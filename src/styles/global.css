@@ -1,0 +1,547 @@
+:root {
+    /* Paleta de colores original */
+    --sidebar-bg: #ffffff;
+    --sidebar-hover: #d2f9f0;
+    --sidebar-active: #00b494;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --border-color: #e5e7eb;
+    --bg-main: #f9fafb;
+    --danger-color: #ef4444;
+    --danger-bg: #fee2e2;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+}
+
+/* --- Layout Structure --- */
+.app-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden; /* Evita scroll global */
+}
+
+.sidebar {
+    width: 80px; /* Sidebar más estrecho, solo para iconos */
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 0;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.sidebar-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.sidebar-icon:hover {
+    background-color: var(--sidebar-hover);
+    color: var(--sidebar-active);
+}
+
+.sidebar-icon.active {
+    background-color: var(--sidebar-active);
+    color: #ffffff;
+}
+
+/* Tooltip para el sidebar de iconos */
+.sidebar-icon .tooltip {
+    position: absolute;
+    left: 60px;
+    background-color: var(--text-primary);
+    color: #fff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 100;
+}
+
+.sidebar-icon:hover .tooltip {
+    opacity: 1;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.top-header {
+    height: 64px;
+    background-color: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    flex-shrink: 0;
+}
+
+.page-area {
+    flex: 1;
+    overflow-y: auto; /* Scroll solo en el área de contenido */
+    padding: 2rem;
+}
+
+/* --- Header Search Bar --- */
+.global-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    width: 300px;
+    transition: border-color 0.2s;
+}
+
+.global-search:hover {
+    border-color: var(--sidebar-active);
+}
+
+/* --- Botones y utilidades --- */
+.btn-primary {
+    background-color: var(--sidebar-active);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: opacity 0.2s;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+/* --- Drawer (Panel Lateral Deslizante) --- */
+.drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.drawer-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.drawer-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 450px;
+    max-width: 90%;
+    height: 100vh;
+    background-color: var(--sidebar-bg);
+    box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.drawer-panel.open {
+    transform: translateX(0);
+}
+
+.drawer-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.drawer-content {
+    padding: 1.5rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* --- Listas Modernas (Clientes/Técnicos) --- */
+.entity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.entity-card {
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.2s ease;
+}
+
+.entity-card:hover {
+    border-color: var(--sidebar-active);
+}
+
+.entity-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: var(--sidebar-hover);
+    color: var(--sidebar-active);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.entity-details h3 {
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: 0.15rem;
+}
+
+.entity-details p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.entity-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* --- Botones de Iconos (Dentro de tarjetas) --- */
+.btn-icon {
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 0.4rem;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    background-color: var(--sidebar-hover);
+    color: var(--sidebar-active);
+}
+
+.btn-icon.danger:hover {
+    background-color: var(--danger-bg);
+    color: var(--danger-color);
+}
+
+/* --- Formularios dentro del Drawer --- */
+.form-group {
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.form-input, .form-select {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    height: 44px;
+}
+
+.form-input:focus, .form-select:focus {
+    border-color: var(--sidebar-active);
+    box-shadow: 0 0 0 3px var(--sidebar-hover);
+}
+
+.btn-submit {
+    background-color: var(--sidebar-active);
+    color: #fff;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 1rem;
+    transition: opacity 0.2s;
+}
+
+.btn-submit:hover {
+    opacity: 0.9;
+}
+
+.btn-cancel {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+/* --- Fila para formularios (2 columnas) --- */
+.form-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+/* --- Estilos del SearchableSelect --- */
+.searchable-container {
+    position: relative;
+    width: 100%;
+}
+
+.searchable-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1100; /* Mayor que el Drawer para que se vea encima */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.searchable-option {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.searchable-option:hover {
+    background-color: var(--sidebar-hover);
+}
+
+.searchable-option.no-results {
+    color: var(--text-secondary);
+    font-style: italic;
+    cursor: default;
+}
+
+/* --- Tarjetas de Vehículo --- */
+.vehicle-card {
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.2s ease;
+}
+
+.vehicle-card:hover {
+    border-color: var(--sidebar-active);
+}
+
+.vehicle-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.vehicle-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.vehicle-year {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.vehicle-owner {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.vehicle-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.vehicle-tag {
+    background-color: var(--sidebar-hover);
+    color: var(--sidebar-active);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* --- Etiquetas de Estado (Status Tags) --- */
+.status-tag {
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-green { background-color: #d2f9f0; color: #00b494; }
+.status-red { background-color: #fee2e2; color: #dc2626; }
+.status-yellow { background-color: #fef9c3; color: #ca8a04; }
+.status-gray { background-color: #f3f4f6; color: #4b5563; }
+
+/* --- Modal de Historial (Centrado) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050; /* Encima del Drawer */
+}
+
+.modal-box {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Textarea para Notas --- */
+.form-textarea {
+    min-height: 80px;
+    resize: vertical;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-textarea:focus {
+    border-color: var(--sidebar-active);
+    box-shadow: 0 0 0 3px var(--sidebar-hover);
+}
+
+/* --- Dashboard --- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h3 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.stat-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-icon {
+    width: fit-content;
+    padding: 0.5rem;
+    border-radius: 8px;
+    background-color: var(--sidebar-hover);
+    color: var(--sidebar-active);
+    margin-bottom: 0.5rem;
+}
