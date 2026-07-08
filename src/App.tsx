@@ -10,12 +10,12 @@ import Gps from './pages/Gps';
 import Dashboard from './pages/Dashboard';
 import Installations from './pages/Installations';
 
-const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
-  <div>
-    <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>{title}</h1>
-    <p style={{ color: '#6b7280', marginTop: '1rem' }}>Próximamente...</p>
-  </div>
-);
+// const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
+//   <div>
+//     <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>{title}</h1>
+//     <p style={{ color: '#6b7280', marginTop: '1rem' }}>Próximamente...</p>
+//   </div>
+// );
 
 const App: React.FC = () => {
   return (
