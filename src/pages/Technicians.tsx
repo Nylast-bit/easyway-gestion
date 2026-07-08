@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Technician } from '../types';
+import type { Technician } from '../types';
 import { Plus, Pencil, Trash2, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Drawer from '../components/Drawer';

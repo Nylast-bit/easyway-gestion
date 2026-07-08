@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Simcard } from '../types';
+import type { Simcard } from '../types';
 
 interface SimcardFormProps {
   onSubmit: (data: any) => void;

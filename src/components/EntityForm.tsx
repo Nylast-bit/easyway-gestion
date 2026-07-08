@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Client, Technician } from '../types';
+import type { Client, Technician } from '../types';
 
 interface EntityFormProps {
   type: 'client' | 'technician';

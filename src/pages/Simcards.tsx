@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { Simcard } from '../types';
+import type { Simcard } from '../types';
 import { Plus, Pencil, Trash2, Cpu, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Drawer from '../components/Drawer';
