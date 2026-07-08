@@ -25,6 +25,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ onSubmit, initialValues }) =>
   useEffect(() => {
     const fetchData = async () => {
       // Obtener clientes
+      
       const { data: cliData } = await supabase.from('clientes').select('id, nombre');
       if (cliData) setClients(cliData);
 
@@ -42,7 +43,15 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ onSubmit, initialValues }) =>
           .maybeSingle();
 
         if (asigData?.gps) {
-          finalGpsOptions = [asigData.gps, ...finalGpsOptions];
+          // 1. Extraemos el objeto singular
+          const gpsAsignado = Array.isArray(asigData.gps) 
+            ? asigData.gps[0] 
+            : asigData.gps;
+4
+          // 2. Lo agregamos al inicio de las opciones
+          finalGpsOptions = [gpsAsignado, ...finalGpsOptions];
+          
+          // 3. Actualizamos el estado del formulario
           setFormData(prev => ({ ...prev, gps_id: asigData.gps_id }));
         }
       }

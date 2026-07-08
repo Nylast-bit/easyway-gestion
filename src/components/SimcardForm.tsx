@@ -21,8 +21,8 @@ const SimcardForm: React.FC<SimcardFormProps> = ({ onSubmit, initialValues }) =>
     e.preventDefault();
     const dataToSubmit = { ...formData };
     // Convertir fechas vacías a null para la BD
-    if (!dataToSubmit.fecha_compra) dataToSubmit.fecha_compra = null;
-    if (!dataToSubmit.fecha_vencimiento) dataToSubmit.fecha_vencimiento = null;
+    if (!dataToSubmit.fecha_compra) dataToSubmit.fecha_compra = "";
+    if (!dataToSubmit.fecha_vencimiento) dataToSubmit.fecha_vencimiento = "null";
     onSubmit(dataToSubmit);
   };
 

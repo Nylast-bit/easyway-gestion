@@ -33,7 +33,14 @@ const GpsForm: React.FC<GpsFormProps> = ({ onSubmit, initialValues }) => {
           .maybeSingle();
 
         if (asigData?.simcards) {
-          finalSimOptions = [asigData.simcards, ...finalSimOptions];
+          // Garantizamos que siempre tengamos un objeto único, satisfaciendo a TypeScript y al Runtime
+          const simcardAsignada = Array.isArray(asigData.simcards) 
+            ? asigData.simcards[0] 
+            : asigData.simcards;
+
+          // Ahora insertamos un objeto plano, no un arreglo
+          finalSimOptions = [simcardAsignada, ...finalSimOptions];
+          
           setFormData(prev => ({ ...prev, simcard_id: asigData.simcard_id }));
         }
       }
