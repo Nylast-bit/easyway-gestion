@@ -40,7 +40,6 @@ const GpsForm: React.FC<GpsFormProps> = ({ onSubmit, initialValues }) => {
 
           // Ahora insertamos un objeto plano, no un arreglo
           finalSimOptions = [simcardAsignada, ...finalSimOptions];
-          
           setFormData(prev => ({ ...prev, simcard_id: asigData.simcard_id }));
         }
       }

@@ -58,7 +58,27 @@ const Gps: React.FC = () => {
 
     if (editingItem) {
       // 1. Actualizar GPS
-      await supabase.from('gps').update(gpsData).eq('id', editingItem.id);
+      const { error } = await supabase.from('gps').update(gpsData).eq('id', editingItem.id);
+      if (error) return toast.error('Error: ' + error.message);
+
+      // --- NUEVA LÓGICA: Si el GPS ya no está "Instalado", desvincularlo del vehículo ---
+      if (gpsData.estado !== 'Instalado') {
+        // Buscar si tiene una asignación de vehículo activa
+        const { data: activeAssignment } = await supabase
+        .from('gps_asignaciones')
+        .select('id, vehiculo_id')
+        .eq('gps_id', editingItem.id)
+        .is('fecha_fin', null)
+        .maybeSingle();
+
+        // Si la tiene, cerrar la asignación
+        if (activeAssignment) {
+          await supabase.from('gps_asignaciones')
+          .update({ fecha_fin: new Date() })
+          .eq('id', activeAssignment.id);
+        }
+      }
+      // --- FIN DE LA NUEVA LÓGICA ---
 
       const currentSimId = editingItem.simcard_asignaciones[0]?.simcard_id || null;
 
