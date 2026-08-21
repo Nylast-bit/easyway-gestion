@@ -57,7 +57,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ onSubmit, initialValues }) =>
           .maybeSingle();
 
         if (asigData?.gps) {
-          finalGpsOptions = [asigData.gps, ...finalGpsOptions];
+          const gpsAsignado = Array.isArray(asigData.gps) ? asigData.gps[0] : asigData.gps;
+          finalGpsOptions = [gpsAsignado, ...finalGpsOptions];
           setFormData(prev => ({ ...prev, gps_id: asigData.gps_id }));
         }
 
