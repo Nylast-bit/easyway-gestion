@@ -31,3 +31,8 @@ dist-ssr
 # Dependencias
 node_modules
 .pnpm-store
+
+# Datos privados y respaldos
+backups/
+*.xlsx
+!tests/fixtures/excel-muestra.xlsx

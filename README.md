@@ -1,32 +1,37 @@
-# React + TypeScript + Vite
+# Easyway GPS Gestión
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aplicación React + Vite para gestionar clientes, vehículos, equipos e instalaciones.
+La evolución a backend propio se realiza por fases. La SPA actual sigue en `src/`;
+`apps/api/src/db/` contiene únicamente el esquema inicial, no un servidor todavía.
 
-Currently, two official plugins are available:
+## Desarrollo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Usar npm y Node 22. Instalar con `npm ci`.
 
-## React Compiler
+- `npm run dev`: SPA existente (requiere las variables Vite de Supabase).
+- `npm run lint`: oxlint.
+- `npm run typecheck`: tipos de la SPA y herramientas de base de datos.
+- `npm test`: integración de la migración en PostgreSQL 16 real; requiere Docker activo.
+  Crea un contenedor efímero con puerto local aleatorio y lo elimina al terminar.
+- `npm run build`: compilación de la SPA.
+- `npm run db:generate -- --name=descripcion`: generar una migración después de cambiar el esquema.
+- `npm run db:migrate`: aplicar migraciones pendientes usando `DATABASE_URL`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Base de datos inicial
 
-## Expanding the Oxlint configuration
+Ver [docs/migracion-bd.md](docs/migracion-bd.md) para crear el proyecto vacío,
+aplicar el SQL y preparar Storage. El esquema se reconstruyó desde consultas y
+formularios: no es una exportación de la base anterior.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+La migración habilita RLS sin políticas públicas. **La SPA antigua no puede hacer
+CRUD con la anon key sobre esta base nueva**: se conectará mediante el backend en
+la fase 3. No abrir permisos públicos para sortear esta transición.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+El Excel real y `backups/` están excluidos de Git. El histórico se importará en la
+fase 6 con análisis, vista previa y confirmación; todavía no se ha importado.
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Estado
+
+Fase 1: esquema inicial y pruebas locales preparados. Pendiente configurar y aplicar
+la migración en el proyecto Supabase del usuario, y verificar allí la disponibilidad
+gratuita de Storage/S3. No se ha accedido a servicios remotos.
