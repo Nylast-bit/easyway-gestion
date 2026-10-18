@@ -165,6 +165,9 @@ Después se aplicaron `0004_modelo_ampliado` y `0005_retirar_tipo_texto` (destin
 cuentas): 19 tablas con RLS y 0 políticas, 9 tipos de servicio y Plan Anual sembrados, `instalaciones.tipo`
 sustituido por `tipo_servicio_id`, checks e índices únicos de cobros presentes.
 
+Luego se aplicó `0006_importacion`: 22 tablas con RLS y 0 políticas, `importacion_filas.datos` admite nulo y
+el índice de idempotencia cubre los estados Analizada y Confirmada.
+
 Se ejecutaron pruebas locales con Node 22.22.0 y PostgreSQL 16. Se verificó el bucket
 privado `vehicles`. En la fase 3 (`npm run storage:verificar`) se comprobaron subida sin
 sobrescritura, descarga con URL firmada, rechazo de la URL pública y borrado.

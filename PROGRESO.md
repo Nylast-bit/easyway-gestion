@@ -1,6 +1,6 @@
 # Progreso — Easyway GPS Gestión
 
-**Estado: fases 5–7 implementadas (pendiente aplicar 0006 en Supabase). Siguiente: fase 8 — extras y CI; la 4 (Docker) al final.**
+**Estado: fases 5–7 implementadas y migradas en Supabase. Siguiente: fase 8 — extras y CI; la 4 (Docker) al final.**
 Las casillas se marcan únicamente cuando la tarea o verificación esté terminada.
 
 ## Fase 1 — Base inicial y Supabase
@@ -110,7 +110,8 @@ Fases 5 → 6 → 7 → 8; la fase 4 (Docker) queda al final. Decisiones de nego
 - [x] Análisis/staging, vista previa, alias (técnicos, planes, tipos) y advertencias por fila.
 - [x] Confirmación transaccional, idempotencia, reporte y reversión segura.
 - [x] Pruebas de conteos, duplicados y rollback.
-- [ ] Aplicar 0006 en Supabase e importar el Excel real (lo confirma el usuario desde la pantalla).
+- [x] Aplicar 0006 en Supabase (historial 0000–0006; 22 tablas con RLS, 0 políticas).
+- [ ] Importar el Excel real (lo hace el usuario desde la pantalla Importar).
 - [x] Verificaciones, documentación y commit.
 
 ### Evidencia de fase 6
