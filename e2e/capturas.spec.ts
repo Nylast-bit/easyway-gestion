@@ -88,6 +88,43 @@ const vencimientos = [
     vehiculo: { id: 7, descripcion: 'TOYOTA HILUX DOBLE CABINA (L123456)', cliente_nombre: clientes[0].nombre } },
 ];
 
+// Importación del Excel (fase 6): análisis pendiente con alias y filas con problemas.
+const conteoImportacion = { clientes: 163, vehiculos: 480, gps: 456, simcards: 349, instalaciones: 519, tecnicos: 7, planes: 7, tipos_servicio: 0, servicios: 224, asignaciones_gps: 503, asignaciones_sim: 434 };
+const importacion = {
+  id: 7, archivo_nombre: 'Control de instalación Easyway GPS - copia revisada por administración 2026.xlsx', estado: 'Analizada',
+  creado_por_nombre: 'Ana Gabriela Administradora', created_at: '2026-10-18T12:00:00Z', confirmada_at: null, revertida_at: null,
+  resumen: {
+    archivo: 'Control.xlsx', hoja: 'Data de instalaciones e cliente', filas: 524, filas_validas: 519, filas_con_error: 5, filas_con_advertencia: 126, filas_omitidas: 0,
+    nuevos: conteoImportacion, existentes: { clientes: 12, vehiculos: 3, gps: 0, simcards: 0 },
+    tecnicos: [
+      { clave: 'eliezer', texto: 'Eliezer', filas: 277, sugerencia: { accion: 'crear', nombre: 'Eliezer' } },
+      { clave: 'gabo', texto: 'Gabo', filas: 2, sugerencia: { accion: 'crear', nombre: 'Gabo' } },
+      { clave: 'gabo chamo', texto: 'Gabo Chamo', filas: 20, sugerencia: { accion: 'crear', nombre: 'Gabo Chamo' } },
+      { clave: '-', texto: '-', filas: 58, sugerencia: { accion: 'ninguno' } },
+    ],
+    planes: [
+      { clave: 'plan anual (monitoreo)', texto: 'Plan Anual (monitoreo)', filas: 161, sugerencia: { accion: 'existente', id: 1 } },
+      { clave: 'plan anual (sin monit.)', texto: 'Plan Anual (Sin monit.) con equipo propio del cliente', filas: 1, sugerencia: { accion: 'crear', nombre: 'Plan Anual (Sin monit.) con equipo propio del cliente' } },
+    ],
+    tipos: [
+      { clave: 'instalacion', texto: 'Instalación', filas: 382, sugerencia: { accion: 'existente', id: 1 } },
+      { clave: 'cambio', texto: 'Cambio', filas: 17, sugerencia: { accion: 'existente', id: 4 } },
+    ],
+  },
+  opciones: {
+    tecnicos: { eliezer: { accion: 'crear', nombre: 'Eliezer' }, gabo: { accion: 'crear', nombre: 'Gabo Chamo' }, 'gabo chamo': { accion: 'crear', nombre: 'Gabo Chamo' }, '-': { accion: 'ninguno' } },
+    planes: { 'plan anual (monitoreo)': { accion: 'existente', id: 1 }, 'plan anual (sin monit.)': { accion: 'crear', nombre: 'Plan Anual (Sin monit.) con equipo propio del cliente' } },
+    tipos: { instalacion: { accion: 'existente', id: 1 }, cambio: { accion: 'existente', id: 4 } },
+    crear_servicios: true,
+  },
+};
+const filasImportacion = [
+  { id: 1, hoja: 'Data de instalaciones e cliente', fila: 16, datos: null, advertencias: [], errores: ['Fila sin IMEI'] },
+  { id: 2, hoja: 'Data de instalaciones e cliente', fila: 45, errores: [], advertencias: ['SIM con número largo (20 dígitos); revisa que no sea un IMEI', 'Vehículo sin placa ni descripción: se identifica por el IMEI'],
+    datos: { cliente: { nombre: clientes[0].nombre, clave: 'x', telefono: null, correo: null, empresa: true }, imei: '863829070755440', sim: '89010260000000000005', fecha: '2024-01-10',
+      vehiculo: { marca: null, modelo: null, año: null, color: null, placa: null, chasis: null, tipo: 'Carro', descripcion: null }, tecnico: 'Eliezer', plan: 'Plan Anual', tipo_servicio: 'Instalación' } },
+];
+
 async function simularApi(page: Page) {
   const datos: Record<string, unknown> = {
     '/api/auth/sesion': { usuario: { ...usuarioPrueba, nombre: 'Ana Gabriela Administradora' } },
@@ -103,12 +140,14 @@ async function simularApi(page: Page) {
     ],
     '/api/instalaciones': instalaciones,
     '/api/usuarios': usuarios,
-    '/api/tipos-servicio': [{ id: 1, nombre: 'Instalación', activo: true }, { id: 3, nombre: 'Mantenimiento', activo: true }],
+    '/api/tipos-servicio': [{ id: 1, nombre: 'Instalación', activo: true }, { id: 3, nombre: 'Mantenimiento', activo: true }, { id: 4, nombre: 'Cambio de equipo', activo: true }],
     '/api/planes': planes,
     '/api/cobros/resumen': { pendiente: 1499999.5, vencido: 999000, clientes_con_deuda: 2, cobrado_mes: 12500000, por_generar: 18,
       deudores: [{ cliente_id: 1, cliente_nombre: clientes[0].nombre, saldo: 149499.5, vencido: 99000 }, { cliente_id: 2, cliente_nombre: clientes[1].nombre, saldo: 5500, vencido: 0 }] },
     '/api/cobros/estado-cuenta/1': estadoCuenta,
     '/api/vencimientos?dias=30': vencimientos,
+    '/api/importaciones': [importacion],
+    '/api/importaciones/7/filas?filtro=problemas': filasImportacion,
     '/api/buscar?q=car': [
       { tipo: 'cliente', id: 1, etiqueta: clientes[0].nombre },
       { tipo: 'vehiculo', id: 7, etiqueta: 'TOYOTA HILUX DOBLE CABINA (L123456)' },
@@ -225,6 +264,11 @@ for (const tamano of TAMANOS) {
       await page.getByRole('button', { name: /Planes/ }).click();
       await expect(page.getByText('Plan Anual (Sin monitoreo) histórico importado del Excel')).toBeVisible();
       await capturar('18-planes');
+
+      await page.goto('/import');
+      await page.getByRole('button', { name: /copia revisada/ }).click();
+      await expect(page.getByRole('button', { name: 'Confirmar importación' })).toBeVisible();
+      await capturar('20-importar');
 
       await page.goto('/');
       await page.locator('.global-search').click();

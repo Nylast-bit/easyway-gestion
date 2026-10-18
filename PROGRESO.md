@@ -1,6 +1,6 @@
 # Progreso — Easyway GPS Gestión
 
-**Estado: fase 5 implementada y migrada en Supabase. En curso: fase 6 — importación Excel.**
+**Estado: fase 6 implementada (pendiente aplicar 0006 en Supabase). Siguiente: fase 7 — técnicos, aprobación y costos.**
 Las casillas se marcan únicamente cuando la tarea o verificación esté terminada.
 
 ## Fase 1 — Base inicial y Supabase
@@ -106,11 +106,21 @@ Fases 5 → 6 → 7 → 8; la fase 4 (Docker) queda al final. Decisiones de nego
   salían de las tarjetas en móvil y se añadió esa comprobación a las capturas.
 
 ## Fase 6 — Importación Excel
-- [ ] Fixture anonimizado y normalizadores completos.
-- [ ] Análisis/staging, vista previa, alias (técnicos, planes, tipos) y advertencias por fila.
-- [ ] Confirmación transaccional, idempotencia, reporte y reversión segura.
-- [ ] Pruebas de conteos, duplicados y rollback.
-- [ ] Verificaciones, documentación y commit.
+- [x] Fixture anonimizado y normalizadores completos.
+- [x] Análisis/staging, vista previa, alias (técnicos, planes, tipos) y advertencias por fila.
+- [x] Confirmación transaccional, idempotencia, reporte y reversión segura.
+- [x] Pruebas de conteos, duplicados y rollback.
+- [ ] Aplicar 0006 en Supabase e importar el Excel real (lo confirma el usuario desde la pantalla).
+- [x] Verificaciones, documentación y commit.
+
+### Evidencia de fase 6
+- Excel real analizado en seco (solo conteos): 524 filas, 519 válidas, 5 con error; 163 clientes, 480 vehículos,
+  456 GPS, 349 SIM, 519 instalaciones, 503 asignaciones de GPS y 434 de SIM; 224 planes de cobro con primer cargo
+  en su próxima renovación (desde 2026-11).
+- Unitarias del lector y planificador con el fixture (historial, cambio de SIM, desinstalación, reutilización).
+- 4 de integración: análisis e idempotencia, confirmación con alias, rollback completo ante conflicto a mitad,
+  reversión bloqueada por datos posteriores y después permitida; descarte borra el staging.
+- Captura de la pantalla Importar en 4 tamaños (contadores en 2 columnas en móvil).
 
 ## Fase 7 — Técnicos, aprobación y cobros
 - [ ] Portal móvil del técnico: nueva instalación (cliente/vehículo nuevos), fotos e historial propio.

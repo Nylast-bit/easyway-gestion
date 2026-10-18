@@ -46,12 +46,19 @@
 - Vigencias: asignar GPS a vehículo fija `gps.fecha_vencimiento` a 1 año; SIM a 1 año si no tenía fecha. Editables (`PUT /vencimientos/gps|simcard/:id`).
 - `registrarAuditoria(tx, …)` dentro de la misma transacción en toda acción sensible. Fechas de negocio con `fechaEnRD`/`sumarMeses` de shared.
 
+## Importación del Excel (fase 6)
+
+- Flujo: `POST /api/importaciones` (multipart, ≤10 MB) analiza sin escribir datos de negocio y guarda filas normalizadas en staging; `/previsualizar` recalcula con decisiones de catálogo; `/confirmar` ejecuta en una transacción; `/descartar` y `/revertir`. El archivo no se guarda.
+- Lector `apps/api/src/importacion/analizar.ts` (columnas por título; hoja "Data de instalaciones e cliente", "Simcards" solo fechas, "Listado de Clientes" solo tipo Empresa). Planificador puro `planificar.ts`: cada fila es un evento cronológico sobre su GPS/SIM; omite filas con IMEI ya existente; planes de cobro solo con plan activo y desde la próxima renovación. Ejecutor `aplicar.ts` con inserciones por lotes y registro de lo creado.
+- Idempotencia por hash del archivo (índice único parcial). Revertir borra solo lo registrado; si algo posterior lo usa, la FK revierte todo (409).
+- Fixture: `tests/fixtures/excel-muestra.xlsx` generado con `npx tsx scripts/crear-fixture-excel.ts` (datos inventados, mismas rarezas). El Excel real nunca se versiona ni se imprime: los análisis solo muestran conteos.
+
 ## Base de datos y dominio
 
 - `apps/api/src/db/esquema.ts` fue reconstruido desde frontend, no introspectado. Decisiones en `docs/migracion-bd.md`.
 - `npm run db:generate -- --name=descripcion`: versionar SQL y metadatos de `apps/api/drizzle`. `npm run db:migrate` usa DATABASE_URL e historial Drizzle; no combinar SQL manual y migrador, ni usar drizzle-kit push.
 - `npm run db:verify`: versión/tablas/RLS, transacción de solo lectura y sin credenciales en salida.
-- Tablas exactas: `clientes`, `tecnicos`, `vehiculos`, `gps`, `simcards`, `instalaciones`, `gps_asignaciones`, `simcard_asignaciones`, `vehiculo_imagenes` (con `subida_por`), `usuarios`, `sesiones`, `verificaciones_correo`, `tipos_servicio`, `planes`, `servicios`, `cargos`, `pagos`, `pago_aplicaciones`, `auditoria`.
+- Tablas exactas: `clientes`, `tecnicos`, `vehiculos`, `gps`, `simcards`, `instalaciones`, `gps_asignaciones`, `simcard_asignaciones`, `vehiculo_imagenes` (con `subida_por`), `usuarios`, `sesiones`, `verificaciones_correo`, `tipos_servicio`, `planes`, `servicios`, `cargos`, `pagos`, `pago_aplicaciones`, `auditoria`, `importaciones`, `importacion_filas`, `importacion_registros`.
 - Plan vigente: "Plan Anual" RD$5,500 (sembrado en 0004). Plan Anual y Plan Anual (monitoreo) son equivalentes; Plan Anual (Sin monit.) es distinto. America/Santo_Domingo; moneda DOP (RD$).
 - Instalaciones usan `tipo_servicio_id` (catálogo `tipos_servicio`); `aprobacion` (Pendiente/Aprobada/Rechazada), `propuesta` y costo del técnico preparan la fase 7.
 - Excel real y `backups/` ignorados; único fixture permitido: `tests/fixtures/excel-muestra.xlsx` anonimizado.

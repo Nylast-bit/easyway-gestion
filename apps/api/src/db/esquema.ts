@@ -227,3 +227,36 @@ export const auditoria = pgTable('auditoria', {
   index('auditoria_entidad_idx').on(tabla.entidad, tabla.entidad_id),
   index('auditoria_fecha_idx').on(tabla.created_at),
 ]).enableRLS();
+
+// Fase 6: importación del Excel con staging. El archivo no se guarda: solo las filas ya normalizadas.
+export const estadoImportacion = pgEnum('estado_importacion', ['Analizada', 'Confirmada', 'Revertida', 'Descartada']);
+
+export const importaciones = pgTable('importaciones', {
+  id: id(), archivo_nombre: text('archivo_nombre').notNull(), archivo_hash: text('archivo_hash').notNull(),
+  estado: estadoImportacion('estado').notNull().default('Analizada'),
+  // Conteos, catálogos detectados (técnicos, planes, tipos) y su asignación elegida en la vista previa.
+  resumen: jsonb('resumen').notNull(), opciones: jsonb('opciones'),
+  creado_por: usuarioRef('creado_por'), created_at: creado(),
+  confirmada_por: usuarioRef('confirmada_por'), confirmada_at: timestamp('confirmada_at', { withTimezone: true }),
+  revertida_por: usuarioRef('revertida_por'), revertida_at: timestamp('revertida_at', { withTimezone: true }),
+}, (tabla) => [
+  // Idempotencia: el mismo archivo no puede estar analizado o confirmado dos veces a la vez.
+  uniqueIndex('importaciones_archivo_vigente').on(tabla.archivo_hash).where(sql`${tabla.estado} IN ('Analizada', 'Confirmada')`),
+]).enableRLS();
+
+export const importacionFilas = pgTable('importacion_filas', {
+  id: id(), importacion_id: integer('importacion_id').notNull().references(() => importaciones.id, { onDelete: 'cascade' }),
+  hoja: text('hoja').notNull(), fila: integer('fila').notNull(),
+  // Null en filas con error u omitidas (títulos repetidos).
+  datos: jsonb('datos'), advertencias: jsonb('advertencias').notNull().default(sql`'[]'::jsonb`),
+  errores: jsonb('errores').notNull().default(sql`'[]'::jsonb`),
+}, (tabla) => [index('importacion_filas_importacion_idx').on(tabla.importacion_id, tabla.hoja, tabla.fila)]).enableRLS();
+
+// Registros creados por una importación confirmada: permiten revertirla borrando solo lo suyo.
+export const importacionRegistros = pgTable('importacion_registros', {
+  id: id(), importacion_id: integer('importacion_id').notNull().references(() => importaciones.id),
+  tabla: text('tabla').notNull(), registro_id: integer('registro_id').notNull(),
+}, (tabla) => [
+  uniqueIndex('importacion_registros_unico').on(tabla.tabla, tabla.registro_id),
+  index('importacion_registros_importacion_idx').on(tabla.importacion_id),
+]).enableRLS();

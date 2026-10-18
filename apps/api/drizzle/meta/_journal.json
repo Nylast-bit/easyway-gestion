@@ -43,6 +43,13 @@
       "when": 1792345744816,
       "tag": "0005_retirar_tipo_texto",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792348417057,
+      "tag": "0006_importacion",
+      "breakpoints": true
     }
   ]
 }

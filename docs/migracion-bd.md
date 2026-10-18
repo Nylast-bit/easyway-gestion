@@ -141,6 +141,12 @@ Aditiva; las filas existentes quedan con autor nulo (solo un admin podrá borrar
 - Siembra `Plan Anual` (Anual, RD$5,500). Cargos/pagos se anulan con motivo (checks); un servicio solo
   puede facturar una vez cada periodo (índice único parcial).
 
+## Fase 6 — importación (0006_importacion)
+
+Tablas `importaciones` (archivo, hash, estado, resumen y decisiones), `importacion_filas` (staging normalizado
+con advertencias/errores; `datos` nulo en filas con error) e `importacion_registros` (qué creó cada importación,
+para revertir). RLS sin políticas. Un archivo (por SHA-256) solo puede estar analizado o confirmado una vez.
+
 ## Verificación del destino
 
 Se comprobó primero que `public` no tenía tablas. Después se aplicaron `0000_inicial`

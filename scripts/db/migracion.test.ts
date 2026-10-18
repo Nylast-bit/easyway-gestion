@@ -18,8 +18,7 @@ test('crea las tablas y repetir la migración no duplica su registro', async () 
   await migrar();
   const tablas = await cliente`SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public'`;
   expect(tablas.map(t => t.tablename).sort()).toEqual([
-    'auditoria', 'cargos', 'clientes', 'gps', 'gps_asignaciones', 'instalaciones', 'pago_aplicaciones', 'pagos', 'planes', 'servicios', 'sesiones', 'simcard_asignaciones',
-    'simcards', 'tecnicos', 'tipos_servicio', 'usuarios', 'vehiculo_imagenes', 'vehiculos', 'verificaciones_correo',
+    'auditoria', 'cargos', 'clientes', 'gps', 'gps_asignaciones', 'importacion_filas', 'importacion_registros', 'importaciones', 'instalaciones', 'pago_aplicaciones', 'pagos', 'planes', 'servicios', 'sesiones', 'simcard_asignaciones', 'simcards', 'tecnicos', 'tipos_servicio', 'usuarios', 'vehiculo_imagenes', 'vehiculos', 'verificaciones_correo',
   ]);
   expect(tablas.every(t => t.rowsecurity)).toBe(true);
   const [registro] = await cliente`SELECT count(*)::int AS cantidad FROM drizzle.__drizzle_migrations`;

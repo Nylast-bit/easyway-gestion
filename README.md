@@ -84,6 +84,17 @@ que se borra al terminar.
   cobrar en 30/60/90 días o 1 año, con los vencidos primero; la fecha de GPS/SIM se puede corregir.
 - Todas estas acciones quedan en la auditoría (`GET /api/auditoria`).
 
+## Importar el Excel
+
+Menú **Importar**: se sube el Excel de control (hoja "Data de instalaciones e cliente"). Analizar no crea
+nada; muestra cuántos clientes, vehículos, GPS, SIM e instalaciones se crearán, las filas con errores o
+advertencias y permite decidir qué hacer con cada técnico, plan y tipo de servicio escrito en el Excel
+(crear, usar uno existente, unir alias como "Gabo" → "Gabo Chamo" o dejar sin técnico/plan). Al confirmar
+todo se crea en una transacción: el historial de cada GPS y SIM se reconstruye por fecha, los GPS quedan
+con vencimiento a 1 año de su última instalación y, si se marca, se crean planes de cobro desde la próxima
+renovación (sin deuda de años pasados). El mismo archivo no se importa dos veces. **Revertir** borra solo lo
+importado y se niega si algo creado después lo usa (cargos, pagos, fotos, instalaciones nuevas).
+
 ## Técnicos
 
 Una cuenta con rol técnico debe estar vinculada a su ficha (`tecnico_id`). En la web solo ve
