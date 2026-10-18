@@ -44,8 +44,15 @@ try {
   await almacen.borrar([ruta]);
   subido = false;
   paso('Borrado del objeto de prueba', true);
-  const despues = firmada ? await fetch(firmada) : null;
-  paso(`URL firmada deja de servir el objeto borrado (HTTP ${despues?.status})`, despues !== null && !despues.ok);
+  // La CDN de Supabase puede servir la copia en caché unos segundos tras borrar; se espera la invalidación.
+  const inicio = Date.now();
+  let despues = firmada ? await fetch(firmada) : null;
+  while (despues?.ok && Date.now() - inicio < 120_000) {
+    await new Promise(resolver => setTimeout(resolver, 5000));
+    despues = await fetch(firmada!);
+  }
+  const segundos = Math.round((Date.now() - inicio) / 1000);
+  paso(`URL firmada deja de servir el objeto borrado (HTTP ${despues?.status}, tras ${segundos} s de caché CDN)`, despues !== null && !despues.ok);
 } catch (error) {
   paso(`Error: ${(error as Error).message}`, false);
 } finally {
