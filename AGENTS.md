@@ -35,7 +35,7 @@ Esquema reconstruido desde el frontend en `apps/api/src/db/esquema.ts`; no es un
 - No usar `drizzle-kit push` en el destino. Cambios de esquema posteriores van en migraciones nuevas.
 - El Excel real y `backups/` están ignorados; solo se permite el futuro fixture anonimizado `tests/fixtures/excel-muestra.xlsx`.
 - Plan Anual y Plan Anual (monitoreo) son equivalentes, confirmado; Plan Anual (Sin monit.) es distinto.
-- Storage/S3 de Supabase pendiente de configuración y confirmación de cuota gratuita; secretos solo en backend. Zona horaria: America/Santo_Domingo; moneda DOP (RD$).
+- Storage acordado: API de Supabase Storage, bucket privado `vehicles` (verificado), sin credenciales S3. Adaptador exclusivo del backend con `SUPABASE_URL`, `SUPABASE_SECRET_KEY` y `SUPABASE_STORAGE_BUCKET=vehicles`; nunca exponer la clave en VITE_/NEXT_PUBLIC_. El código antiguo aún usa `vehiculos` y URLs públicas: se sustituye al migrar el CRUD al backend. Zona horaria: America/Santo_Domingo; moneda DOP (RD$).
 - Skills oficiales en `.agents/skills`, registradas mediante `opencode.json`; revisar las guías aplicables a PostgreSQL/Storage. La arquitectura y migraciones Drizzle del proyecto prevalecen sobre ejemplos de Supabase Auth o CLI.
 
 ## Convenciones

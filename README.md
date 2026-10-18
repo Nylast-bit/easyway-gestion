@@ -36,7 +36,9 @@ fase 6 con análisis, vista previa y confirmación; todavía no se ha importado.
 
 Fase 1: migraciones 0000 y 0001 aplicadas en Supabase (PostgreSQL 17.11), nueve
 tablas verificadas con RLS habilitado. Pruebas locales aprobadas en PostgreSQL 16.
-Pendiente configurar las credenciales S3 y verificar el bucket privado `vehiculos`.
+Bucket privado `vehicles` verificado. Se usará la API de Supabase Storage, sin S3.
+Pendiente configurar `SUPABASE_URL` y `SUPABASE_SECRET_KEY` exclusivamente para
+el futuro backend; el adaptador y sus pruebas de archivos llegan en la fase 3.
 El plan Free publicado incluye 1 GB de archivos; confirmar el plan de la organización.
 
 Fase 2 acordada: migrar a Next.js App Router en `apps/web` y npm workspaces,
@@ -45,3 +47,6 @@ Node, no solo nginx estático. Esta migración aún no está implementada.
 
 Skills oficiales Supabase instaladas en `.agents/skills`; reiniciar OpenCode para
 que descubra las skills registradas en `opencode.json`.
+
+`npx tsx scripts/db/verificar-storage.ts` inspecciona el bucket `vehicles` mediante
+una transacción de solo lectura. No prueba aún subidas ni descargas por la API.
