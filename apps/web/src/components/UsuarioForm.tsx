@@ -10,6 +10,8 @@ export type DatosFormularioUsuario = {
 interface UsuarioFormProps {
   onSubmit: (datos: DatosFormularioUsuario) => void;
   initialValues?: UsuarioFila;
+  // Ficha de técnico con la que se crea la cuenta (atajo desde "Técnicos sin cuenta").
+  fichaInicial?: Persona;
   fichas: Persona[];
   // Fichas ya vinculadas a otra cuenta (una ficha = una cuenta).
   fichasOcupadas: number[];
@@ -17,14 +19,14 @@ interface UsuarioFormProps {
 }
 
 // Alta y edición de cuentas. Usuario y correo solo se fijan al crear: son identificadores de acceso.
-const UsuarioForm: React.FC<UsuarioFormProps> = ({ onSubmit, initialValues, fichas, fichasOcupadas, esPropia }) => {
+const UsuarioForm: React.FC<UsuarioFormProps> = ({ onSubmit, initialValues, fichaInicial, fichas, fichasOcupadas, esPropia }) => {
   const [datos, setDatos] = useState<DatosFormularioUsuario>({
-    nombre: initialValues?.nombre ?? '',
+    nombre: initialValues?.nombre ?? fichaInicial?.nombre ?? '',
     usuario: initialValues?.usuario ?? '',
     correo: initialValues?.correo ?? '',
     contrasena: '',
     rol: initialValues?.rol ?? 'tecnico',
-    tecnico_id: initialValues?.tecnico_id ?? '',
+    tecnico_id: initialValues?.tecnico_id ?? fichaInicial?.id ?? '',
     activo: initialValues?.activo ?? true,
   });
   const [verContrasena, setVerContrasena] = useState(false);

@@ -186,3 +186,34 @@ test('borrar vehículo: sin historial elimina también sus fotos; con historial 
   expect(existsSync(join(directorio, rutaLibre))).toBe(false);
   expect(await conexion.bd.select().from(vehiculoImagenes)).toHaveLength(1);
 });
+
+test('filtros de instalaciones: periodo, técnico, sin técnico, tipo y resumen; el técnico solo cuenta lo suyo', async () => {
+  const { vehiculoA, vehiculoB, instalacionA } = escenario;
+  const tecnicosLista = (await api('/tecnicos', 'admin')).datos as { id: number; nombre: string }[];
+  const tecA = tecnicosLista.find(t => t.nombre === 'Técnico A')!.id;
+  const g3 = (await api('/gps', 'admin', { cuerpo: { imei: '863829070000009' } })).datos;
+  // Fechas: A en octubre (semana del 12), B y una sin técnico en septiembre.
+  await api(`/instalaciones/${instalacionA}`, 'admin', { metodo: 'PUT', cuerpo: { vehiculo_id: vehiculoA, gps_id: (await api(`/instalaciones/${instalacionA}`, 'admin')).datos.gps_id, tecnico_id: tecA, tipo_servicio_id: 1, fecha_instalacion: '2026-10-14T15:00:00Z' } });
+  await api(`/instalaciones/${escenario.instalacionB}`, 'admin', { metodo: 'PUT', cuerpo: { vehiculo_id: vehiculoB, gps_id: (await api(`/instalaciones/${escenario.instalacionB}`, 'admin')).datos.gps_id, tecnico_id: tecnicosLista.find(t => t.nombre === 'Técnico B')!.id, tipo_servicio_id: 3, fecha_instalacion: '2026-09-05T15:00:00Z' } });
+  await api('/instalaciones', 'admin', { cuerpo: { vehiculo_id: vehiculoB, gps_id: g3.id, tipo_servicio_id: 1, fecha_instalacion: '2026-09-30T23:30:00-04:00' } });
+
+  const ids = async (consulta: string, quien = 'admin') => (await api(`/instalaciones?${consulta}`, quien)).datos.length;
+  expect(await ids('')).toBe(3);
+  expect(await ids('desde=2026-10-12&hasta=2026-10-18')).toBe(1);
+  // El límite del día se toma en hora de Santo Domingo: 23:30 del 30-sep entra en septiembre.
+  expect(await ids('desde=2026-09-01&hasta=2026-09-30')).toBe(2);
+  expect(await ids(`tecnico=${tecA}`)).toBe(1);
+  expect(await ids('tecnico=sin')).toBe(1);
+  expect(await ids('tipo_servicio_id=3')).toBe(1);
+  expect((await api('/instalaciones?desde=2026-10-10&hasta=2026-10-01', 'admin')).estado).toBe(400);
+
+  const resumen = (await api('/instalaciones/resumen?desde=2026-09-01&hasta=2026-10-31', 'admin')).datos;
+  expect(resumen.total).toBe(3);
+  expect(resumen.por_tecnico.map((t: { nombre: string; total: number }) => [t.nombre, t.total]).sort()).toEqual([['Sin técnico', 1], ['Técnico A', 1], ['Técnico B', 1]]);
+  expect(resumen.por_tipo.map((t: { nombre: string; total: number }) => [t.nombre, t.total])).toEqual([['Instalación', 2], ['Mantenimiento', 1]]);
+
+  // Un técnico no puede ampliar su alcance con el filtro de técnico.
+  expect(await ids('tecnico=sin', 'tecnico.a')).toBe(1);
+  expect(await ids('', 'tecnico.a')).toBe(1);
+  expect((await api('/instalaciones/resumen', 'tecnico.a')).datos).toMatchObject({ total: 1, por_tecnico: [{ nombre: 'Técnico A', total: 1 }] });
+});

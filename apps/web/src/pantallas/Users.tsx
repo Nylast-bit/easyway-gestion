@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { KeyRound, Pencil, Plus, UserCog } from 'lucide-react';
+import { KeyRound, Pencil, Plus, UserCog, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { LONGITUD_MINIMA_CONTRASENA, type Persona, type UsuarioFila } from '@easyway/shared';
 import Drawer from '../components/Drawer';
@@ -21,6 +21,7 @@ const Users: React.FC = () => {
   const [abierto, setAbierto] = useState(false);
   const [modo, setModo] = useState<'editar' | 'contrasena'>('editar');
   const [seleccion, setSeleccion] = useState<UsuarioFila | null>(null);
+  const [fichaNueva, setFichaNueva] = useState<Persona | null>(null);
   const [nuevaContrasena, setNuevaContrasena] = useState('');
 
   const cargar = useCallback(async () => {
@@ -33,8 +34,9 @@ const Users: React.FC = () => {
 
   useEffect(() => { void cargar(); }, [cargar]);
 
-  const abrir = (cuenta: UsuarioFila | null, nuevoModo: typeof modo) => {
+  const abrir = (cuenta: UsuarioFila | null, nuevoModo: typeof modo, ficha: Persona | null = null) => {
     setSeleccion(cuenta);
+    setFichaNueva(ficha);
     setModo(nuevoModo);
     setNuevaContrasena('');
     setAbierto(true);
@@ -68,6 +70,8 @@ const Users: React.FC = () => {
   const termino = busqueda.toLowerCase();
   const filtradas = cuentas.filter(c => [c.nombre, c.usuario, c.correo].some(v => v?.toLowerCase().includes(termino)));
   const fichasOcupadas = cuentas.flatMap(c => (c.tecnico_id ? [c.tecnico_id] : []));
+  // Técnicos cuya ficha aún no tiene cuenta: sin cuenta no pueden entrar a ver ni registrar sus trabajos.
+  const sinCuenta = fichas.filter(f => !fichasOcupadas.includes(f.id));
   const ahora = Date.now();
 
   return (
@@ -79,6 +83,19 @@ const Users: React.FC = () => {
 
       <input type="text" placeholder="Buscar por nombre, usuario o correo..." className="form-input"
         style={{ marginBottom: '1.5rem', maxWidth: '400px' }} value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+
+      {sinCuenta.length > 0 && (
+        <section className="aviso-sin-cuenta" aria-label="Técnicos sin cuenta">
+          <p><strong>Técnicos sin cuenta ({sinCuenta.length}).</strong> Crea su acceso para que vean y registren sus trabajos.</p>
+          <div className="filtros-chips">
+            {sinCuenta.map(f => (
+              <button key={f.id} type="button" className="filtro-chip" onClick={() => abrir(null, 'editar', f)}>
+                <UserPlus size={14} aria-hidden /> Crear cuenta para {f.nombre}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="entity-list">
         {filtradas.length === 0 ? (
@@ -129,7 +146,7 @@ const Users: React.FC = () => {
             <button type="submit" className="btn-submit">Restablecer</button>
           </form>
         ) : (
-          <UsuarioForm key={seleccion?.id ?? 'nueva'} onSubmit={guardar} initialValues={seleccion ?? undefined}
+          <UsuarioForm key={seleccion?.id ?? `nueva-${fichaNueva?.id ?? ''}`} onSubmit={guardar} initialValues={seleccion ?? undefined} fichaInicial={fichaNueva ?? undefined}
             fichas={fichas} fichasOcupadas={fichasOcupadas} esPropia={seleccion?.id === yo?.id} />
         )}
       </Drawer>

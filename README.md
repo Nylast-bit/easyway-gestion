@@ -104,6 +104,10 @@ Una cuenta con rol técnico debe estar vinculada a su ficha (`tecnico_id`).
   Queda **pendiente**: no cambia el inventario hasta que un administrador lo apruebe. Ve sus trabajos
   (pendiente/aprobado/rechazado con motivo) y lo que se le debe y ya cobró.
 - **Mis instalaciones**: avance (estado y notas) y fotos de sus trabajos; solo borra las fotos que subió.
+- **Filtros de instalaciones**: periodo (esta semana, este mes, mes anterior, este año o rango), técnico, tipo y
+  estado, con el total y el conteo por técnico (pulsar un técnico filtra por él). El técnico solo cuenta lo suyo.
+- **Cuentas de técnicos**: en Usuarios, "Técnicos sin cuenta" crea el acceso ya ligado a la ficha; al entrar,
+  el técnico ve todas las instalaciones registradas a su nombre (incluidas las importadas).
 - **Aprobaciones** (admin): revisa cada trabajo, ve posibles duplicados (cliente con el mismo nombre, vehículo
   con la misma placa, GPS ya instalado) y decide unirlos o crearlos; fija el costo del técnico y, si quiere,
   el plan de cobro. Aprobar hace todo en una transacción; si el GPS está instalado en otro vehículo no se

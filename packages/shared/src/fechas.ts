@@ -23,3 +23,23 @@ export function sumarDias(fecha: string, dias: number) {
 }
 
 export const mesesPorPeriodo = { Mensual: 1, Anual: 12 } as const;
+
+export const periodosFiltro = ['todo', 'semana', 'mes', 'mes_anterior', 'anio', 'personalizado'] as const;
+export type PeriodoFiltro = (typeof periodosFiltro)[number];
+
+/** Rango de fechas (incluidas) de un periodo relativo a `hoy`. Semana de lunes a domingo. */
+export function rangoPeriodo(periodo: PeriodoFiltro, hoy: string): { desde: string | null; hasta: string | null } {
+  const [anio, mes] = hoy.split('-').map(Number);
+  const inicioMes = `${anio}-${String(mes).padStart(2, '0')}-01`;
+  switch (periodo) {
+    case 'semana': {
+      const dia = new Date(`${hoy}T12:00:00Z`).getUTCDay();
+      const lunes = sumarDias(hoy, -((dia + 6) % 7));
+      return { desde: lunes, hasta: sumarDias(lunes, 6) };
+    }
+    case 'mes': return { desde: inicioMes, hasta: sumarDias(sumarMeses(inicioMes, 1), -1) };
+    case 'mes_anterior': { const desde = sumarMeses(inicioMes, -1); return { desde, hasta: sumarDias(inicioMes, -1) }; }
+    case 'anio': return { desde: `${anio}-01-01`, hasta: `${anio}-12-31` };
+    default: return { desde: null, hasta: null };
+  }
+}

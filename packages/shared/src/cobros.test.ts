@@ -22,3 +22,13 @@ test('importes: positivos, dos decimales como máximo y planes gratuitos permiti
   expect(esquemaPago.parse({ ...pago, monto: '1500.50' }).monto).toBe(1500.5);
   expect(esquemaServicio.parse({ vehiculo_id: '7', plan_id: 1, fecha_inicio: '2026-10-18', precio: '' }).precio).toBeNull();
 });
+
+test('periodos de filtro: semana lunes-domingo, mes, mes anterior y año', async () => {
+  const { rangoPeriodo } = await import('./fechas');
+  expect(rangoPeriodo('semana', '2026-10-18')).toEqual({ desde: '2026-10-12', hasta: '2026-10-18' });
+  expect(rangoPeriodo('semana', '2026-10-19')).toEqual({ desde: '2026-10-19', hasta: '2026-10-25' });
+  expect(rangoPeriodo('mes', '2026-02-10')).toEqual({ desde: '2026-02-01', hasta: '2026-02-28' });
+  expect(rangoPeriodo('mes_anterior', '2026-01-15')).toEqual({ desde: '2025-12-01', hasta: '2025-12-31' });
+  expect(rangoPeriodo('anio', '2026-10-18')).toEqual({ desde: '2026-01-01', hasta: '2026-12-31' });
+  expect(rangoPeriodo('todo', '2026-10-18')).toEqual({ desde: null, hasta: null });
+});

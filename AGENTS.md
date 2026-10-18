@@ -58,7 +58,8 @@
 - `POST /campo/trabajos`: el técnico registra un trabajo (cliente/vehículo existentes o propuestos) que queda `aprobacion = 'Pendiente'` con `propuesta`; no toca inventario ni asignaciones. Técnicos solo buscan clientes por nombre (`/campo/clientes`, id+nombre).
 - `POST /aprobaciones/:id/aprobar` (una transacción): une con cliente/vehículo existente si el admin lo indica o los crea, crea o reutiliza GPS/SIM por número y aplica el efecto del tipo (`efectoDe` en `negocio/aprobaciones.ts`: instalación/reinstalación/venta/cambio de equipo asignan; desinstalación/retiro retira; cambio de SIM solo SIM; el resto nada). Fija `costo_tecnico`; plan de cobro opcional.
 - Costos: `/costos-tecnicos` lista y resume; `/pagar` es todo-o-nada; `/desmarcar` exige motivo y queda auditado; el costo no se cambia si ya está pagado.
-- Web: técnico entra a `/field` (Trabajo de campo) y `/installations`; admin `/approvals` y `/technician-costs`.
+- Web: técnico entra a `/field` (Trabajo de campo) y `/installations` (`RUTAS_TECNICO`); admin `/approvals` y `/technician-costs`.
+- Filtros de instalaciones: `GET /instalaciones` y `/instalaciones/resumen` aceptan `desde`/`hasta` (fechas RD, -04:00), `tecnico` (id o `sin`), `tipo_servicio_id`, `estado` (`esquemaFiltroInstalaciones`); para un técnico se ignora `tecnico` y siempre se aplica su alcance. Periodos relativos con `rangoPeriodo` de shared. Usuarios muestra "Técnicos sin cuenta" con atajo de alta ligado a la ficha.
 
 ## Base de datos y dominio
 

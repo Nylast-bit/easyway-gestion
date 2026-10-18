@@ -1,6 +1,9 @@
 import { Hono } from 'hono';
-import { and, desc, eq, sql, type SQL } from 'drizzle-orm';
-import { esquemaAvanceInstalacion, esquemaInstalacion, type DatosInstalacion, type InstalacionFila } from '@easyway/shared';
+import { and, asc, desc, eq, gte, isNull, lte, sql, type SQL } from 'drizzle-orm';
+import {
+  esquemaAvanceInstalacion, esquemaFiltroInstalaciones, esquemaInstalacion,
+  type DatosInstalacion, type InstalacionFila, type ResumenInstalaciones, type UsuarioSesion,
+} from '@easyway/shared';
 import type { BaseDatos } from '../db/cliente';
 import { clientes, gps, instalaciones, simcards, tecnicos, tiposServicio, vehiculos } from '../db/esquema';
 import type { Entorno } from '../auth/middleware';
@@ -47,10 +50,45 @@ export function crearRutasInstalaciones(bd: BaseDatos) {
     return fila;
   }
 
+  // Filtros del listado; para un técnico el filtro de técnico se ignora (siempre ve solo lo suyo).
+  function filtrosDe(consulta: Record<string, string>, usuario: UsuarioSesion): SQL[] {
+    const resultado = esquemaFiltroInstalaciones.safeParse(consulta);
+    if (!resultado.success) throw new ErrorHttp(400, resultado.error.issues[0]?.message ?? 'Filtro inválido');
+    const f = resultado.data;
+    const tecnico = fichaTecnico(usuario);
+    const filtros: SQL[] = [...alcance(tecnico)];
+    if (f.desde) filtros.push(gte(instalaciones.fecha_instalacion, new Date(`${f.desde}T00:00:00-04:00`)));
+    if (f.hasta) filtros.push(lte(instalaciones.fecha_instalacion, new Date(`${f.hasta}T23:59:59.999-04:00`)));
+    if (tecnico === null && f.tecnico === 'sin') filtros.push(isNull(instalaciones.tecnico_id));
+    else if (tecnico === null && typeof f.tecnico === 'number') filtros.push(eq(instalaciones.tecnico_id, f.tecnico));
+    if (f.tipo_servicio_id) filtros.push(eq(instalaciones.tipo_servicio_id, f.tipo_servicio_id));
+    if (f.estado) filtros.push(eq(instalaciones.estado, f.estado));
+    return filtros;
+  }
+
   const aFila = (d: DatosInstalacion) => ({ ...d, fecha_instalacion: d.fecha_instalacion ? new Date(d.fecha_instalacion) : null });
 
   return new Hono<Entorno>()
-    .get('/', async c => c.json(await listar(alcance(fichaTecnico(c.get('usuario'))))))
+    .get('/', async c => c.json(await listar(filtrosDe(c.req.query(), c.get('usuario')))))
+    // Conteos con los mismos filtros: total, por técnico y por tipo de servicio.
+    .get('/resumen', async c => {
+      const condicion = and(eq(instalaciones.aprobacion, 'Aprobada'), ...filtrosDe(c.req.query(), c.get('usuario')));
+      const total = sql<number>`count(*)`.mapWith(Number);
+      const [porTecnico, porTipo] = await Promise.all([
+        bd.select({ tecnico_id: instalaciones.tecnico_id, nombre: tecnicos.nombre, total }).from(instalaciones)
+          .leftJoin(tecnicos, eq(tecnicos.id, instalaciones.tecnico_id)).where(condicion)
+          .groupBy(instalaciones.tecnico_id, tecnicos.nombre).orderBy(desc(total), asc(tecnicos.nombre)),
+        bd.select({ tipo_servicio_id: tiposServicio.id, nombre: tiposServicio.nombre, total }).from(instalaciones)
+          .innerJoin(tiposServicio, eq(tiposServicio.id, instalaciones.tipo_servicio_id)).where(condicion)
+          .groupBy(tiposServicio.id).orderBy(desc(total)),
+      ]);
+      const resumen: ResumenInstalaciones = {
+        total: porTecnico.reduce((suma, f) => suma + f.total, 0),
+        por_tecnico: porTecnico.map(f => ({ tecnico_id: f.tecnico_id, nombre: f.nombre ?? 'Sin técnico', total: f.total })),
+        por_tipo: porTipo,
+      };
+      return c.json(resumen);
+    })
     .get('/:id', async c => c.json(await uno(leerId(c), fichaTecnico(c.get('usuario')))))
     .patch('/:id/avance', async c => {
       const id = leerId(c);

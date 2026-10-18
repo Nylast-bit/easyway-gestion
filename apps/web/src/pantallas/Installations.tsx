@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import type { InstalacionFila } from '@easyway/shared';
+import React, { useCallback, useEffect, useState } from 'react';
+import type { InstalacionFila, ResumenInstalaciones } from '@easyway/shared';
 import { Plus, Pencil, Trash2, ClipboardList, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Drawer from '../components/Drawer';
 import InstallationForm, { type DatosFormularioInstalacion } from '../components/InstallationForm';
 import AvanceInstalacionForm, { type DatosAvance } from '../components/AvanceInstalacionForm';
 import GaleriaFotos from '../components/GaleriaFotos';
+import FiltrosInstalaciones from '../components/FiltrosInstalaciones';
+import { consultaDe, filtroInicial, type Filtro } from '../lib/filtrosInstalaciones';
 import { formatearFecha, mensajeError, solicitarApi } from '../lib/api';
 import { useSesion } from '../lib/sesion';
 
@@ -27,13 +29,23 @@ const Installations: React.FC = () => {
   // El panel lateral muestra el formulario completo (admin), el avance (técnico) o las fotos del vehículo.
   const [modo, setModo] = useState<'editar' | 'avance' | 'fotos'>('editar');
   const esTecnico = useSesion()?.rol === 'tecnico';
+  const [filtro, setFiltro] = useState<Filtro>(filtroInicial);
+  const [resumen, setResumen] = useState<ResumenInstalaciones | null>(null);
 
-  const fetchInstallations = async () => {
-    try { setInstallations(await solicitarApi<InstalacionFila[]>('/instalaciones')); }
-    catch (error) { toast.error(mensajeError(error, 'Error al cargar instalaciones')); }
-  };
+  // Lista y conteos se piden a la API con los mismos filtros.
+  const fetchInstallations = useCallback(async () => {
+    const consulta = consultaDe(filtro);
+    try {
+      const [lista, conteos] = await Promise.all([
+        solicitarApi<InstalacionFila[]>(`/instalaciones${consulta ? `?${consulta}` : ''}`),
+        solicitarApi<ResumenInstalaciones>(`/instalaciones/resumen${consulta ? `?${consulta}` : ''}`),
+      ]);
+      setInstallations(lista);
+      setResumen(conteos);
+    } catch (error) { toast.error(mensajeError(error, 'Error al cargar instalaciones')); }
+  }, [filtro]);
 
-  useEffect(() => { fetchInstallations(); }, []);
+  useEffect(() => { void fetchInstallations(); }, [fetchInstallations]);
 
   const abrir = (i: InstalacionFila | null, nuevoModo: typeof modo) => { setEditingItem(i); setModo(nuevoModo); setIsDrawerOpen(true); };
   const handleOpenAdd = () => abrir(null, 'editar');
@@ -82,6 +94,8 @@ const Installations: React.FC = () => {
         <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>{esTecnico ? 'Mis instalaciones' : 'Instalaciones'}</h1>
         {!esTecnico && <button className="btn-primary" onClick={handleOpenAdd}><Plus size={18} /> Agregar</button>}
       </div>
+
+      <FiltrosInstalaciones filtro={filtro} onCambio={setFiltro} resumen={resumen} esTecnico={esTecnico} />
 
       <input
         type="text" placeholder="Buscar por cliente, placa o IMEI..." className="form-input"

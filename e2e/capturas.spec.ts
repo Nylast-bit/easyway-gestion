@@ -18,6 +18,9 @@ const clientes = [
 ];
 const tecnicos = [
   { id: 1, nombre: 'Pedro Antonio Martínez Rosario', telefono: '8295551234', correo: 'pedro.martinez@easyway.do', created_at: '2026-10-01T12:00:00Z' },
+  // Fichas sin cuenta de acceso: aparecen en el aviso de Usuarios.
+  { id: 2, nombre: 'Gabo Chamo', telefono: null, correo: null, created_at: '2026-10-01T12:00:00Z' },
+  { id: 3, nombre: 'Francisco Javier Hernández de la Cruz', telefono: null, correo: null, created_at: '2026-10-01T12:00:00Z' },
 ];
 const gps = [
   { id: 11, imei: '863829070755440', modelo: 'Teltonika FMB920', estado: 'Instalado', created_at: '', simcard: { id: 5, numero: '8091802704' }, vehiculo: { id: 7, marca: 'TOYOTA', modelo: 'HILUX DOBLE CABINA', placa: 'L123456' } },
@@ -160,6 +163,8 @@ async function simularApi(page: Page) {
       { fecha_inicio: '2026-01-15T12:00:00Z', fecha_fin: '2026-03-01T11:00:00Z', gps: { id: 13, imei: gps[2].imei, modelo: gps[2].modelo } },
     ],
     '/api/instalaciones': instalaciones,
+    '/api/instalaciones/resumen': { total: 519, por_tipo: [{ tipo_servicio_id: 1, nombre: 'Instalación', total: 399 }, { tipo_servicio_id: 2, nombre: 'Venta', total: 66 }, { tipo_servicio_id: 3, nombre: 'Mantenimiento', total: 20 }],
+      por_tecnico: [{ tecnico_id: 1, nombre: tecnicos[0].nombre, total: 275 }, { tecnico_id: 5, nombre: 'Francis', total: 66 }, { tecnico_id: null, nombre: 'Sin técnico', total: 63 }, { tecnico_id: 2, nombre: 'Gabo Chamo', total: 22 }] },
     '/api/usuarios': usuarios,
     '/api/tipos-servicio?activos=1': [{ id: 1, nombre: 'Instalación', activo: true }, { id: 3, nombre: 'Mantenimiento', activo: true }],
     '/api/tipos-servicio': [{ id: 1, nombre: 'Instalación', activo: true }, { id: 3, nombre: 'Mantenimiento', activo: true }, { id: 4, nombre: 'Cambio de equipo', activo: true }],

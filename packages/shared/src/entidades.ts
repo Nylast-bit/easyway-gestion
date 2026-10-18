@@ -145,3 +145,21 @@ export const TAMANO_MAXIMO_FOTO = 8 * 1024 * 1024;
 
 // URL temporal de lectura (caduca); nunca se guarda en el cliente más allá de la vista actual.
 export interface FotoVehiculo { id: number; url: string; created_at: string; propia: boolean; autor: string | null }
+
+// Filtros del listado de instalaciones (fechas de calendario en Santo Domingo, ambas incluidas).
+const fechaFiltro = z.union([z.literal(''), z.iso.date('Fecha inválida')]).optional().transform(v => v || null);
+export const esquemaFiltroInstalaciones = z.object({
+  desde: fechaFiltro,
+  hasta: fechaFiltro,
+  // Número de ficha o "sin" para las instalaciones sin técnico.
+  tecnico: z.union([z.literal(''), z.literal('sin'), z.coerce.number().int().positive()]).optional().transform(v => (v === '' || v === undefined ? null : v)),
+  tipo_servicio_id: z.union([z.literal(''), z.coerce.number().int().positive()]).optional().transform(v => (v === '' || v === undefined ? null : v)),
+  estado: z.union([z.literal(''), z.enum(estadosInstalacion)]).optional().transform(v => v || null),
+}).refine(f => !f.desde || !f.hasta || f.desde <= f.hasta, { message: 'La fecha inicial es posterior a la final', path: ['hasta'] });
+export type FiltroInstalaciones = z.output<typeof esquemaFiltroInstalaciones>;
+
+export interface ResumenInstalaciones {
+  total: number;
+  por_tecnico: { tecnico_id: number | null; nombre: string; total: number }[];
+  por_tipo: { tipo_servicio_id: number; nombre: string; total: number }[];
+}

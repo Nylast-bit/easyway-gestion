@@ -138,6 +138,12 @@ Fases 5 → 6 → 7 → 8; la fase 4 (Docker) queda al final. Decisiones de nego
 - Playwright: flujo técnico → aprobación → pago en el navegador con API simulada con estado; capturas de Trabajo de
   campo, nuevo trabajo, aprobación y costos en 4 tamaños (se corrigió el tipo por defecto y el espaciado en móvil).
 
+## Entre fases 7 y 8 — Revisión de la migración y filtros
+- [x] Análisis de los datos importados (solo lectura): ningún técnico tenía cuenta; Gabo Chamo (ficha 2) tiene 22 instalaciones.
+- [x] Filtros de instalaciones por periodo (semana, mes, mes anterior, año, rango), técnico (incl. sin técnico), tipo y estado, con resumen por técnico y tipo.
+- [x] Usuarios: aviso de técnicos sin cuenta con atajo de alta ligado a su ficha.
+- [x] Pruebas: integración de filtros y aislamiento, unitarias web/shared, e2e y capturas en 4 tamaños.
+
 ## Fase 8 — Extras y CI completo
 - [ ] Dashboard, stock mínimo y vencimientos.
 - [ ] Historial de vehículo/GPS/SIM.

@@ -82,3 +82,20 @@ test('editar: la cuenta propia no puede desactivarse; restablecer contraseña us
   fireEvent.click(screen.getByRole('button', { name: 'Restablecer' }));
   await waitFor(() => expect(llamadas.find(l => l.url === '/api/usuarios/2/contrasena')?.cuerpo).toEqual({ contrasena: 'nueva-clave-456' }));
 });
+
+test('técnicos sin cuenta: el atajo abre el alta con rol técnico, nombre y ficha ya puestos', async () => {
+  const llamadas = simularApi({
+    'GET /api/usuarios': () => Response.json(cuentas), 'GET /api/tecnicos': () => Response.json(fichas),
+    'POST /api/usuarios': () => Response.json({ usuario: {} }, { status: 201 }),
+  });
+  renderizar();
+  expect(await screen.findByText('Técnicos sin cuenta (1).')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Crear cuenta para Pedro M\./ })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /Crear cuenta para Luis R\./ }));
+  expect(screen.getByLabelText('Nombre completo *')).toHaveValue('Luis R.');
+  expect(screen.getByLabelText('Ficha de técnico')).toHaveValue('5');
+  fireEvent.change(screen.getByLabelText('Usuario'), { target: { value: 'luis' } });
+  fireEvent.change(screen.getByLabelText('Contraseña inicial *'), { target: { value: 'clave-inicial-1' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Crear cuenta' }));
+  await waitFor(() => expect(llamadas.find(l => l.metodo === 'POST')?.cuerpo).toMatchObject({ nombre: 'Luis R.', rol: 'tecnico', tecnico_id: 5, usuario: 'luis' }));
+});

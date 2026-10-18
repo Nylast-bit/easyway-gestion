@@ -49,7 +49,7 @@ test('instalaciones como técnico: sin alta ni borrado, el lápiz envía solo el
   expect(screen.queryByRole('button', { name: 'Eliminar instalación' })).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Actualizar avance' }));
-  fireEvent.change(screen.getByLabelText('Estado'), { target: { value: 'Completado' } });
+  fireEvent.change(screen.getByLabelText('Estado', { selector: '#avance-estado' }), { target: { value: 'Completado' } });
   fireEvent.change(screen.getByLabelText('Notas'), { target: { value: 'Probado' } });
   fireEvent.click(screen.getByRole('button', { name: 'Guardar avance' }));
   await waitFor(() => expect(llamadas.find(l => l.metodo === 'PATCH')).toBeDefined());

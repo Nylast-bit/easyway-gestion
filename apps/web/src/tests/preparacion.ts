@@ -12,6 +12,7 @@ export function respuestaPorDefecto(url: string) {
     return Response.json({ usuario: { id: 1, nombre: 'Ana Admin', usuario: 'admin', correo: null, rol: 'admin', tecnico_id: null } });
   }
   if (url === '/api/resumen') return Response.json({ clientes: 0, vehiculos: 0, gps: 0, simcards: 0 });
+  if (url.startsWith('/api/instalaciones/resumen')) return Response.json({ total: 0, por_tecnico: [], por_tipo: [] });
   return Response.json([]);
 }
 
