@@ -41,4 +41,5 @@ backups/
 *.tsbuildinfo
 playwright-report/
 test-results/
+capturas/
 coverage/

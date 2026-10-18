@@ -226,6 +226,14 @@ body {
     display: flex;
     align-items: center;
     gap: 1rem;
+    /* Sin min-width: 0 un hijo flex no se encoge y los textos largos se cortan en móvil */
+    flex: 1;
+    min-width: 0;
+}
+
+.entity-details {
+    min-width: 0;
+    overflow-wrap: break-word;
 }
 
 .avatar {
@@ -256,6 +264,7 @@ body {
 .entity-actions {
     display: flex;
     gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 /* --- Botones de Iconos (Dentro de tarjetas) --- */
@@ -407,8 +416,9 @@ body {
 
 .vehicle-header {
     display: flex;
+    flex-wrap: wrap; /* En pantallas estrechas la fecha/año baja de línea en vez de aplastar el título */
     align-items: baseline;
-    gap: 0.5rem;
+    column-gap: 0.5rem;
     margin-bottom: 0.25rem;
 }
 
@@ -416,6 +426,8 @@ body {
     font-size: 1rem;
     font-weight: 700;
     color: var(--text-primary);
+    min-width: 0;
+    overflow-wrap: break-word;
 }
 
 .vehicle-year {
@@ -450,7 +462,6 @@ body {
     border-radius: 4px;
     font-size: 0.75rem;
     font-weight: 600;
-    text-transform: capitalize;
 }
 
 .status-green { background-color: #d2f9f0; color: #00b494; }
@@ -712,6 +723,10 @@ body {
         gap: 1rem;
     }
 
+    .entity-info {
+        width: 100%;
+    }
+
     /* Los botones de editar/eliminar se alinean a la derecha abajo */
     .entity-actions {
         align-self: flex-end;
@@ -722,6 +737,17 @@ body {
     /* Asegurar que el contenido interno del vehículo ocupe todo el ancho */
     .vehicle-card > div:first-child {
         width: 100%;
+    }
+
+    /* Filas con título y botones juntos (Instalaciones): los botones bajan de línea
+       en lugar de aplastar el título o salirse de la tarjeta. */
+    .vehicle-card > div:first-child:has(> .entity-actions) {
+        flex-wrap: wrap;
+        row-gap: 0.5rem;
+    }
+
+    .vehicle-card > div:first-child > .entity-actions {
+        margin-left: auto;
     }
 
     /* Hacer que el Drawer (Panel lateral) ocupe casi toda la pantalla en móviles */

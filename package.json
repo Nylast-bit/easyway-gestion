@@ -19,13 +19,14 @@
     "test": "npm run test:unit && npm run test:int",
     "test:unit": "node --test scripts/calidad.test.mjs && npm run test --workspaces",
     "test:int": "vitest run --config vitest.config.ts",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=chromium",
     "prepare": "husky",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db/migrar.ts",
     "db:verify": "tsx scripts/db/verificar.ts",
     "dev:api": "npm run dev --workspace=@easyway/api",
     "db:crear-admin": "tsx scripts/db/crear-admin.ts",
+    "test:capturas": "playwright test --project=capturas",
     "storage:verificar": "tsx apps/api/src/verificar-storage.ts"
   },
   "dependencies": {
