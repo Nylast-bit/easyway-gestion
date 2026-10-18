@@ -9,4 +9,4 @@ export const ContextoSesion = createContext<UsuarioSesion | null>(null);
 export const useSesion = () => useContext(ContextoSesion);
 
 // Rutas visibles para un técnico; el resto del portal es de administración.
-export const RUTAS_TECNICO = ['/installations'];
+export const RUTAS_TECNICO = ['/field', '/installations'];

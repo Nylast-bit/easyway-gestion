@@ -31,8 +31,8 @@ function simularApi(rutas: Record<string, () => Response>) {
 test('un técnico solo ve Instalaciones en el menú y se le redirige desde rutas de administración', async () => {
   simularApi({ 'GET /api/auth/sesion': () => Response.json({ usuario: tecnico }) });
   render(<MainLayout><h1>Dashboard</h1></MainLayout>);
-  await waitFor(() => expect(enrutador.replace).toHaveBeenCalledWith('/installations'));
-  expect(screen.getAllByRole('link').map(l => l.getAttribute('aria-label'))).toEqual(['Instalaciones']);
+  await waitFor(() => expect(enrutador.replace).toHaveBeenCalledWith('/field'));
+  expect(screen.getAllByRole('link').map(l => l.getAttribute('aria-label'))).toEqual(['Instalaciones', 'Trabajo de campo']);
   // El contenido de administración no llega a montarse (no hace peticiones que darían 403).
   expect(screen.queryByRole('heading', { name: 'Dashboard' })).not.toBeInTheDocument();
   expect(screen.queryByText(/Buscar\.\.\./)).not.toBeInTheDocument();

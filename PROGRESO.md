@@ -1,6 +1,6 @@
 # Progreso — Easyway GPS Gestión
 
-**Estado: fase 6 implementada (pendiente aplicar 0006 en Supabase). Siguiente: fase 7 — técnicos, aprobación y costos.**
+**Estado: fases 5–7 implementadas (pendiente aplicar 0006 en Supabase). Siguiente: fase 8 — extras y CI; la 4 (Docker) al final.**
 Las casillas se marcan únicamente cuando la tarea o verificación esté terminada.
 
 ## Fase 1 — Base inicial y Supabase
@@ -123,11 +123,19 @@ Fases 5 → 6 → 7 → 8; la fase 4 (Docker) queda al final. Decisiones de nego
 - Captura de la pantalla Importar en 4 tamaños (contadores en 2 columnas en móvil).
 
 ## Fase 7 — Técnicos, aprobación y cobros
-- [ ] Portal móvil del técnico: nueva instalación (cliente/vehículo nuevos), fotos e historial propio.
-- [ ] Cola de aprobación del admin, costo del técnico y asignaciones atómicas.
-- [ ] Costos de técnicos pagados/pendientes, reportes y auditoría de reversiones.
-- [ ] E2e técnico → aprobación → costo pagado.
-- [ ] Verificaciones, documentación y commit.
+- [x] Portal móvil del técnico: nueva instalación (cliente/vehículo nuevos), fotos e historial propio.
+- [x] Cola de aprobación del admin, costo del técnico y asignaciones atómicas.
+- [x] Costos de técnicos pagados/pendientes, reportes y auditoría de reversiones.
+- [x] E2e técnico → aprobación → costo pagado.
+- [x] Verificaciones, documentación y commit.
+
+### Evidencia de fase 7
+- Sin migraciones nuevas: usa los campos de aprobación y costo preparados en 0004.
+- 3 pruebas de integración: flujo completo (registro sin tocar inventario, unión con cliente duplicado, asignación
+  GPS/SIM, plan, mantenimiento sin cambios, desinstalación, costos todo-o-nada y desmarcado auditado), aislamiento y
+  validación, y rollback total si el GPS está instalado en otro vehículo.
+- Playwright: flujo técnico → aprobación → pago en el navegador con API simulada con estado; capturas de Trabajo de
+  campo, nuevo trabajo, aprobación y costos en 4 tamaños (se corrigió el tipo por defecto y el espaciado en móvil).
 
 ## Fase 8 — Extras y CI completo
 - [ ] Dashboard, stock mínimo y vencimientos.

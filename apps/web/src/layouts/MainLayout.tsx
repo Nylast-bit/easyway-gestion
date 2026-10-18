@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Users, Wrench, Car, Satellite, Cpu, ClipboardList, LayoutDashboard, Search, LogOut, UserCog, Receipt, CalendarClock, FileUp } from 'lucide-react';
+import { Users, Wrench, Car, Satellite, Cpu, ClipboardList, LayoutDashboard, Search, LogOut, UserCog, Receipt, CalendarClock, FileUp, Smartphone, ClipboardCheck, HandCoins } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { UsuarioSesion } from '@easyway/shared';
 import GlobalSearch from '../components/GlobalSearch';
@@ -18,6 +18,9 @@ const navItems = [
   { to: '/gps', icon: Satellite, label: 'GPS' },
   { to: '/simcards', icon: Cpu, label: 'Simcards' },
   { to: '/installations', icon: ClipboardList, label: 'Instalaciones' },
+  { to: '/field', icon: Smartphone, label: 'Trabajo de campo' },
+  { to: '/approvals', icon: ClipboardCheck, label: 'Aprobaciones' },
+  { to: '/technician-costs', icon: HandCoins, label: 'Costos técnicos' },
   { to: '/billing', icon: Receipt, label: 'Cobros' },
   { to: '/expirations', icon: CalendarClock, label: 'Vencimientos' },
   { to: '/import', icon: FileUp, label: 'Importar' },
@@ -49,7 +52,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   useEffect(() => {
     if (usuario && !rutaPermitida) router.replace(RUTAS_TECNICO[0]);
   }, [usuario, rutaPermitida, router]);
-  const elementos = esTecnico ? navItems.filter(item => RUTAS_TECNICO.includes(item.to)) : navItems;
+  const elementos = esTecnico ? navItems.filter(item => RUTAS_TECNICO.includes(item.to)) : navItems.filter(item => item.to !== '/field');
 
   const cerrarSesion = async () => {
     try { await solicitarApi('/auth/logout', { metodo: 'POST' }); }

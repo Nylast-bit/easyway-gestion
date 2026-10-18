@@ -4,3 +4,4 @@ export * from './entidades';
 export * from './fechas';
 export * from './cobros';
 export * from './importacion';
+export * from './campo';

@@ -125,6 +125,27 @@ const filasImportacion = [
       vehiculo: { marca: null, modelo: null, año: null, color: null, placa: null, chasis: null, tipo: 'Carro', descripcion: null }, tecnico: 'Eliezer', plan: 'Plan Anual', tipo_servicio: 'Instalación' } },
 ];
 
+// Fase 7: trabajos de campo, aprobación y costos con textos largos.
+const trabajoCampo = {
+  id: 21, aprobacion: 'Pendiente', estado: 'Completado', tipo: 'Instalación', fecha_instalacion: '2026-10-17T14:00:00Z', created_at: '',
+  motivo_rechazo: null, notas: 'El cliente pidió ubicar el equipo bajo el tablero y probar el corte de motor en presencia del chofer.',
+  cliente_nombre: `${clientes[0].nombre} · nuevo`, vehiculo_descripcion: 'TOYOTA HILUX DOBLE CABINA (L123456) · nuevo',
+  imei: gps[0].imei, sim: '89010260000000000005', vehiculo_id: null, costo_tecnico: null, costo_pagado_at: null,
+  tecnico_nombre: tecnicos[0].nombre, registrada_por_nombre: 'pedro.martinez',
+  propuesta: { cliente_id: null, cliente_nuevo: { nombre: clientes[0].nombre, telefono: '8095550101', correo: null, tipo: 'Empresa', documento: null, notas: null },
+    vehiculo_nuevo: { marca: 'TOYOTA', modelo: 'HILUX DOBLE CABINA', placa: 'L123456', año: 2022, chasis: null, color: 'BLANCO', tipo: 'Carro' }, imei: gps[0].imei, sim: '89010260000000000005' },
+  coincidencias: { clientes: [{ id: 1, nombre: clientes[0].nombre }], vehiculos: [], gps: { id: 11, estado: 'Instalado', vehiculo: 'TOYOTA HILUX DOBLE CABINA (L123456)' }, simcard: null },
+};
+const trabajosTecnico = [
+  { ...trabajoCampo, coincidencias: { clientes: [], vehiculos: [], gps: null, simcard: null } },
+  { ...trabajoCampo, id: 22, aprobacion: 'Rechazada', motivo_rechazo: 'El IMEI de la foto no coincide con el registrado; vuelve a enviarlo con una foto legible de la etiqueta.' },
+  { ...trabajoCampo, id: 23, aprobacion: 'Aprobada', cliente_nombre: clientes[0].nombre, vehiculo_id: 7, costo_tecnico: 1200, costo_pagado_at: '2026-10-18T12:00:00Z' },
+];
+const costosTecnicos = [
+  { instalacion_id: 23, tecnico_id: 1, tecnico_nombre: tecnicos[0].nombre, fecha_instalacion: '2026-10-17T14:00:00Z', tipo: 'Instalación',
+    cliente_nombre: clientes[0].nombre, vehiculo_descripcion: 'TOYOTA HILUX DOBLE CABINA (L123456)', costo: 1200, pagado_at: null, referencia: null },
+];
+
 async function simularApi(page: Page) {
   const datos: Record<string, unknown> = {
     '/api/auth/sesion': { usuario: { ...usuarioPrueba, nombre: 'Ana Gabriela Administradora' } },
@@ -140,6 +161,7 @@ async function simularApi(page: Page) {
     ],
     '/api/instalaciones': instalaciones,
     '/api/usuarios': usuarios,
+    '/api/tipos-servicio?activos=1': [{ id: 1, nombre: 'Instalación', activo: true }, { id: 3, nombre: 'Mantenimiento', activo: true }],
     '/api/tipos-servicio': [{ id: 1, nombre: 'Instalación', activo: true }, { id: 3, nombre: 'Mantenimiento', activo: true }, { id: 4, nombre: 'Cambio de equipo', activo: true }],
     '/api/planes': planes,
     '/api/cobros/resumen': { pendiente: 1499999.5, vencido: 999000, clientes_con_deuda: 2, cobrado_mes: 12500000, por_generar: 18,
@@ -147,6 +169,9 @@ async function simularApi(page: Page) {
     '/api/cobros/estado-cuenta/1': estadoCuenta,
     '/api/vencimientos?dias=30': vencimientos,
     '/api/importaciones': [importacion],
+    '/api/aprobaciones': [trabajoCampo],
+    '/api/costos-tecnicos/resumen': [{ tecnico_id: 1, tecnico_nombre: tecnicos[0].nombre, trabajos: 128, total: 153600, pagado: 98400, pendiente: 55200 }],
+    '/api/costos-tecnicos?estado=pendientes': costosTecnicos,
     '/api/importaciones/7/filas?filtro=problemas': filasImportacion,
     '/api/buscar?q=car': [
       { tipo: 'cliente', id: 1, etiqueta: clientes[0].nombre },
@@ -226,6 +251,7 @@ for (const tamano of TAMANOS) {
         ['06-vehiculos', '/vehicles', 'Vehículos'], ['07-gps', '/gps', 'GPS'], ['08-simcards', '/simcards', 'Simcards'],
         ['09-instalaciones', '/installations', 'Instalaciones'], ['14-usuarios', '/users', 'Usuarios'],
         ['16-cobros', '/billing', 'Cobros'], ['19-vencimientos', '/expirations', 'Vencimientos'],
+        ['23-costos-tecnicos', '/technician-costs', 'Costos de técnicos'],
       ] as const;
       for (const [nombre, ruta, titulo] of pantallas) {
         await page.goto(ruta);
@@ -270,11 +296,26 @@ for (const tamano of TAMANOS) {
       await expect(page.getByRole('button', { name: 'Confirmar importación' })).toBeVisible();
       await capturar('20-importar');
 
+      await page.goto('/approvals');
+      await page.getByRole('button', { name: /Instalación ·/ }).click();
+      await expect(page.getByLabel('Costo del técnico (RD$) *')).toBeVisible();
+      await capturar('22-aprobacion');
+
       await page.goto('/');
       await page.locator('.global-search').click();
       await page.getByPlaceholder('Buscar clientes, vehículos o GPS...').fill('car');
       await expect(page.getByText('TOYOTA HILUX DOBLE CABINA (L123456)')).toBeVisible();
       await capturar('13-busqueda-global');
+
+      await page.route('**/api/auth/sesion', route => route.fulfill({ json: { usuario: { ...usuarioPrueba, nombre: tecnicos[0].nombre, rol: 'tecnico', tecnico_id: 1 } } }));
+      await page.route('**/api/campo/trabajos', route => route.fulfill({ json: trabajosTecnico }));
+      await page.route('**/api/campo/costos', route => route.fulfill({ json: { tecnico_id: 1, tecnico_nombre: tecnicos[0].nombre, trabajos: 128, total: 153600, pagado: 98400, pendiente: 55200 } }));
+      await page.goto('/field');
+      await expect(page.getByRole('heading', { name: 'Trabajo de campo' })).toBeVisible();
+      await capturar('21-trabajo-campo');
+      await page.getByRole('button', { name: /Nuevo trabajo/ }).click();
+      await page.getByRole('button', { name: 'Es un cliente nuevo' }).click();
+      await capturar('21b-nuevo-trabajo');
 
       expect(errores).toEqual([]);
     });

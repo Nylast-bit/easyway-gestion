@@ -23,7 +23,7 @@
 
 - `.env` raíz se carga sin sobrescribir el entorno por scripts de BD y `apps/web/next.config.ts`. Next también admite su `.env` de workspace.
 - La web no usa Supabase ni variables `NEXT_PUBLIC_*`: todo dato pasa por `solicitarApi` (`apps/web/src/lib/api.ts`) hacia `/api`. Las pruebas web simulan `fetch` por ruta (`src/tests/preparacion.ts`).
-- Permisos por prefijo en `apps/api/src/app.ts` (`proteger`): toda ruta nueva se declara ahí. Solo admin: `usuarios`, `resumen`, `buscar`, `clientes`, `tecnicos`, `vehiculos`, `gps`, `simcards`. Admin y técnico: `instalaciones`, `fotos`.
+- Permisos por prefijo en `apps/api/src/app.ts` (`proteger`): toda ruta nueva se declara ahí. Solo admin: `usuarios`, `resumen`, `buscar`, `clientes`, `tecnicos`, `vehiculos`, `gps`, `simcards`. Admin y técnico: `instalaciones`, `fotos`, `tipos-servicio`, `campo` (solo técnicos con ficha). Admin también: `aprobaciones`, `costos-tecnicos`, `importaciones`.
 - Aislamiento de técnicos (`negocio/acceso.ts`): cuenta técnica sin `tecnico_id` → 403; ve solo instalaciones con su `tecnico_id` (ajenas → 404) y solo cambia su avance (`PATCH /instalaciones/:id/avance`); fotos solo de vehículos donde tiene instalación y borra solo las que subió (`subida_por`). La web oculta al técnico todo salvo `/installations` (`RUTAS_TECNICO` en `lib/sesion.tsx`).
 - Asignaciones GPS↔vehículo y SIM↔GPS solo en `apps/api/src/negocio/asignaciones.ts`, dentro de transacción con `FOR UPDATE`; cambian estados (`Instalado`/`Asignada`/`Disponible`) y cierran historial con `fecha_fin`, nunca lo borran. Errores PostgreSQL se traducen en `http/erroresBd.ts`.
 - RLS sin políticas públicas es intencional: el backend usa el rol propietario; no abrir permisos anon.
@@ -52,6 +52,13 @@
 - Lector `apps/api/src/importacion/analizar.ts` (columnas por título; hoja "Data de instalaciones e cliente", "Simcards" solo fechas, "Listado de Clientes" solo tipo Empresa). Planificador puro `planificar.ts`: cada fila es un evento cronológico sobre su GPS/SIM; omite filas con IMEI ya existente; planes de cobro solo con plan activo y desde la próxima renovación. Ejecutor `aplicar.ts` con inserciones por lotes y registro de lo creado.
 - Idempotencia por hash del archivo (índice único parcial). Revertir borra solo lo registrado; si algo posterior lo usa, la FK revierte todo (409).
 - Fixture: `tests/fixtures/excel-muestra.xlsx` generado con `npx tsx scripts/crear-fixture-excel.ts` (datos inventados, mismas rarezas). El Excel real nunca se versiona ni se imprime: los análisis solo muestran conteos.
+
+## Técnicos, aprobación y costos (fase 7)
+
+- `POST /campo/trabajos`: el técnico registra un trabajo (cliente/vehículo existentes o propuestos) que queda `aprobacion = 'Pendiente'` con `propuesta`; no toca inventario ni asignaciones. Técnicos solo buscan clientes por nombre (`/campo/clientes`, id+nombre).
+- `POST /aprobaciones/:id/aprobar` (una transacción): une con cliente/vehículo existente si el admin lo indica o los crea, crea o reutiliza GPS/SIM por número y aplica el efecto del tipo (`efectoDe` en `negocio/aprobaciones.ts`: instalación/reinstalación/venta/cambio de equipo asignan; desinstalación/retiro retira; cambio de SIM solo SIM; el resto nada). Fija `costo_tecnico`; plan de cobro opcional.
+- Costos: `/costos-tecnicos` lista y resume; `/pagar` es todo-o-nada; `/desmarcar` exige motivo y queda auditado; el costo no se cambia si ya está pagado.
+- Web: técnico entra a `/field` (Trabajo de campo) y `/installations`; admin `/approvals` y `/technician-costs`.
 
 ## Base de datos y dominio
 

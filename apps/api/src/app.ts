@@ -22,6 +22,8 @@ import { crearRutasCobros } from './negocio/cobros';
 import { crearRutasVencimientos } from './negocio/vencimientos';
 import { crearRutasAuditoria } from './negocio/auditoria';
 import { crearRutasImportacion } from './importacion/rutas';
+import { crearRutasCampo } from './negocio/campo';
+import { crearRutasAprobaciones, crearRutasCostos } from './negocio/aprobaciones';
 
 export interface DependenciasApp {
   bd: BaseDatos;
@@ -47,9 +49,9 @@ export function crearApp({ bd, enviador, almacen, produccion, reloj = () => new 
     app.use(`${prefijo}/*`, ...middlewares);
   };
   for (const prefijo of ['/usuarios', '/resumen', '/buscar', '/clientes', '/tecnicos', '/vehiculos', '/gps', '/simcards',
-    '/planes', '/servicios', '/cargos', '/pagos', '/cobros', '/vencimientos', '/auditoria', '/importaciones']) proteger(prefijo, sesion, admin);
+    '/planes', '/servicios', '/cargos', '/pagos', '/cobros', '/vencimientos', '/auditoria', '/importaciones', '/aprobaciones', '/costos-tecnicos']) proteger(prefijo, sesion, admin);
   // Admin y técnicos; cada ruta aplica el aislamiento por ficha de técnico.
-  for (const prefijo of ['/instalaciones', '/fotos', '/tipos-servicio']) proteger(prefijo, sesion);
+  for (const prefijo of ['/instalaciones', '/fotos', '/tipos-servicio', '/campo']) proteger(prefijo, sesion);
 
   app.get('/salud', c => c.json({ estado: 'ok' }));
   app.route('/auth', crearRutasAutenticacion(autenticacion, produccion));
@@ -72,6 +74,9 @@ export function crearApp({ bd, enviador, almacen, produccion, reloj = () => new 
   app.route('/vencimientos', crearRutasVencimientos(bd, reloj));
   app.route('/auditoria', crearRutasAuditoria(bd));
   app.route('/importaciones', crearRutasImportacion(bd, reloj));
+  app.route('/campo', crearRutasCampo(bd));
+  app.route('/aprobaciones', crearRutasAprobaciones(bd, reloj));
+  app.route('/costos-tecnicos', crearRutasCostos(bd, reloj));
 
   // Enlaces firmados del almacén local (desarrollo): la firma con caducidad es la autorización.
   const { leerFirmado } = almacen;

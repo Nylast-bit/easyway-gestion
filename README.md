@@ -97,9 +97,19 @@ importado y se niega si algo creado después lo usa (cargos, pagos, fotos, insta
 
 ## Técnicos
 
-Una cuenta con rol técnico debe estar vinculada a su ficha (`tecnico_id`). En la web solo ve
-"Mis instalaciones": puede actualizar estado y notas de sus trabajos y subir fotos de esos
-vehículos; solo borra las fotos que subió. No ve clientes, inventario ni trabajos de otros técnicos.
+Una cuenta con rol técnico debe estar vinculada a su ficha (`tecnico_id`).
+
+- **Trabajo de campo** (pantalla de inicio del técnico, pensada para móvil): registra un trabajo eligiendo
+  cliente y vehículo existentes (búsqueda por nombre) o proponiendo nuevos, con IMEI, SIM, tipo, fecha y notas.
+  Queda **pendiente**: no cambia el inventario hasta que un administrador lo apruebe. Ve sus trabajos
+  (pendiente/aprobado/rechazado con motivo) y lo que se le debe y ya cobró.
+- **Mis instalaciones**: avance (estado y notas) y fotos de sus trabajos; solo borra las fotos que subió.
+- **Aprobaciones** (admin): revisa cada trabajo, ve posibles duplicados (cliente con el mismo nombre, vehículo
+  con la misma placa, GPS ya instalado) y decide unirlos o crearlos; fija el costo del técnico y, si quiere,
+  el plan de cobro. Aprobar hace todo en una transacción; si el GPS está instalado en otro vehículo no se
+  aprueba y no se crea nada. Rechazar exige motivo, que ve el técnico.
+- **Costos técnicos** (admin): deuda por técnico, marcar trabajos como pagados con referencia (todo o nada) y
+  desmarcar con motivo auditado.
 
 ## Verificación
 
