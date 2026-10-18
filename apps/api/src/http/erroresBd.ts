@@ -8,6 +8,9 @@ const MENSAJES: Record<string, string> = {
   simcards_numero_unico: 'Ya existe una simcard con ese número',
   gps_asignacion_activa_unica: 'El GPS ya está asignado a otro vehículo',
   simcard_asignacion_activa_unica: 'La simcard ya está asignada a otro GPS',
+  usuarios_usuario_unico: 'Ya existe una cuenta con ese nombre de usuario',
+  usuarios_correo_unico: 'Ya existe una cuenta con ese correo',
+  usuarios_tecnico_unico: 'Esa ficha de técnico ya tiene una cuenta vinculada',
 };
 
 type ErrorPostgres = { code?: string; constraint_name?: string };

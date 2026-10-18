@@ -18,9 +18,10 @@ test.each([
   expect(screen.queryByText(/Error al cargar/)).not.toBeInTheDocument();
 });
 
-test('conserva las siete rutas, marca Dashboard y abre/cierra búsqueda con teclado', async () => {
+test('muestra las ocho rutas de administración, marca Dashboard y abre/cierra búsqueda con teclado', async () => {
   render(<MainLayout><h1>Contenido</h1></MainLayout>);
-  expect(await screen.findAllByRole('link')).toHaveLength(7);
+  expect(await screen.findAllByRole('link')).toHaveLength(8);
+  expect(screen.getByRole('link', { name: 'Usuarios' })).toHaveAttribute('href', '/users');
   expect(screen.getByRole('link', { name: 'Clientes' })).toHaveAttribute('href', '/clients');
   expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('aria-current', 'page');
   fireEvent.keyDown(window, { key: 'k', ctrlKey: true });

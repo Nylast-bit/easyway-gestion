@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/servidor.ts",
+    "dev": "node --watch --import tsx src/servidor.ts",
     "start": "tsx src/servidor.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

@@ -47,15 +47,16 @@ que se borra al terminar.
 - 5 intentos fallidos bloquean la cuenta 15 minutos. La sesión dura 12 horas.
 - Configurar `RESEND_API_KEY` y `CORREO_REMITENTE` (dominio verificado en Resend). Sin
   ellas, en desarrollo el código aparece en la consola de la API; en producción son obligatorias.
-- Primer administrador (idempotente; datos solo en el entorno del comando):
-
-  ```sh
-  ADMIN_USUARIO=admin ADMIN_CONTRASENA='...' npm run db:crear-admin
-  ```
-
-  Con `ADMIN_CORREO` el administrador verificará su correo en el primer inicio de sesión.
+- Primer administrador: `npm run db:crear-admin` en una terminal pide nombre, usuario y/o correo
+  y la contraseña (oculta). Es idempotente: si ya hay un administrador no cambia nada. Para
+  automatizarlo acepta `ADMIN_NOMBRE`, `ADMIN_USUARIO`, `ADMIN_CORREO` y `ADMIN_CONTRASENA`.
+  Con correo, el primer inicio de sesión pedirá el código enviado a ese correo.
+- Resto de cuentas: pantalla **Usuarios** (solo administradores). Alta de administradores o
+  técnicos vinculados a su ficha, activar/desactivar y restablecer contraseña; desactivar o
+  restablecer cierra las sesiones abiertas de esa cuenta.
 - Endpoints: `POST /api/auth/login`, `/verificar-correo`, `/reenviar-codigo`, `/logout`,
-  `GET /api/auth/sesion` y `POST /api/usuarios` (solo admin).
+  `GET /api/auth/sesion`; cuentas (solo admin): `GET/POST /api/usuarios`, `PUT /api/usuarios/:id`
+  y `PUT /api/usuarios/:id/contrasena`.
 
 ## Gestión y transacciones
 

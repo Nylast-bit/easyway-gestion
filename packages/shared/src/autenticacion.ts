@@ -32,13 +32,16 @@ export const esquemaReenviarCodigo = z.object({ desafio: z.string().min(20).max(
 export const rolesUsuario = ['admin', 'tecnico'] as const;
 export type RolUsuario = (typeof rolesUsuario)[number];
 
+// Los formularios envían "" en campos vacíos: equivale a no indicarlo.
+const vacioComoAusente = (valor: unknown) => (typeof valor === 'string' && valor.trim() === '' ? undefined : valor);
+
 export const esquemaCrearUsuario = z.object({
   nombre: z.string().trim().min(1, 'El nombre es obligatorio').max(120),
-  usuario: z.string().trim().toLowerCase().regex(patronUsuario, 'Usuario: 3-40 letras minúsculas, números, punto, guion o guion bajo').optional(),
-  correo: z.string().trim().toLowerCase().pipe(z.email('Correo inválido')).optional(),
+  usuario: z.preprocess(vacioComoAusente, z.string().trim().toLowerCase().regex(patronUsuario, 'Usuario: 3-40 letras minúsculas, números, punto, guion o guion bajo').optional()),
+  correo: z.preprocess(vacioComoAusente, z.string().trim().toLowerCase().pipe(z.email('Correo inválido')).optional()),
   contrasena: z.string().min(LONGITUD_MINIMA_CONTRASENA, `La contraseña necesita al menos ${LONGITUD_MINIMA_CONTRASENA} caracteres`).max(200),
   rol: z.enum(rolesUsuario).default('tecnico'),
-  tecnico_id: z.number().int().positive().optional(),
+  tecnico_id: z.preprocess(vacioComoAusente, z.coerce.number().int().positive().nullable().optional()),
 }).refine(datos => datos.usuario || datos.correo, { message: 'Indica un usuario o un correo', path: ['usuario'] })
   .refine(datos => !datos.tecnico_id || datos.rol === 'tecnico', { message: 'Solo un técnico puede vincularse a la ficha de técnico', path: ['tecnico_id'] });
 
@@ -54,3 +57,24 @@ export interface UsuarioSesion {
 export type RespuestaLogin =
   | { estado: 'sesion_iniciada'; usuario: UsuarioSesion }
   | { estado: 'verificacion_requerida'; desafio: string; correo: string; reintentarEn: number };
+
+// Gestión de cuentas por un administrador. Usuario y correo no se editan: son identificadores de acceso.
+export const esquemaActualizarUsuario = z.object({
+  nombre: z.string().trim().min(1, 'El nombre es obligatorio').max(120),
+  rol: z.enum(rolesUsuario),
+  tecnico_id: z.union([z.literal(''), z.null(), z.coerce.number().int().positive()]).optional()
+    .transform(valor => (valor === '' || valor === undefined ? null : valor)),
+  activo: z.boolean(),
+}).refine(datos => !datos.tecnico_id || datos.rol === 'tecnico', { message: 'Solo un técnico puede vincularse a la ficha de técnico', path: ['tecnico_id'] });
+
+export const esquemaRestablecerContrasena = z.object({
+  contrasena: z.string().min(LONGITUD_MINIMA_CONTRASENA, `La contraseña necesita al menos ${LONGITUD_MINIMA_CONTRASENA} caracteres`).max(200),
+});
+
+export interface UsuarioFila extends UsuarioSesion {
+  activo: boolean;
+  correo_verificado: boolean;
+  bloqueado_hasta: string | null;
+  tecnico_nombre: string | null;
+  created_at: string;
+}

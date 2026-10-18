@@ -35,7 +35,8 @@
 - Login por usuario o correo (`clasificarIdentificador` en shared). Toda cuenta con correo sin verificar recibe OTP de 6 dígitos por Resend (10 min, 5 intentos, reenvío cada 60 s, máx. 5) y se verifica una sola vez; cuentas solo con usuario no tienen OTP.
 - 5 contraseñas fallidas bloquean 15 min. Mutaciones solo aceptan JSON (defensa CSRF junto a SameSite). Roles `admin`/`tecnico`: `requerirSesion` + `requerirRol`.
 - Sin `RESEND_API_KEY`/`CORREO_REMITENTE` en desarrollo el OTP se imprime en la consola de la API; en producción son obligatorias. Plantilla HTML en `apps/api/src/correo/plantillaOtp.ts` (paleta #00b494).
-- Primer admin: `ADMIN_USUARIO` y/o `ADMIN_CORREO` + `ADMIN_CONTRASENA` en el entorno y `npm run db:crear-admin` (idempotente).
+- Primer admin: `npm run db:crear-admin` (interactivo con contraseña oculta, o `ADMIN_*` en el entorno; idempotente). El resto de cuentas en `/users` (pantalla Usuarios, admin). Un admin no puede desactivarse ni quitarse el rol; desactivar, cambiar rol/ficha o restablecer contraseña borra las sesiones de esa cuenta.
+- `npm run dev` de la API usa `node --watch --import tsx` (no `tsx watch`, que en Windows se quedaba sin escuchar).
 
 ## Base de datos y dominio
 

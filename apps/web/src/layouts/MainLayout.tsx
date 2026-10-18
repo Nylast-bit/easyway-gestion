@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Users, Wrench, Car, Satellite, Cpu, ClipboardList, LayoutDashboard, Search, LogOut } from 'lucide-react';
+import { Users, Wrench, Car, Satellite, Cpu, ClipboardList, LayoutDashboard, Search, LogOut, UserCog } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { UsuarioSesion } from '@easyway/shared';
 import GlobalSearch from '../components/GlobalSearch';
@@ -18,6 +18,7 @@ const navItems = [
   { to: '/gps', icon: Satellite, label: 'GPS' },
   { to: '/simcards', icon: Cpu, label: 'Simcards' },
   { to: '/installations', icon: ClipboardList, label: 'Instalaciones' },
+  { to: '/users', icon: UserCog, label: 'Usuarios' },
 ];
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
