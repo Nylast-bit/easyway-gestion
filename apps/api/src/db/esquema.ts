@@ -58,6 +58,7 @@ export const gpsAsignaciones = pgTable('gps_asignaciones', {
   fecha_inicio: inicio(), fecha_fin: fin(),
 }, (tabla) => [
   uniqueIndex('gps_asignacion_activa_unica').on(tabla.gps_id).where(sql`${tabla.fecha_fin} IS NULL`),
+  index('gps_asignaciones_gps_idx').on(tabla.gps_id),
   index('gps_asignaciones_vehiculo_idx').on(tabla.vehiculo_id),
   check('gps_asignaciones_fechas', sql`${tabla.fecha_fin} IS NULL OR ${tabla.fecha_fin} >= ${tabla.fecha_inicio}`),
 ]).enableRLS();
@@ -67,6 +68,7 @@ export const simcardAsignaciones = pgTable('simcard_asignaciones', {
   gps_id: integer('gps_id').notNull().references(() => gps.id), fecha_inicio: inicio(), fecha_fin: fin(),
 }, (tabla) => [
   uniqueIndex('simcard_asignacion_activa_unica').on(tabla.simcard_id).where(sql`${tabla.fecha_fin} IS NULL`),
+  index('simcard_asignaciones_simcard_idx').on(tabla.simcard_id),
   index('simcard_asignaciones_gps_idx').on(tabla.gps_id),
   check('simcard_asignaciones_fechas', sql`${tabla.fecha_fin} IS NULL OR ${tabla.fecha_fin} >= ${tabla.fecha_inicio}`),
 ]).enableRLS();

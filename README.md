@@ -16,6 +16,8 @@ Usar npm y Node 22. Instalar con `npm ci`.
 - `npm run build`: compilación de la SPA.
 - `npm run db:generate -- --name=descripcion`: generar una migración después de cambiar el esquema.
 - `npm run db:migrate`: aplicar migraciones pendientes usando `DATABASE_URL`.
+- `npm run db:verify`: consultar versión, tablas y RLS sin modificar datos.
+  Ambos comandos cargan `.env` raíz sin imprimir la conexión.
 
 ## Base de datos inicial
 
@@ -32,6 +34,14 @@ fase 6 con análisis, vista previa y confirmación; todavía no se ha importado.
 
 ## Estado
 
-Fase 1: esquema inicial y pruebas locales preparados. Pendiente configurar y aplicar
-la migración en el proyecto Supabase del usuario, y verificar allí la disponibilidad
-gratuita de Storage/S3. No se ha accedido a servicios remotos.
+Fase 1: migraciones 0000 y 0001 aplicadas en Supabase (PostgreSQL 17.11), nueve
+tablas verificadas con RLS habilitado. Pruebas locales aprobadas en PostgreSQL 16.
+Pendiente configurar las credenciales S3 y verificar el bucket privado `vehiculos`.
+El plan Free publicado incluye 1 GB de archivos; confirmar el plan de la organización.
+
+Fase 2 acordada: migrar a Next.js App Router en `apps/web` y npm workspaces,
+conservar backend Hono separado y validación compartida. La web requerirá servidor
+Node, no solo nginx estático. Esta migración aún no está implementada.
+
+Skills oficiales Supabase instaladas en `.agents/skills`; reiniciar OpenCode para
+que descubra las skills registradas en `opencode.json`.

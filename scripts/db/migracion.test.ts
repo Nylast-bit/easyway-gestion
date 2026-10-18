@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { setTimeout } from 'node:timers/promises';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
@@ -40,7 +41,8 @@ test('crea las nueve tablas y repetir la migración no duplica su registro', asy
   ]);
   expect(tablas.every(t => t.rowsecurity)).toBe(true);
   const [registro] = await cliente`SELECT count(*)::int AS cantidad FROM drizzle.__drizzle_migrations`;
-  expect(registro.cantidad).toBe(1);
+  const historial = JSON.parse(readFileSync('apps/api/drizzle/meta/_journal.json', 'utf8')) as { entries: unknown[] };
+  expect(registro.cantidad).toBe(historial.entries.length);
 });
 
 test('protege relaciones, identificadores y una sola asignación activa por equipo', async () => {

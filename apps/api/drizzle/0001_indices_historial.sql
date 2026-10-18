@@ -1,0 +1,2 @@
+CREATE INDEX "gps_asignaciones_gps_idx" ON "gps_asignaciones" USING btree ("gps_id");--> statement-breakpoint
+CREATE INDEX "simcard_asignaciones_simcard_idx" ON "simcard_asignaciones" USING btree ("simcard_id");

@@ -59,8 +59,8 @@ No verifican todavía el servicio Supabase ni Storage.
 1. Crear un proyecto vacío en la cuenta del usuario y guardar su contraseña fuera de Git.
 2. Obtener la conexión PostgreSQL directa desde el panel Connect. No usar el pooler
    en modo transacción para migraciones. Si la red no soporta la conexión directa,
-   configurar conectividad compatible antes de continuar.
-3. Configurar `DATABASE_URL` en el entorno del proceso (no pegarla en chats o commits).
+   usar el pooler en modo sesión (puerto 5432), compatible con migraciones.
+3. Configurar `DATABASE_URL` en el entorno del proceso o `.env` raíz (no pegarla en chats o commits).
    Usar TLS según las instrucciones del proveedor; no desactivar validación de certificados.
 4. Ejecutar desde la raíz `npm run db:migrate`. El comando requiere la variable y
    mantiene el registro de migraciones en `drizzle.__drizzle_migrations`.
@@ -98,7 +98,25 @@ No se han creado buckets ni credenciales desde esta fase local.
 
 ## Próximas fases
 
-La fase 2 moverá la SPA y consolidará npm workspaces. Las herramientas de BD ya
+La fase 2 migrará la SPA a Next.js App Router y consolidará npm workspaces, conservando
+Hono como backend separado. Las herramientas de BD ya
 usan la ubicación final `apps/api`, pero las dependencias siguen en el paquete raíz.
 Antes de cargar datos reales se incorporarán respaldo/restauración. No se necesita
 copiar Storage ni respaldar una base antigua inexistente. El Excel se carga en fase 6.
+
+## Verificación del destino
+
+Se comprobó primero que `public` no tenía tablas. Después se aplicaron `0000_inicial`
+y `0001_indices_historial` mediante Drizzle y se verificaron las nueve tablas con
+RLS habilitado y cero políticas públicas en PostgreSQL 17.11. No se importaron datos.
+La segunda migración añade índices completos para consultar el historial de GPS/SIM;
+los índices parciales existentes solo cubren asignaciones activas.
+
+Se ejecutaron pruebas locales con Node 22.22.0 y PostgreSQL 16. Supabase Storage aún
+no se verificó en este proyecto: faltan credenciales S3 y confirmación del bucket.
+La tarifa pública consultada incluye 1 GB Storage, 5 GB egress y 5 GB cached egress
+en Free; no determina qué plan tiene la organización del usuario.
+
+Fuentes: https://supabase.com/pricing y
+https://supabase.com/docs/guides/storage/s3/authentication . Las claves S3 tienen
+acceso privilegiado a los buckets y deben permanecer exclusivamente en backend.
