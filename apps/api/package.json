@@ -1,9 +1,21 @@
 {
-  "name": "@easyway/api", "version": "0.0.0", "private": true, "type": "module",
+  "name": "@easyway/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
   "scripts": {
+    "dev": "tsx watch src/servidor.ts",
+    "start": "tsx src/servidor.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:related": "vitest related --run --passWithNoTests"
   },
-  "dependencies": { "drizzle-orm": "^0.45.4", "postgres": "^3.4.9", "@easyway/shared": "*" }
+  "dependencies": {
+    "@easyway/shared": "*",
+    "@hono/node-server": "^2.1.5",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.13",
+    "postgres": "^3.4.9",
+    "zod": "^4.6.7"
+  }
 }

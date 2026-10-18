@@ -1,43 +1,25 @@
-import { execFileSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { setTimeout } from 'node:timers/promises';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import postgres from 'postgres';
+import type postgres from 'postgres';
 import { afterAll, beforeAll, expect, test } from 'vitest';
+import { iniciarPostgresEfimero } from './postgres-efimero.js';
 
-// Base efímera independiente de DATABASE_URL: nunca ejecutar pruebas contra el destino real.
-const nombre = `easyway-prueba-${randomUUID()}`;
+let base: Awaited<ReturnType<typeof iniciarPostgresEfimero>> | undefined;
 let cliente: ReturnType<typeof postgres>;
-let creado = false;
-const docker = (...args: string[]) => execFileSync('docker', args, { encoding: 'utf8', timeout: 120000 }).trim();
-const migrar = () => migrate(drizzle(cliente), { migrationsFolder: 'apps/api/drizzle' });
+const migrar = () => base!.migrar();
 
 beforeAll(async () => {
-  docker('run', '--detach', '--rm', '--name', nombre, '-e', 'POSTGRES_PASSWORD=prueba-local',
-    '-p', '127.0.0.1::5432', 'postgres:16-alpine');
-  creado = true;
-  const puerto = docker('inspect', '--format', '{{(index (index .NetworkSettings.Ports "5432/tcp") 0).HostPort}}', nombre);
-  cliente = postgres(`postgres://postgres:prueba-local@127.0.0.1:${puerto}/postgres`, { max: 1, connect_timeout: 2 });
-  for (let intento = 0; intento < 30; intento++) {
-    try { await cliente`SELECT 1`; break; }
-    catch (error) { if (intento === 29) throw error; await setTimeout(500); }
-  }
-  await migrar();
+  base = await iniciarPostgresEfimero();
+  cliente = base.cliente;
 }, 180000);
 
-afterAll(async () => {
-  try { if (cliente) await cliente.end(); }
-  finally { if (creado) docker('stop', nombre); }
-});
+afterAll(async () => { await base?.detener(); });
 
-test('crea las nueve tablas y repetir la migración no duplica su registro', async () => {
+test('crea las tablas y repetir la migración no duplica su registro', async () => {
   await migrar();
   const tablas = await cliente`SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public'`;
   expect(tablas.map(t => t.tablename).sort()).toEqual([
-    'clientes', 'gps', 'gps_asignaciones', 'instalaciones', 'simcard_asignaciones',
-    'simcards', 'tecnicos', 'vehiculo_imagenes', 'vehiculos',
+    'clientes', 'gps', 'gps_asignaciones', 'instalaciones', 'sesiones', 'simcard_asignaciones',
+    'simcards', 'tecnicos', 'usuarios', 'vehiculo_imagenes', 'vehiculos', 'verificaciones_correo',
   ]);
   expect(tablas.every(t => t.rowsecurity)).toBe(true);
   const [registro] = await cliente`SELECT count(*)::int AS cantidad FROM drizzle.__drizzle_migrations`;

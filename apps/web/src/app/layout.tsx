@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import MainLayout from '../layouts/MainLayout';
 import { Proveedores } from './proveedores';
 import '../styles/global.css';
 
@@ -8,5 +7,5 @@ import '../styles/global.css';
 export const metadata: Metadata = { title: 'Easyway GPS Gestión', description: 'Gestión de instalaciones e inventario GPS' };
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return <html lang="es"><body><Proveedores><MainLayout>{children}</MainLayout></Proveedores></body></html>;
+  return <html lang="es"><body><Proveedores>{children}</Proveedores></body></html>;
 }

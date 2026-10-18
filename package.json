@@ -11,7 +11,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "npm run dev --workspace=@easyway/web",
+    "dev": "concurrently -k -n api,web -c cyan,green \"npm run dev --workspace=@easyway/api\" \"npm run dev --workspace=@easyway/web\"",
     "build": "npm run typecheck && npm run build --workspace=@easyway/web",
     "lint": "oxlint apps packages scripts e2e",
     "preview": "npm run start --workspace=@easyway/web",
@@ -23,7 +23,9 @@
     "prepare": "husky",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db/migrar.ts",
-    "db:verify": "tsx scripts/db/verificar.ts"
+    "db:verify": "tsx scripts/db/verificar.ts",
+    "dev:api": "npm run dev --workspace=@easyway/api",
+    "db:crear-admin": "tsx scripts/db/crear-admin.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
@@ -36,6 +38,7 @@
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "concurrently": "^10.0.6",
     "drizzle-kit": "^0.31.11",
     "husky": "^9.1.7",
     "jsdom": "^30.1.3",

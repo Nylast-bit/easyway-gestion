@@ -15,6 +15,13 @@
       "when": 1792262082104,
       "tag": "0001_indices_historial",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792339665976,
+      "tag": "0002_autenticacion",
+      "breakpoints": true
     }
   ]
 }

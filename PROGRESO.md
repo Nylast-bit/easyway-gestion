@@ -1,6 +1,6 @@
 # Progreso — Easyway GPS Gestión
 
-**Estado: fase 2 completada. Próxima: fase 3 — API, autenticación y transacciones (sin iniciar).**
+**Estado: fase 3 en curso — bloque 1 (Hono, autenticación y OTP) implementado; siguiente: CRUD con transacciones.**
 Las casillas se marcan únicamente cuando la tarea o verificación esté terminada.
 
 ## Fase 1 — Base inicial y Supabase
@@ -36,13 +36,23 @@ Las casillas se marcan únicamente cuando la tarea o verificación esté termina
 - La interfaz muestra conexión pendiente sin variables públicas; CRUD/API propios llegan en fase 3.
 
 ## Fase 3 — API, autenticación y transacciones
-- [ ] Hono, contratos/validación Zod y configuración del backend.
-- [ ] Migrar usuarios/sesiones; login, bloqueo temporal, roles y seed admin.
+- [x] Hono, contratos/validación Zod y configuración del backend (autenticación; contratos CRUD en el bloque 2).
+- [x] Migrar usuarios/sesiones; login, bloqueo temporal, roles y seed admin.
+- [x] Verificación de correo por OTP (Resend, plantilla HTML con colores de la marca); cuentas solo con usuario sin OTP.
+- [ ] Aplicar `0002_autenticacion` en Supabase y crear el administrador real.
 - [ ] Migrar CRUD, búsquedas y asignaciones a API con transacciones.
 - [ ] Portal protegido y retirada de Supabase del frontend.
 - [ ] Adaptador Supabase Storage con autorización y URLs temporales; probar archivos.
 - [ ] Pruebas de autorización, aislamiento entre técnicos y rollback.
 - [ ] Verificaciones, documentación y commit.
+
+### Evidencia de fase 3 — bloque 1
+- 41 pruebas rápidas: 2 guardas, 9 API, 12 web y 20 shared (entre ellas contratos de login y plantilla OTP).
+- 10 pruebas de integración con PostgreSQL 16 efímero: login por usuario, bloqueo 15 min, OTP con
+  reenvío/espera/agotamiento/caducidad, fallo del proveedor de correo, sesión caducada, roles y CSRF por JSON.
+- Prueba de humo del proceso real: migración, seed admin, login 202 → OTP → cookie HttpOnly → crear usuario.
+- 3 escenarios Playwright: redirección sin sesión, login con OTP → ruta solicitada y navegación de las siete rutas.
+- Build Next con `/login` y proxy de sesión; lint sin errores (cuatro advertencias heredadas).
 
 ## Fase 4 — Docker
 - [ ] Imágenes multi-stage de Next.js/API y compose de desarrollo/producción.

@@ -12,6 +12,7 @@
     "test:related": "vitest related --run --passWithNoTests"
   },
   "dependencies": {
+    "@easyway/shared": "*",
     "@supabase/supabase-js": "2.108.2",
     "lucide-react": "^1.21.0",
     "next": "^16.4.2",

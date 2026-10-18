@@ -1,10 +1,13 @@
 import { expect, test } from '@playwright/test';
+import { iniciarSesionSimulada, prepararAislamiento } from './sesion';
 
-test('navega las siete rutas y recarga sin consultar producción', async ({ page }) => {
+test('navega las siete rutas y recarga sin consultar producción', async ({ page, context }) => {
   const errores: string[] = [];
   page.on('pageerror', error => errores.push(error.message));
-  await page.route(/supabase\.(co|com)/, route => route.abort());
+  await prepararAislamiento(page);
+  await iniciarSesionSimulada(context, page);
   await page.goto('/');
+  await expect(page.getByText('Ana Admin')).toBeVisible();
   for (const [ruta, titulo] of [
     ['/', 'Dashboard'], ['/clients', 'Clientes'], ['/technicians', 'Técnicos'],
     ['/vehicles', 'Vehículos'], ['/gps', 'GPS'], ['/simcards', 'Simcards'], ['/installations', 'Instalaciones'],

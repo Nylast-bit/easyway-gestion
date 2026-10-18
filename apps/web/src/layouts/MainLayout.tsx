@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Users, Wrench, Car, Satellite, Cpu, ClipboardList, LayoutDashboard, Search } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Users, Wrench, Car, Satellite, Cpu, ClipboardList, LayoutDashboard, Search, LogOut } from 'lucide-react';
+import toast from 'react-hot-toast';
+import type { UsuarioSesion } from '@easyway/shared';
 import GlobalSearch from '../components/GlobalSearch';
+import { ErrorApi, solicitarApi } from '../lib/api';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,7 +21,28 @@ const navItems = [
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [usuario, setUsuario] = useState<UsuarioSesion | null>(null);
+
+  // La API decide si la sesión es válida; con 401 (cookie caducada) se vuelve al login.
+  useEffect(() => {
+    let activo = true;
+    solicitarApi<{ usuario: UsuarioSesion }>('/auth/sesion')
+      .then(datos => { if (activo) setUsuario(datos.usuario); })
+      .catch(error => {
+        if (!activo) return;
+        if (error instanceof ErrorApi && error.estado === 401) router.replace(`/login?siguiente=${encodeURIComponent(pathname ?? '/')}`);
+        else toast.error(error instanceof ErrorApi ? error.message : 'No se pudo comprobar la sesión');
+      });
+    return () => { activo = false; };
+  }, [router, pathname]);
+
+  const cerrarSesion = async () => {
+    try { await solicitarApi('/auth/logout', { metodo: 'POST' }); }
+    catch { toast.error('No se pudo cerrar la sesión en el servidor'); }
+    router.replace('/login');
+  };
 
   // Intercepta las teclas para abrir la búsqueda con Ctrl+K o Cmd+K
   useEffect(() => {
@@ -58,7 +82,16 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <Search size={18} />
             <span>Buscar... (Ctrl + K)</span>
           </div>
-          <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e5e7eb' }}></div>
+          <div className="cabecera-usuario">
+            <div className="cabecera-nombre">
+              <span>{usuario?.nombre ?? ' '}</span>
+              <small>{usuario ? (usuario.rol === 'admin' ? 'Administrador' : 'Técnico') : ''}</small>
+            </div>
+            <div className="cabecera-avatar" aria-hidden="true">{usuario?.nombre.charAt(0).toUpperCase()}</div>
+            <button type="button" className="cabecera-salir" onClick={cerrarSesion} aria-label="Cerrar sesión" title="Cerrar sesión">
+              <LogOut size={18} />
+            </button>
+          </div>
         </header>
 
         <main className="page-area">

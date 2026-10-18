@@ -1,9 +1,22 @@
 import '@testing-library/jest-dom/vitest';
-import { afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
+import { enrutador } from './enrutador';
+
 afterEach(cleanup);
-vi.mock('next/navigation', () => ({ usePathname: () => '/', useRouter: () => ({ push: vi.fn() }) }));
+// Sin red: por defecto la API responde con una sesión de administrador; cada prueba puede sustituirlo.
+beforeEach(() => {
+  enrutador.push.mockReset();
+  enrutador.replace.mockReset();
+  vi.stubGlobal('fetch', vi.fn(async () => Response.json({
+    usuario: { id: 1, nombre: 'Ana Admin', usuario: 'admin', correo: null, rol: 'admin', tecnico_id: null },
+  })));
+});
+vi.mock('next/navigation', async () => {
+  const { enrutador } = await import('./enrutador');
+  return { usePathname: () => '/', useRouter: () => enrutador };
+});
 vi.mock('../lib/supabaseClient', () => {
   const respuesta = { data: [], error: null, count: 0 };
   const consulta: Record<string, unknown> = {};

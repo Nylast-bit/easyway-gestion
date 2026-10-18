@@ -10,5 +10,5 @@
     "noUnusedParameters": true,
     "types": ["node"]
   },
-  "include": ["apps/api/src/db/**/*.ts", "scripts/db/**/*.ts", "drizzle.config.ts", "vitest.config.ts"]
+  "include": ["apps/api/src/db/esquema.ts", "apps/api/src/auth/criptografia.ts", "scripts/db/**/*.ts", "drizzle.config.ts", "vitest.config.ts"]
 }

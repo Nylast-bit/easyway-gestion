@@ -109,6 +109,18 @@ con esquema/migraciones en `apps/api` y validación compartida en `packages/shar
 Antes de cargar datos reales se incorporarán respaldo/restauración. No se necesita
 copiar Storage ni respaldar una base antigua inexistente. El Excel se carga en fase 6.
 
+## Fase 3 — autenticación (0002_autenticacion)
+
+Añade `usuarios`, `sesiones` y `verificaciones_correo`, todas con RLS sin políticas.
+
+- Una cuenta tiene `usuario` y/o `correo` (único, en minúsculas). Con correo, debe
+  verificarlo una vez (`correo_verificado_at`) mediante OTP antes de tener sesión.
+- `tecnico_id` opcional y único enlaza la cuenta con la ficha de `tecnicos`; solo rol `tecnico`.
+- Contraseñas scrypt; tokens de sesión y desafíos OTP se guardan como SHA-256.
+- Borrar un usuario borra en cascada sus sesiones y verificaciones; no afecta a datos de negocio.
+- Es aditiva: no modifica tablas existentes. Aplicar con `npm run db:migrate` y crear el
+  administrador con `npm run db:crear-admin`.
+
 ## Verificación del destino
 
 Se comprobó primero que `public` no tenía tablas. Después se aplicaron `0000_inicial`
