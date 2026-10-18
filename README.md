@@ -129,7 +129,7 @@ las pruebas rápidas. Docker y Playwright no se ejecutan en pre-commit.
 
 Ver [docs/migracion-bd.md](docs/migracion-bd.md). Las migraciones 0000/0001 están
 aplicadas en Supabase PostgreSQL 17.11, junto con 0002 (autenticación) y 0003 (autor de fotos).
-0004 (modelo ampliado) y 0005 (retira el tipo en texto) están pendientes de aplicar. El Excel real no está importado ni versionado;
+0004 (modelo ampliado) y 0005 (retira el tipo en texto) también están aplicadas. El Excel real no está importado ni versionado;
 su importador transaccional se construirá en la fase 6.
 
 Skills oficiales Supabase en `.agents/skills`, registradas mediante `opencode.json`.
