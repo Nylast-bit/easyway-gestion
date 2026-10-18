@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import type { Simcard } from '../types';
+import type { SimcardFila } from '@easyway/shared';
+
+export type DatosFormularioSimcard = { numero: string; fecha_compra: string; fecha_vencimiento: string };
 
 interface SimcardFormProps {
-  onSubmit: (data: any) => void;
-  initialValues?: Simcard;
+  onSubmit: (data: DatosFormularioSimcard) => void;
+  initialValues?: SimcardFila;
 }
 
 const SimcardForm: React.FC<SimcardFormProps> = ({ onSubmit, initialValues }) => {
-  const [formData, setFormData] = useState({
+  // Fechas vacías se envían como "" y la API las guarda como null.
+  const [formData, setFormData] = useState<DatosFormularioSimcard>({
     numero: initialValues?.numero || '',
     fecha_compra: initialValues?.fecha_compra || '',
     fecha_vencimiento: initialValues?.fecha_vencimiento || ''
@@ -19,27 +22,23 @@ const SimcardForm: React.FC<SimcardFormProps> = ({ onSubmit, initialValues }) =>
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const dataToSubmit = { ...formData };
-    // Convertir fechas vacías a null para la BD
-    if (!dataToSubmit.fecha_compra) dataToSubmit.fecha_compra = "";
-    if (!dataToSubmit.fecha_vencimiento) dataToSubmit.fecha_vencimiento = "null";
-    onSubmit(dataToSubmit);
+    onSubmit(formData);
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="form-group">
-        <label className="form-label">Número (Único) *</label>
-        <input type="text" name="numero" className="form-input" value={formData.numero} onChange={handleChange} maxLength={20} required />
+        <label className="form-label" htmlFor="sim-numero">Número (Único) *</label>
+        <input id="sim-numero" type="text" name="numero" className="form-input" value={formData.numero} onChange={handleChange} maxLength={25} required />
       </div>
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Fecha de Compra</label>
-          <input type="date" name="fecha_compra" className="form-input" value={formData.fecha_compra || ''} onChange={handleChange} />
+          <label className="form-label" htmlFor="sim-compra">Fecha de Compra</label>
+          <input id="sim-compra" type="date" name="fecha_compra" className="form-input" value={formData.fecha_compra} onChange={handleChange} />
         </div>
         <div className="form-group">
-          <label className="form-label">Fecha de Vencimiento</label>
-          <input type="date" name="fecha_vencimiento" className="form-input" value={formData.fecha_vencimiento || ''} onChange={handleChange} />
+          <label className="form-label" htmlFor="sim-vence">Fecha de Vencimiento</label>
+          <input id="sim-vence" type="date" name="fecha_vencimiento" className="form-input" value={formData.fecha_vencimiento} onChange={handleChange} />
         </div>
       </div>
 

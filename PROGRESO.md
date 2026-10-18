@@ -1,6 +1,6 @@
 # Progreso — Easyway GPS Gestión
 
-**Estado: fase 3 en curso — bloque 1 (Hono, autenticación y OTP) implementado; siguiente: CRUD con transacciones.**
+**Estado: fase 3 en curso — bloques 1 (autenticación y OTP) y 2 (CRUD y asignaciones transaccionales) implementados; siguiente: Storage de fotos y aislamiento de técnicos.**
 Las casillas se marcan únicamente cuando la tarea o verificación esté terminada.
 
 ## Fase 1 — Base inicial y Supabase
@@ -40,10 +40,10 @@ Las casillas se marcan únicamente cuando la tarea o verificación esté termina
 - [x] Migrar usuarios/sesiones; login, bloqueo temporal, roles y seed admin.
 - [x] Verificación de correo por OTP (Resend, plantilla HTML con colores de la marca); cuentas solo con usuario sin OTP.
 - [ ] Aplicar `0002_autenticacion` en Supabase y crear el administrador real.
-- [ ] Migrar CRUD, búsquedas y asignaciones a API con transacciones.
-- [ ] Portal protegido y retirada de Supabase del frontend.
+- [x] Migrar CRUD, búsquedas y asignaciones a API con transacciones.
+- [x] Portal protegido y retirada de Supabase del frontend (fotos deshabilitadas hasta el adaptador de Storage).
 - [ ] Adaptador Supabase Storage con autorización y URLs temporales; probar archivos.
-- [ ] Pruebas de autorización, aislamiento entre técnicos y rollback.
+- [ ] Pruebas de autorización, aislamiento entre técnicos y rollback (autorización por rol y rollback hechos; falta aislamiento de técnicos).
 - [ ] Verificaciones, documentación y commit.
 
 ### Evidencia de fase 3 — bloque 1
@@ -53,6 +53,15 @@ Las casillas se marcan únicamente cuando la tarea o verificación esté termina
 - Prueba de humo del proceso real: migración, seed admin, login 202 → OTP → cookie HttpOnly → crear usuario.
 - 3 escenarios Playwright: redirección sin sesión, login con OTP → ruta solicitada y navegación de las siete rutas.
 - Build Next con `/login` y proxy de sesión; lint sin errores (cuatro advertencias heredadas).
+
+### Evidencia de fase 3 — bloque 2
+- 58 pruebas rápidas: 2 guardas, 9 API, 16 web (CRUD contra API simulada) y 24 shared (contratos de entidades).
+- 17 pruebas de integración: 7 nuevas de gestión con PostgreSQL 16 efímero (401/403 en todas las rutas, CRUD y
+  normalización, asignación/cambio/retirada de GPS y SIM, rollback completo ante equipo no disponible,
+  3 peticiones simultáneas por el mismo GPS → una 201 y dos 409, historial, resumen y búsqueda con comodines escapados).
+- 3 escenarios Playwright con API simulada y Supabase bloqueado.
+- Humo con pila real (PostgreSQL efímero + API + Next): login, alta encadenada cliente → SIM → GPS → vehículo, 409 al reutilizar el GPS y pantallas mostrando los datos.
+- Lint sin errores ni advertencias; build Next correcto; `@supabase/supabase-js` retirado de la web.
 
 ## Fase 4 — Docker
 - [ ] Imágenes multi-stage de Next.js/API y compose de desarrollo/producción.

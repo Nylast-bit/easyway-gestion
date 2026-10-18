@@ -1,28 +1,27 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
-
 import { enrutador } from './enrutador';
 
 afterEach(cleanup);
-// Sin red: por defecto la API responde con una sesión de administrador; cada prueba puede sustituirlo.
+
+// API simulada sin red: sesión de administrador, resumen vacío y listas vacías.
+// Cada prueba puede sustituir fetch con vi.stubGlobal para respuestas concretas.
+export function respuestaPorDefecto(url: string) {
+  if (url === '/api/auth/sesion') {
+    return Response.json({ usuario: { id: 1, nombre: 'Ana Admin', usuario: 'admin', correo: null, rol: 'admin', tecnico_id: null } });
+  }
+  if (url === '/api/resumen') return Response.json({ clientes: 0, vehiculos: 0, gps: 0, simcards: 0 });
+  return Response.json([]);
+}
+
 beforeEach(() => {
   enrutador.push.mockReset();
   enrutador.replace.mockReset();
-  vi.stubGlobal('fetch', vi.fn(async () => Response.json({
-    usuario: { id: 1, nombre: 'Ana Admin', usuario: 'admin', correo: null, rol: 'admin', tecnico_id: null },
-  })));
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => respuestaPorDefecto(url)));
 });
+
 vi.mock('next/navigation', async () => {
   const { enrutador } = await import('./enrutador');
   return { usePathname: () => '/', useRouter: () => enrutador };
-});
-vi.mock('../lib/supabaseClient', () => {
-  const respuesta = { data: [], error: null, count: 0 };
-  const consulta: Record<string, unknown> = {};
-  for (const metodo of ['select', 'order', 'eq', 'is', 'limit', 'ilike', 'gte', 'lte', 'single']) {
-    consulta[metodo] = () => consulta;
-  }
-  consulta.then = (resolver: (valor: typeof respuesta) => unknown) => Promise.resolve(respuesta).then(resolver);
-  return { configuracionPublicaDisponible: true, supabase: { from: vi.fn(() => consulta) } };
 });

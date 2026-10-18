@@ -14,17 +14,18 @@
 - `npm run typecheck`: incluye `next typegen` para evitar tipos de rutas obsoletos y `tsconfig.db.json` para herramientas.
 - `npm run test:unit`: guardas de commits + Vitest por workspace. Enfoque: `npm run test --workspace=@easyway/shared -- -t telefono`.
 - `npm run test:int`: PostgreSQL 16 efímero en Docker (`scripts/db/postgres-efimero.ts`), puerto local aleatorio, elimina su contenedor; no lee DATABASE_URL. Incluye `apps/api/src/**/*.int.test.ts` (excluidos del Vitest del workspace). Enfoque: `npm run test:int -- -t RLS`.
-- `npm test`: unitarias + integración. `npm run test:e2e`: Playwright inicia Next en 3100 con variables públicas vacías, bloquea Supabase y simula la API en el navegador (`e2e/sesion.ts`); falla si ya hay un `next dev` en marcha en `apps/web`. Instalar navegador con `npx playwright install chromium`.
+- `npm test`: unitarias + integración. `npm run test:e2e`: Playwright inicia Next en 3100, bloquea Supabase y simula la API en el navegador (`e2e/sesion.ts`: ruta genérica `**/api/**` y luego las específicas); falla si ya hay un `next dev` en marcha en `apps/web`. Instalar navegador con `npx playwright install chromium`.
 - Pre-commit: lint-staged bloquea secretos/datos, lint de staged, tipos y tests relacionados rápidos; cambios globales/shared verifican todos los workspaces. No ejecutar Docker/e2e dentro del hook.
 - Al cerrar fase: lint, typecheck, test, build y e2e pertinentes; actualizar README/PROGRESO y commit Conventional Commits.
 
 ## Variables y acceso
 
 - `.env` raíz se carga sin sobrescribir el entorno por scripts de BD y `apps/web/next.config.ts`. Next también admite su `.env` de workspace.
-- Web transitoria: `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Sin ellas muestra aviso de conexión pendiente; cliente inicializado al usarlo, no durante prerender. No sustituirlas por secretos.
-- El CRUD heredado todavía vive en las pantallas y formularios con Supabase. Las pruebas web simulan ese cliente, no consultan el proyecto real. Se sustituye por Hono en fase 3.
-- RLS sin políticas públicas es intencional: no abrir permisos anon para hacer funcionar el CRUD antiguo en la BD nueva.
-- Storage: API Supabase, bucket privado `vehicles` verificado. Adaptador futuro solo backend: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_STORAGE_BUCKET=vehicles`; nunca secretos en VITE_/NEXT_PUBLIC_. Código antiguo usa `vehiculos`/URLs públicas y se sustituirá en fase 3.
+- La web no usa Supabase ni variables `NEXT_PUBLIC_*`: todo dato pasa por `solicitarApi` (`apps/web/src/lib/api.ts`) hacia `/api`. Las pruebas web simulan `fetch` por ruta (`src/tests/preparacion.ts`).
+- Rutas de gestión (`/api/clientes`, `tecnicos`, `vehiculos`, `gps`, `simcards`, `instalaciones`, `resumen`, `buscar`) exigen rol admin; el portal de técnicos y su aislamiento llegan en fase 7.
+- Asignaciones GPS↔vehículo y SIM↔GPS solo en `apps/api/src/negocio/asignaciones.ts`, dentro de transacción con `FOR UPDATE`; cambian estados (`Instalado`/`Asignada`/`Disponible`) y cierran historial con `fecha_fin`, nunca lo borran. Errores PostgreSQL se traducen en `http/erroresBd.ts`.
+- RLS sin políticas públicas es intencional: el backend usa el rol propietario; no abrir permisos anon.
+- Storage: API Supabase, bucket privado `vehicles` verificado. Adaptador pendiente (bloque 3), solo backend: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_STORAGE_BUCKET=vehicles`; nunca secretos en `NEXT_PUBLIC_`. Las fotos están deshabilitadas en la UI hasta entonces.
 
 ## Autenticación
 
@@ -43,4 +44,4 @@
 - Plan Anual y Plan Anual (monitoreo) son equivalentes; Plan Anual (Sin monit.) es distinto. America/Santo_Domingo; moneda DOP (RD$).
 - Excel real y `backups/` ignorados; único fixture permitido: `tests/fixtures/excel-muestra.xlsx` anonimizado.
 - Skills oficiales en `.agents/skills` registradas por `opencode.json`. Arquitectura/migraciones Drizzle prevalecen sobre ejemplos Supabase Auth/CLI.
-- Comentarios y UI nuevos en español. Toasts react-hot-toast (proveedor en app), iconos lucide-react. Tipos heredados compartidos en `apps/web/src/types.ts`.
+- Comentarios y UI nuevos en español. Toasts react-hot-toast (proveedor en app), iconos lucide-react. Contratos Zod y tipos de respuesta de la API en `packages/shared/src/entidades.ts` (la web los importa de `@easyway/shared`).

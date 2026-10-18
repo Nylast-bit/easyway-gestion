@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import toast from 'react-hot-toast';
+import type { Resumen } from '@easyway/shared';
+import { mensajeError, solicitarApi } from '../lib/api';
 import { Users, Car, Satellite, Cpu } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -11,23 +13,9 @@ const Dashboard: React.FC = () => {
   });
 
   useEffect(() => {
-    // Función para contar los registros de cada tabla
-    const fetchStats = async () => {
-      const [cli, veh, gps, sim] = await Promise.all([
-        supabase.from('clientes').select('*', { count: 'exact', head: true }),
-        supabase.from('vehiculos').select('*', { count: 'exact', head: true }),
-        supabase.from('gps').select('*', { count: 'exact', head: true }),
-        supabase.from('simcards').select('*', { count: 'exact', head: true })
-      ]);
-
-      setStats({
-        clients: cli.count || 0,
-        vehicles: veh.count || 0,
-        gps: gps.count || 0,
-        simcards: sim.count || 0
-      });
-    };
-    fetchStats();
+    solicitarApi<Resumen>('/resumen')
+      .then(r => setStats({ clients: r.clientes, vehicles: r.vehiculos, gps: r.gps, simcards: r.simcards }))
+      .catch(error => toast.error(mensajeError(error, 'Error al cargar el resumen')));
   }, []);
 
   return (

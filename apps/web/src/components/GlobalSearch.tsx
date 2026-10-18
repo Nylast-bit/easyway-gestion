@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, configuracionPublicaDisponible } from '../lib/supabaseClient';
+import type { ResultadoBusqueda } from '@easyway/shared';
+import { solicitarApi } from '../lib/api';
 import { useRouter } from 'next/navigation';
 import { Search, Users, Car, Satellite } from 'lucide-react';
 
@@ -10,24 +11,19 @@ interface GlobalSearchProps {
 
 const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
   const [search, setSearch] = useState('');
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<{ type: string; label: string; icon: typeof Users; path: string }[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    if (search.length > 0 && configuracionPublicaDisponible) {
+    if (search.trim().length > 0) {
       const fetchData = async () => {
-        const [cliRes, vehRes, gpsRes] = await Promise.all([
-          supabase.from('clientes').select('id, nombre').ilike('nombre', `%${search}%`).limit(3),
-          supabase.from('vehiculos').select('id, placa, marca, modelo').ilike('placa', `%${search}%`).limit(3),
-          supabase.from('gps').select('id, imei').ilike('imei', `%${search}%`).limit(3)
-        ]);
-
-        const combined = [
-          ...cliRes.data?.map(c => ({ type: 'Cliente', label: c.nombre, icon: Users, path: '/clients' })) || [],
-          ...vehRes.data?.map(v => ({ type: 'Vehículo', label: `${v.marca} ${v.modelo} (${v.placa})`, icon: Car, path: '/vehicles' })) || [],
-          ...gpsRes.data?.map(g => ({ type: 'GPS', label: g.imei, icon: Satellite, path: '/gps' })) || []
-        ];
-        setResults(combined);
+        const datos = await solicitarApi<ResultadoBusqueda[]>(`/buscar?q=${encodeURIComponent(search.trim())}`).catch(() => []);
+        const destinos = {
+          cliente: { type: 'Cliente', icon: Users, path: '/clients' },
+          vehiculo: { type: 'Vehículo', icon: Car, path: '/vehicles' },
+          gps: { type: 'GPS', icon: Satellite, path: '/gps' },
+        };
+        setResults(datos.map(r => ({ ...destinos[r.tipo], label: r.etiqueta })));
       };
       const timer = setTimeout(fetchData, 300); // Debounce para no saturar la BD
       return () => clearTimeout(timer);

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import type { InstalacionFila } from '@easyway/shared';
 import { Plus, Pencil, Trash2, ClipboardList } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Drawer from '../components/Drawer';
-import InstallationForm from '../components/InstallationForm';
+import InstallationForm, { type DatosFormularioInstalacion } from '../components/InstallationForm';
+import { formatearFecha, mensajeError, solicitarApi } from '../lib/api';
 
 // Función helper para asignar colores a los estados de instalación
 const getInstStatusClass = (status: string) => {
@@ -16,61 +17,46 @@ const getInstStatusClass = (status: string) => {
 };
 
 const Installations: React.FC = () => {
-  const [installations, setInstallations] = useState<any[]>([]);
+  const [installations, setInstallations] = useState<InstalacionFila[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<InstalacionFila | null>(null);
 
   const fetchInstallations = async () => {
-    // JOIN de 4 tablas para obtener toda la info en una sola consulta
-    const { data, error } = await supabase.from('instalaciones').select(`
-      *,
-      vehiculos(placa, marca, modelo, clientes(nombre)),
-      gps(imei),
-      simcards(numero),
-      tecnicos(nombre)
-    `).order('fecha_instalacion', { ascending: false });
-
-    if (error) toast.error('Error al cargar instalaciones');
-    else setInstallations(data || []);
+    try { setInstallations(await solicitarApi<InstalacionFila[]>('/instalaciones')); }
+    catch (error) { toast.error(mensajeError(error, 'Error al cargar instalaciones')); }
   };
 
   useEffect(() => { fetchInstallations(); }, []);
 
   const handleOpenAdd = () => { setEditingItem(null); setIsDrawerOpen(true); };
-  const handleOpenEdit = (i: any) => { setEditingItem(i); setIsDrawerOpen(true); };
+  const handleOpenEdit = (i: InstalacionFila) => { setEditingItem(i); setIsDrawerOpen(true); };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('¿Eliminar este registro?')) {
-      const { error } = await supabase.from('instalaciones').delete().eq('id', id);
-      if (error) toast.error('Error al eliminar');
-      else { toast.success('Registro eliminado'); fetchInstallations(); }
-    }
+    if (!window.confirm('¿Eliminar este registro?')) return;
+    try {
+      await solicitarApi(`/instalaciones/${id}`, { metodo: 'DELETE' });
+      toast.success('Registro eliminado');
+      fetchInstallations();
+    } catch (error) { toast.error(mensajeError(error, 'Error al eliminar')); }
   };
 
-  const handleSubmit = async (formData: any) => {
-    // Asegurar que los campos vacíos vayan como null
-    const dataToSubmit = { ...formData };
-    if (!dataToSubmit.simcard_id) dataToSubmit.simcard_id = null;
-
-    if (editingItem) {
-      const { error } = await supabase.from('instalaciones').update(dataToSubmit).eq('id', editingItem.id);
-      if (error) return toast.error('Error: ' + error.message);
-      toast.success('Instalación actualizada');
-    } else {
-      const { error } = await supabase.from('instalaciones').insert([dataToSubmit]);
-      if (error) return toast.error('Error: ' + error.message);
-      toast.success('Instalación registrada');
-    }
-    setIsDrawerOpen(false);
-    fetchInstallations();
+  const handleSubmit = async (formData: DatosFormularioInstalacion) => {
+    try {
+      if (editingItem) await solicitarApi(`/instalaciones/${editingItem.id}`, { metodo: 'PUT', cuerpo: formData });
+      else await solicitarApi('/instalaciones', { cuerpo: formData });
+      toast.success(editingItem ? 'Instalación actualizada' : 'Instalación registrada');
+      setIsDrawerOpen(false);
+      fetchInstallations();
+    } catch (error) { toast.error(mensajeError(error, 'No se pudo guardar')); }
   };
 
   // Búsqueda integrada (Cliente, Placa o IMEI)
+  const termino = searchTerm.toLowerCase();
   const filtered = installations.filter(i =>
-    i.vehiculos?.clientes?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (i.vehiculos?.placa || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    i.gps?.imei?.includes(searchTerm)
+    i.vehiculo.cliente_nombre.toLowerCase().includes(termino) ||
+    (i.vehiculo.placa || '').toLowerCase().includes(termino) ||
+    i.gps_imei.includes(searchTerm.trim())
   );
 
   return (
@@ -99,23 +85,23 @@ const Installations: React.FC = () => {
                 <div>
                   <div className="vehicle-header">
                     <span className="vehicle-title">{i.tipo}: {i.asunto || 'Sin asunto'}</span>
-                    <span className="vehicle-year">{new Date(i.fecha_instalacion).toLocaleDateString()}</span>
+                    <span className="vehicle-year">{formatearFecha(i.fecha_instalacion)}</span>
                   </div>
                   <div className="vehicle-owner">
-                    Cliente: {i.vehiculos?.clientes?.nombre || 'N/A'} | Veh: {i.vehiculos?.marca} {i.vehiculos?.modelo} ({i.vehiculos?.placa || 'S/P'})
+                    Cliente: {i.vehiculo.cliente_nombre} | Veh: {i.vehiculo.marca} {i.vehiculo.modelo} ({i.vehiculo.placa || 'S/P'})
                   </div>
                 </div>
                 <div className="entity-actions">
-                  <button className="btn-icon" onClick={() => handleOpenEdit(i)}><Pencil size={18} /></button>
-                  <button className="btn-icon danger" onClick={() => handleDelete(i.id)}><Trash2 size={18} /></button>
+                  <button className="btn-icon" aria-label="Editar instalación" onClick={() => handleOpenEdit(i)}><Pencil size={18} /></button>
+                  <button className="btn-icon danger" aria-label="Eliminar instalación" onClick={() => handleDelete(i.id)}><Trash2 size={18} /></button>
                 </div>
               </div>
               <div className="vehicle-tags" style={{ marginTop: '0.5rem' }}>
                 {/* Etiqueta de Estado con color */}
                 <span className={`status-tag ${getInstStatusClass(i.estado)}`}>{i.estado}</span>
-                <span className="vehicle-tag">GPS: {i.gps?.imei || 'N/A'}</span>
-                {i.simcards?.numero && <span className="vehicle-tag">SIM: {i.simcards.numero}</span>}
-                <span className="vehicle-tag">Técnico: {i.tecnicos?.nombre || 'N/A'}</span>
+                <span className="vehicle-tag">GPS: {i.gps_imei}</span>
+                {i.simcard_numero && <span className="vehicle-tag">SIM: {i.simcard_numero}</span>}
+                <span className="vehicle-tag">Técnico: {i.tecnico_nombre || 'N/A'}</span>
               </div>
               {i.notas && <p style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.5rem' }}><strong>Notas:</strong> {i.notas}</p>}
             </div>
@@ -124,7 +110,7 @@ const Installations: React.FC = () => {
       </div>
 
       <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title={editingItem ? 'Editar Instalación' : 'Nueva Instalación'}>
-        <InstallationForm onSubmit={handleSubmit} initialValues={editingItem || undefined} />
+        <InstallationForm key={editingItem?.id ?? 'nueva'} onSubmit={handleSubmit} initialValues={editingItem || undefined} />
       </Drawer>
     </div>
   );

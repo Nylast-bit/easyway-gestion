@@ -7,6 +7,6 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev --workspace=@easyway/web -- --hostname 127.0.0.1 --port 3100',
     url: 'http://127.0.0.1:3100', reuseExistingServer: false, timeout: 120000,
-    env: { NEXT_PUBLIC_SUPABASE_URL: '', NEXT_PUBLIC_SUPABASE_ANON_KEY: '', NEXT_TELEMETRY_DISABLED: '1' },
+    env: { NEXT_TELEMETRY_DISABLED: '1' },
   },
 });

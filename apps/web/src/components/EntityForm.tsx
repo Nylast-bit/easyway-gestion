@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import type { Client, Technician } from '../types';
+import type { Persona } from '@easyway/shared';
+
+export type DatosFormularioPersona = { nombre: string; telefono: string; correo: string };
 
 interface EntityFormProps {
-  type: 'client' | 'technician';
-  onSubmit: (data: Client | Technician) => void;
-  initialValues?: Client | Technician;
+  etiqueta: string;
+  onSubmit: (data: DatosFormularioPersona) => void;
+  initialValues?: Persona;
 }
 
-const EntityForm: React.FC<EntityFormProps> = ({ type, onSubmit, initialValues }) => {
+const EntityForm: React.FC<EntityFormProps> = ({ etiqueta, onSubmit, initialValues }) => {
   const [formData, setFormData] = useState({
     nombre: initialValues?.nombre || '',
     telefono: initialValues?.telefono || '',
@@ -33,21 +35,23 @@ const EntityForm: React.FC<EntityFormProps> = ({ type, onSubmit, initialValues }
   return (
     <form onSubmit={handleSubmit}>
       <div className="form-group">
-        <label className="form-label">Nombre Completo *</label>
+        <label className="form-label" htmlFor="persona-nombre">Nombre Completo *</label>
         <input
           type="text"
+          id="persona-nombre"
           name="nombre"
           className="form-input"
           value={formData.nombre}
           onChange={handleChange}
-          maxLength={60}
+          maxLength={120}
           required
         />
       </div>
       <div className="form-group">
-        <label className="form-label">Teléfono</label>
+        <label className="form-label" htmlFor="persona-telefono">Teléfono</label>
         <input
           type="tel"
+          id="persona-telefono"
           name="telefono"
           className="form-input"
           value={formData.telefono}
@@ -56,18 +60,19 @@ const EntityForm: React.FC<EntityFormProps> = ({ type, onSubmit, initialValues }
         />
       </div>
       <div className="form-group">
-        <label className="form-label">Correo Electrónico</label>
+        <label className="form-label" htmlFor="persona-correo">Correo Electrónico</label>
         <input
           type="email"
+          id="persona-correo"
           name="correo"
           className="form-input"
           value={formData.correo}
           onChange={handleChange}
-          maxLength={40}
+          maxLength={254}
         />
       </div>
       <button type="submit" className="btn-submit">
-        {initialValues ? 'Guardar Cambios' : `Agregar ${type === 'client' ? 'Cliente' : 'Técnico'}`}
+        {initialValues ? 'Guardar Cambios' : `Agregar ${etiqueta}`}
       </button>
       {/* El botón de cancelar lo maneja el Drawer automáticamente al hacer clic fuera o en la X */}
     </form>

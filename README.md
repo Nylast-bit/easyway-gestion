@@ -26,19 +26,16 @@ Antes del primer uso: `npm run db:migrate` y crear el administrador (ver Autenti
 ## Configuración y transición
 
 Usar `.env.example` como referencia sin sobrescribir el `.env` privado existente.
-Las herramientas de BD y Next cargan también el `.env` raíz sin sustituir variables
-ya presentes en el entorno. Solo las dos variables explícitas `NEXT_PUBLIC_SUPABASE_*`
-se incorporan a la web; `DATABASE_URL` y `SUPABASE_SECRET_KEY` son exclusivamente privadas.
+Las herramientas de BD, la API y Next cargan también el `.env` raíz sin sustituir variables
+ya presentes en el entorno. La web no tiene variables públicas: todos los datos pasan por
+la API Hono (`/api`), que es la única con `DATABASE_URL` y claves de Supabase.
 
-La nueva BD tiene RLS sin políticas públicas. El CRUD actual todavía depende del
-cliente antiguo de Supabase y se migrará a Hono en la fase 3. Sin configuración
-pública, las rutas muestran un aviso de conexión pendiente y permiten navegar.
-No introducir claves privadas como variables públicas ni abrir RLS para sortear
-esta transición. Las pruebas de las pantallas usan un cliente simulado.
+La BD tiene RLS sin políticas públicas; el backend usa el rol propietario y aplica su
+propia autorización. No abrir RLS ni exponer claves privadas en la web.
 
 El bucket `vehicles` es privado y se verificaron autenticación/listado con la API
-de Supabase Storage. El adaptador de fotos, enlaces temporales y pruebas de
-subida/descarga/borrado pertenecen a la fase 3. No usamos credenciales S3.
+de Supabase Storage. El adaptador de fotos con enlaces temporales llega en el bloque 3
+de la fase 3; hasta entonces la gestión de fotos está deshabilitada en la UI.
 
 ## Autenticación
 
@@ -57,6 +54,17 @@ subida/descarga/borrado pertenecen a la fase 3. No usamos credenciales S3.
   Con `ADMIN_CORREO` el administrador verificará su correo en el primer inicio de sesión.
 - Endpoints: `POST /api/auth/login`, `/verificar-correo`, `/reenviar-codigo`, `/logout`,
   `GET /api/auth/sesion` y `POST /api/usuarios` (solo admin).
+
+## Gestión y transacciones
+
+- Clientes, técnicos, vehículos, GPS, simcards e instalaciones: `GET/POST /api/<entidad>`,
+  `GET/PUT/DELETE /api/<entidad>/:id` (solo administradores). Además `GET /api/resumen`,
+  `GET /api/buscar?q=` y `GET /api/simcards/:id/historial`.
+- Asignar o cambiar el GPS de un vehículo, o la simcard de un GPS, es una sola transacción:
+  cierra la asignación anterior (conserva el historial), libera el equipo anterior y bloquea
+  el nuevo. Si el equipo no está disponible, no se guarda nada (409).
+- Marcar un GPS como Retirado, Dañado o Disponible lo retira del vehículo.
+- No se pueden borrar registros con historial (vehículos con instalaciones, GPS asignados…): 409.
 
 ## Verificación
 

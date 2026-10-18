@@ -1,59 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { estadosGps, type GpsFila, type SimcardFila } from '@easyway/shared';
 import SearchableSelect from './SearchableSelect';
+import { solicitarApi } from '../lib/api';
+
+export type DatosFormularioGps = { imei: string; modelo: string; estado: GpsFila['estado']; simcard_id: string | number };
 
 interface GpsFormProps {
-  onSubmit: (data: any) => void;
-  initialValues?: any;
+  onSubmit: (data: DatosFormularioGps) => void;
+  initialValues?: GpsFila;
 }
 
 const GpsForm: React.FC<GpsFormProps> = ({ onSubmit, initialValues }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<DatosFormularioGps>({
     imei: initialValues?.imei || '',
     modelo: initialValues?.modelo || '',
     estado: initialValues?.estado || 'Disponible',
-    simcard_id: ''
+    simcard_id: initialValues?.simcard?.id ?? ''
   });
 
-  const [simcards, setSimcards] = useState<any[]>([]);
+  const [simcards, setSimcards] = useState<{ id: number; numero: string }[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      // Traer simcards disponibles
-      const { data: simData } = await supabase.from('simcards').select('id, numero').eq('estado', 'Disponible');
-      let finalSimOptions = simData || [];
-
-      // Si estamos editando, traer la simcard que ya tiene asignada
-      if (initialValues?.id) {
-        const { data: asigData } = await supabase
-          .from('simcard_asignaciones')
-          .select('simcard_id, simcards(id, numero)')
-          .eq('gps_id', initialValues.id)
-          .is('fecha_fin', null)
-          .maybeSingle();
-
-        if (asigData?.simcards) {
-          // Garantizamos que siempre tengamos un objeto único, satisfaciendo a TypeScript y al Runtime
-          const simcardAsignada = Array.isArray(asigData.simcards) 
-            ? asigData.simcards[0] 
-            : asigData.simcards;
-
-          // Ahora insertamos un objeto plano, no un arreglo
-          finalSimOptions = [simcardAsignada, ...finalSimOptions];
-          setFormData(prev => ({ ...prev, simcard_id: asigData.simcard_id }));
-        }
-      }
-      setSimcards(finalSimOptions);
-    };
-    fetchData();
+    // Simcards disponibles más la que ya tiene asignada este GPS.
+    solicitarApi<SimcardFila[]>('/simcards?estado=Disponible')
+      .then(disponibles => setSimcards([...(initialValues?.simcard ? [initialValues.simcard] : []), ...disponibles]))
+      .catch(() => setSimcards(initialValues?.simcard ? [initialValues.simcard] : []));
   }, [initialValues]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSelectChange = (name: string, value: string | number) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,12 +39,12 @@ const GpsForm: React.FC<GpsFormProps> = ({ onSubmit, initialValues }) => {
   return (
     <form onSubmit={handleSubmit}>
       <div className="form-group">
-        <label className="form-label">IMEI (Único) *</label>
-        <input type="text" name="imei" className="form-input" value={formData.imei} onChange={handleChange} maxLength={20} required />
+        <label className="form-label" htmlFor="gps-imei">IMEI (15 dígitos) *</label>
+        <input id="gps-imei" type="text" name="imei" className="form-input" value={formData.imei} onChange={handleChange} maxLength={20} inputMode="numeric" required />
       </div>
       <div className="form-group">
-        <label className="form-label">Modelo</label>
-        <input type="text" name="modelo" className="form-input" value={formData.modelo} onChange={handleChange} maxLength={50} />
+        <label className="form-label" htmlFor="gps-modelo">Modelo</label>
+        <input id="gps-modelo" type="text" name="modelo" className="form-input" value={formData.modelo} onChange={handleChange} maxLength={50} />
       </div>
 
       <div className="form-group">
@@ -77,20 +52,22 @@ const GpsForm: React.FC<GpsFormProps> = ({ onSubmit, initialValues }) => {
         <SearchableSelect
           options={simcards.map(s => ({ id: s.id, label: s.numero }))}
           value={formData.simcard_id}
-          onChange={(val) => handleSelectChange('simcard_id', val)}
+          onChange={(val) => setFormData(prev => ({ ...prev, simcard_id: val }))}
           placeholder="Buscar simcard disponible..."
           allowClear={true}
         />
       </div>
 
       <div className="form-group">
-        <label className="form-label">Estado</label>
-        <select name="estado" className="form-select" value={formData.estado} onChange={handleChange}>
-          <option value="Disponible">Disponible</option>
-          <option value="Instalado">Instalado</option>
-          <option value="Retirado">Retirado</option>
-          <option value="Dañado">Dañado</option>
+        <label className="form-label" htmlFor="gps-estado">Estado</label>
+        <select id="gps-estado" name="estado" className="form-select" value={formData.estado} onChange={handleChange}>
+          {estadosGps.map(estado => <option key={estado} value={estado}>{estado}</option>)}
         </select>
+        {initialValues?.vehiculo && formData.estado !== 'Instalado' && (
+          <p style={{ fontSize: '0.8rem', color: '#b45309', marginTop: '0.4rem' }}>
+            Al guardar, el GPS se retirará del vehículo {initialValues.vehiculo.placa || initialValues.vehiculo.marca || ''}.
+          </p>
+        )}
       </div>
 
       <button type="submit" className="btn-submit">

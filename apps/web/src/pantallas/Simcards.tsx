@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import type { Simcard } from '../types';
+import type { AsignacionHistorial, SimcardFila } from '@easyway/shared';
 import { Plus, Pencil, Trash2, Cpu, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Drawer from '../components/Drawer';
-import SimcardForm from '../components/SimcardForm';
+import SimcardForm, { type DatosFormularioSimcard } from '../components/SimcardForm';
+import { formatearFecha, mensajeError, solicitarApi } from '../lib/api';
 
 // Función helper para asignar colores a los estados
 const getStatusClass = (status: string) => {
@@ -18,67 +18,56 @@ const getStatusClass = (status: string) => {
 };
 
 const Simcards: React.FC = () => {
-  const [simcards, setSimcards] = useState<Simcard[]>([]);
+  const [simcards, setSimcards] = useState<SimcardFila[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Simcard | null>(null);
+  const [editingItem, setEditingItem] = useState<SimcardFila | null>(null);
 
   // Estados para el modal de historial
-  const [historyItem, setHistoryItem] = useState<Simcard | null>(null);
-  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [historyItem, setHistoryItem] = useState<SimcardFila | null>(null);
+  const [historyData, setHistoryData] = useState<AsignacionHistorial[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   const fetchSimcards = async () => {
-    const { data, error } = await supabase.from('simcards').select('*').order('created_at', { ascending: false });
-    if (error) toast.error('Error al cargar simcards');
-    else setSimcards(data || []);
+    try { setSimcards(await solicitarApi<SimcardFila[]>('/simcards')); }
+    catch (error) { toast.error(mensajeError(error, 'Error al cargar simcards')); }
   };
 
   useEffect(() => { fetchSimcards(); }, []);
 
   const handleOpenAdd = () => { setEditingItem(null); setIsDrawerOpen(true); };
-  const handleOpenEdit = (s: Simcard) => { setEditingItem(s); setIsDrawerOpen(true); };
+  const handleOpenEdit = (s: SimcardFila) => { setEditingItem(s); setIsDrawerOpen(true); };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('¿Eliminar Simcard?')) {
-      const { error } = await supabase.from('simcards').delete().eq('id', id);
-      if (error) toast.error('Error al eliminar');
-      else { toast.success('Simcard eliminada'); fetchSimcards(); }
-    }
+    if (!window.confirm('¿Eliminar Simcard?')) return;
+    try {
+      await solicitarApi(`/simcards/${id}`, { metodo: 'DELETE' });
+      toast.success('Simcard eliminada');
+      fetchSimcards();
+    } catch (error) { toast.error(mensajeError(error, 'Error al eliminar')); }
   };
 
-  const handleSubmit = async (formData: any) => {
-    if (editingItem) {
-      // Al actualizar, excluimos el 'estado' del payload para no sobreescribir el de la BD
-      const { estado, ...updateData } = formData;
-      const { error } = await supabase.from('simcards').update(updateData).eq('id', editingItem.id);
-
-      if (error) toast.error('Error: ' + error.message);
-      else { toast.success('Simcard actualizada'); setIsDrawerOpen(false); fetchSimcards(); }
-    } else {
-      // Al insertar, dejamos que la BD ponga 'Disponible' por defecto (no enviamos estado)
-      const { error } = await supabase.from('simcards').insert([formData]);
-      if (error) toast.error('Error: ' + error.message);
-      else { toast.success('Simcard agregada'); setIsDrawerOpen(false); fetchSimcards(); }
-    }
+  // El estado no se envía: lo gobiernan las asignaciones a GPS en la API.
+  const handleSubmit = async (formData: DatosFormularioSimcard) => {
+    try {
+      if (editingItem) await solicitarApi(`/simcards/${editingItem.id}`, { metodo: 'PUT', cuerpo: formData });
+      else await solicitarApi('/simcards', { cuerpo: formData });
+      toast.success(editingItem ? 'Simcard actualizada' : 'Simcard agregada');
+      setIsDrawerOpen(false);
+      fetchSimcards();
+    } catch (error) { toast.error(mensajeError(error, 'No se pudo guardar')); }
   };
 
-  // Función para obtener el historial de asignaciones de la SIM
-  const handleViewHistory = async (s: Simcard) => {
+  // Historial de asignaciones de la SIM a equipos GPS
+  const handleViewHistory = async (s: SimcardFila) => {
     setHistoryItem(s);
     setLoadingHistory(true);
-    const { data, error } = await supabase
-      .from('simcard_asignaciones')
-      .select('fecha_inicio, fecha_fin, gps(imei, modelo)')
-      .eq('simcard_id', s.id)
-      .order('fecha_inicio', { ascending: false });
-
-    if (error) toast.error('Error al cargar historial');
-    else setHistoryData(data || []);
-    setLoadingHistory(false);
+    try { setHistoryData(await solicitarApi<AsignacionHistorial[]>(`/simcards/${s.id}/historial`)); }
+    catch (error) { toast.error(mensajeError(error, 'Error al cargar historial')); }
+    finally { setLoadingHistory(false); }
   };
 
-  const filtered = simcards.filter(s => s.numero.includes(searchTerm));
+  const filtered = simcards.filter(s => s.numero.includes(searchTerm.replace(/[\s-]+/g, '')));
 
   return (
     <div>
@@ -106,14 +95,14 @@ const Simcards: React.FC = () => {
                 <div className="avatar"><Cpu size={18} /></div>
                 <div className="entity-details">
                   <h3>{s.numero}</h3>
-                  <p>Vence: {s.fecha_vencimiento || 'N/A'}</p>
+                  <p>Vence: {s.fecha_vencimiento || 'N/A'}{s.gps ? ` | GPS: ${s.gps.imei}` : ''}</p>
                 </div>
               </div>
               <div className="entity-actions" style={{ alignItems: 'center' }}>
-                <span className={`status-tag ${getStatusClass(s.estado!)}`}>{s.estado}</span>
-                <button className="btn-icon" title="Ver Historial" onClick={() => handleViewHistory(s)}><Clock size={18} /></button>
-                <button className="btn-icon" onClick={() => handleOpenEdit(s)}><Pencil size={18} /></button>
-                <button className="btn-icon danger" onClick={() => handleDelete(s.id!)}><Trash2 size={18} /></button>
+                <span className={`status-tag ${getStatusClass(s.estado)}`}>{s.estado}</span>
+                <button className="btn-icon" title="Ver Historial" aria-label="Ver historial" onClick={() => handleViewHistory(s)}><Clock size={18} /></button>
+                <button className="btn-icon" aria-label="Editar simcard" onClick={() => handleOpenEdit(s)}><Pencil size={18} /></button>
+                <button className="btn-icon danger" aria-label="Eliminar simcard" onClick={() => handleDelete(s.id)}><Trash2 size={18} /></button>
               </div>
             </div>
           ))
@@ -122,7 +111,7 @@ const Simcards: React.FC = () => {
 
       {/* Drawer Agregar/Editar */}
       <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title={editingItem ? 'Editar Simcard' : 'Nueva Simcard'}>
-        <SimcardForm onSubmit={handleSubmit} initialValues={editingItem || undefined} />
+        <SimcardForm key={editingItem?.id ?? 'nueva'} onSubmit={handleSubmit} initialValues={editingItem || undefined} />
       </Drawer>
 
       {/* Modal Historial */}
@@ -137,13 +126,13 @@ const Simcards: React.FC = () => {
                 {historyData.map((asig, index) => (
                   <div key={index} className="vehicle-card" style={{ margin: 0, opacity: asig.fecha_fin ? 0.7 : 1 }}>
                     <div>
-                      <div className="vehicle-title">GPS: {asig.gps?.imei || 'Desconocido'}</div>
+                      <div className="vehicle-title">GPS: {asig.gps.imei}</div>
                       <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                        Asignada el: {new Date(asig.fecha_inicio).toLocaleDateString()}
+                        Asignada el: {formatearFecha(asig.fecha_inicio)}
                       </div>
                       {asig.fecha_fin ? (
                         <span className="status-tag status-red" style={{ marginTop: '0.5rem', display: 'inline-block' }}>
-                          Retirada el: {new Date(asig.fecha_fin).toLocaleDateString()}
+                          Retirada el: {formatearFecha(asig.fecha_fin)}
                         </span>
                       ) : (
                         <span className="status-tag status-green" style={{ marginTop: '0.5rem', display: 'inline-block' }}>

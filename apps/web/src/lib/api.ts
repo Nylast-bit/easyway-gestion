@@ -26,3 +26,18 @@ export async function solicitarApi<T>(ruta: string, opciones: { metodo?: string;
   }
   return datos as T;
 }
+
+export const mensajeError = (error: unknown, alternativo = 'Ocurrió un error inesperado') =>
+  error instanceof ErrorApi ? error.message : alternativo;
+
+// <input type="datetime-local"> trabaja en hora local sin zona; la API guarda instantes ISO.
+export function aFechaHoraLocal(iso: string | null | undefined) {
+  const fecha = iso ? new Date(iso) : new Date();
+  const local = new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+export const desdeFechaHoraLocal = (valor: string) => (valor ? new Date(valor).toISOString() : null);
+
+export const formatearFecha = (iso: string | null | undefined) =>
+  iso ? new Date(iso).toLocaleDateString('es-DO', { timeZone: 'America/Santo_Domingo' }) : 'Sin fecha';

@@ -13,6 +13,7 @@ test('login con correo pide OTP, verifica y abre la ruta solicitada', async ({ p
   page.on('pageerror', error => errores.push(error.message));
   await prepararAislamiento(page);
   const usuario = { ...usuarioPrueba, usuario: null, correo: 'ana@ejemplo.do' };
+  await page.route('**/api/**', route => route.fulfill({ json: [] }));
   await page.route('**/api/auth/login', route => route.fulfill({
     status: 202, json: { estado: 'verificacion_requerida', desafio: 'd'.repeat(43), correo: 'an•@ejemplo.do', reintentarEn: 60 },
   }));

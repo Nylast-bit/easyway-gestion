@@ -12,10 +12,6 @@ const API_URL = (process.env.API_URL || 'http://127.0.0.1:3001').replace(/\/$/, 
 const config: NextConfig = {
   output: 'standalone',
   transpilePackages: ['@easyway/shared'],
-  env: {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
-  },
   async rewrites() {
     return [{ source: '/api/:ruta*', destination: `${API_URL}/api/:ruta*` }];
   },
