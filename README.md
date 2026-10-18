@@ -1,52 +1,79 @@
 # Easyway GPS Gestión
 
-Aplicación React + Vite para gestionar clientes, vehículos, equipos e instalaciones.
-La evolución a backend propio se realiza por fases. La SPA actual sigue en `src/`;
-`apps/api/src/db/` contiene únicamente el esquema inicial, no un servidor todavía.
+Monorepo npm para gestionar clientes, vehículos, inventario e instalaciones GPS.
+**Seguimiento por fase y tarea: [PROGRESO.md](PROGRESO.md).**
 
 ## Desarrollo
 
-Usar npm y Node 22. Instalar con `npm ci`.
+Node 22 y npm. Desde la raíz:
 
-- `npm run dev`: SPA existente (requiere las variables Vite de Supabase).
-- `npm run lint`: oxlint.
-- `npm run typecheck`: tipos de la SPA y herramientas de base de datos.
-- `npm test`: integración de la migración en PostgreSQL 16 real; requiere Docker activo.
-  Crea un contenedor efímero con puerto local aleatorio y lo elimina al terminar.
-- `npm run build`: compilación de la SPA.
-- `npm run db:generate -- --name=descripcion`: generar una migración después de cambiar el esquema.
-- `npm run db:migrate`: aplicar migraciones pendientes usando `DATABASE_URL`.
-- `npm run db:verify`: consultar versión, tablas y RLS sin modificar datos.
-  Ambos comandos cargan `.env` raíz sin imprimir la conexión.
+```sh
+npm ci
+npm run dev
+```
 
-## Base de datos inicial
+La web Next.js App Router arranca en http://localhost:3000.
 
-Ver [docs/migracion-bd.md](docs/migracion-bd.md) para crear el proyecto vacío,
-aplicar el SQL y preparar Storage. El esquema se reconstruyó desde consultas y
-formularios: no es una exportación de la base anterior.
+| Directorio | Estado |
+| --- | --- |
+| `apps/web` | Next.js; rutas en `src/app`, pantallas migradas en `src/pantallas` |
+| `apps/api` | Esquema Drizzle y validación; servidor Hono previsto para fase 3 |
+| `packages/shared` | Zod y normalizadores de texto, teléfono, correo y nombres |
+| `scripts/db` | Migraciones, inspección de Supabase e integración PostgreSQL |
 
-La migración habilita RLS sin políticas públicas. **La SPA antigua no puede hacer
-CRUD con la anon key sobre esta base nueva**: se conectará mediante el backend en
-la fase 3. No abrir permisos públicos para sortear esta transición.
+## Configuración y transición
 
-El Excel real y `backups/` están excluidos de Git. El histórico se importará en la
-fase 6 con análisis, vista previa y confirmación; todavía no se ha importado.
+Usar `.env.example` como referencia sin sobrescribir el `.env` privado existente.
+Las herramientas de BD y Next cargan también el `.env` raíz sin sustituir variables
+ya presentes en el entorno. Solo las dos variables explícitas `NEXT_PUBLIC_SUPABASE_*`
+se incorporan a la web; `DATABASE_URL` y `SUPABASE_SECRET_KEY` son exclusivamente privadas.
 
-## Estado
+La nueva BD tiene RLS sin políticas públicas. El CRUD actual todavía depende del
+cliente antiguo de Supabase y se migrará a Hono en la fase 3. Sin configuración
+pública, las rutas muestran un aviso de conexión pendiente y permiten navegar.
+No introducir claves privadas como variables públicas ni abrir RLS para sortear
+esta transición. Las pruebas de las pantallas usan un cliente simulado.
 
-Fase 1: migraciones 0000 y 0001 aplicadas en Supabase (PostgreSQL 17.11), nueve
-tablas verificadas con RLS habilitado. Pruebas locales aprobadas en PostgreSQL 16.
-Bucket privado `vehicles` verificado. Se usará la API de Supabase Storage, sin S3.
-Pendiente configurar `SUPABASE_URL` y `SUPABASE_SECRET_KEY` exclusivamente para
-el futuro backend; el adaptador y sus pruebas de archivos llegan en la fase 3.
-El plan Free publicado incluye 1 GB de archivos; confirmar el plan de la organización.
+El bucket `vehicles` es privado y se verificaron autenticación/listado con la API
+de Supabase Storage. El adaptador de fotos, enlaces temporales y pruebas de
+subida/descarga/borrado pertenecen a la fase 3. No usamos credenciales S3.
 
-Fase 2 acordada: migrar a Next.js App Router en `apps/web` y npm workspaces,
-conservar backend Hono separado y validación compartida. La web requerirá servidor
-Node, no solo nginx estático. Esta migración aún no está implementada.
+## Verificación
 
-Skills oficiales Supabase instaladas en `.agents/skills`; reiniciar OpenCode para
-que descubra las skills registradas en `opencode.json`.
+| Comando | Qué ejecuta |
+| --- | --- |
+| `npm run lint` | oxlint en código de aplicación y herramientas |
+| `npm run typecheck` | tipos de todos los workspaces, generación de rutas Next y herramientas BD |
+| `npm run test:unit` | guardas de commits y Vitest web/API/shared; sin red ni Docker |
+| `npm run test:int` | PostgreSQL 16 efímero; requiere Docker activo, nunca usa DATABASE_URL |
+| `npm test` | unitarias + integración |
+| `npm run test:e2e` | Chromium, servidor Next aislado en puerto 3100, sin acceso a producción |
+| `npm run build` | typecheck completo y build Next.js |
+| `npm run preview` | servidor Next de producción después del build |
 
-`npx tsx scripts/db/verificar-storage.ts` inspecciona el bucket `vehicles` mediante
-una transacción de solo lectura. No prueba aún subidas ni descargas por la API.
+Antes de ejecutar e2e por primera vez: `npx playwright install chromium`.
+Pruebas enfocadas:
+
+```sh
+npm run test --workspace=@easyway/shared -- -t telefono
+npm run test --workspace=@easyway/web
+npm run test:int -- -t RLS
+```
+
+Husky ejecuta lint-staged: bloquea `.env*` (salvo `.env.example`), respaldos y Excel
+real, comprueba lint de código staged y tipos del workspace afectado. Ejecuta
+`vitest related --run` para cambios locales; cambios globales/shared ejecutan todas
+las pruebas rápidas. Docker y Playwright no se ejecutan en pre-commit.
+
+## Base de datos
+
+- `npm run db:generate -- --name=descripcion`: generar SQL y metadatos tras editar Drizzle.
+- `npm run db:migrate`: aplicar migraciones pendientes usando DATABASE_URL.
+- `npm run db:verify`: versión, tablas y RLS en modo solo lectura.
+- `npx tsx scripts/db/verificar-storage.ts`: metadatos del bucket privado.
+
+Ver [docs/migracion-bd.md](docs/migracion-bd.md). Las migraciones 0000/0001 están
+aplicadas en Supabase PostgreSQL 17.11. El Excel real no está importado ni versionado;
+su importador transaccional se construirá en la fase 6.
+
+Skills oficiales Supabase en `.agents/skills`, registradas mediante `opencode.json`.

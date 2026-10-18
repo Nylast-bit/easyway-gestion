@@ -1,45 +1,38 @@
 # AGENTS.md
 
-SPA Vite + React 19 + TypeScript aún en la raíz. `apps/api/` contiene el esquema y migraciones, no un backend ejecutable. Fase 2 acordada: npm workspaces y Next.js App Router en `apps/web`, manteniendo Hono separado en `apps/api`.
+## Estado y límites
 
-## Comandos (npm)
+- Seguimiento verificable en `PROGRESO.md`: actualizar casillas al terminar cada tarea. No marcar una fase completa sin checks y commit.
+- npm workspaces: `apps/web` es Next.js App Router; `apps/api` solo tiene esquema Drizzle/validación (Hono llega en fase 3); `packages/shared` exporta TS/Zod directamente.
+- Usar npm y Node 22. `package-lock.json` es vigente; ignorar `pnpm-lock.yaml` antiguo, no eliminarlo sin consultar.
+- Rutas en `apps/web/src/app`; pantallas heredadas en `src/pantallas`, nunca `src/pages` (Next crearía rutas Pages Router duplicadas). Sidebar en `src/layouts/MainLayout.tsx`: actualizar al añadir rutas.
 
-- `npm run lint` — oxlint (NO eslint; configuración en `.oxlintrc.json`)
-- `npm run build` — `tsc -b && vite build`. Este es el gate de typecheck y lo que Vercel ejecuta en el deploy; un commit reciente existió solo porque errores de TS bloqueaban el build en Vercel. Ejecútalo antes de dar el trabajo por terminado.
-- `npm run dev` — servidor de desarrollo
-- `npm run typecheck` verifica la SPA y las herramientas de BD (`tsconfig.db.json`).
-- `npm test` ejecuta Vitest contra PostgreSQL 16 efímero en Docker: requiere motor activo, no usa DATABASE_URL y elimina su contenedor. Una prueba: `npm test -- -t "RLS"`.
-- Node objetivo: 22. Comprobar lint, typecheck, test y build antes del commit de cada fase.
+## Comandos y comprobaciones
 
-Usa **npm** únicamente. `package-lock.json` es el lockfile vigente en el repo; `pnpm-lock.yaml` es un residuo antiguo de julio 2026 — ignóralo (y no lo elimines sin preguntar).
+- `npm run dev`: Next en puerto 3000; `npm run build`: tipos de todos los workspaces + build Next. Ejecutar antes de terminar.
+- `npm run lint` usa oxlint, NO ESLint. `noUnusedLocals`/`noUnusedParameters` activos; web conserva tipado permisivo heredado, API/shared usan strict.
+- `npm run typecheck`: incluye `next typegen` para evitar tipos de rutas obsoletos y `tsconfig.db.json` para herramientas.
+- `npm run test:unit`: guardas de commits + Vitest por workspace. Enfoque: `npm run test --workspace=@easyway/shared -- -t telefono`.
+- `npm run test:int`: PostgreSQL 16 efímero en Docker, puerto local aleatorio, elimina su contenedor; no lee DATABASE_URL. Enfoque: `npm run test:int -- -t RLS`.
+- `npm test`: unitarias + integración. `npm run test:e2e`: Playwright inicia Next en 3100 con variables públicas vacías y bloquea Supabase; instalar navegador con `npx playwright install chromium`.
+- Pre-commit: lint-staged bloquea secretos/datos, lint de staged, tipos y tests relacionados rápidos; cambios globales/shared verifican todos los workspaces. No ejecutar Docker/e2e dentro del hook.
+- Al cerrar fase: lint, typecheck, test, build y e2e pertinentes; actualizar README/PROGRESO y commit Conventional Commits.
 
-## Entorno
+## Variables y acceso
 
-- El cliente de Supabase (`src/lib/supabaseClient.ts`) requiere `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `.env` (gitignored). La app falla al iniciar sin ellas; no hay fallbacks ni init diferido.
+- `.env` raíz se carga sin sobrescribir el entorno por scripts de BD y `apps/web/next.config.ts`. Next también admite su `.env` de workspace.
+- Web transitoria: `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Sin ellas muestra aviso de conexión pendiente; cliente inicializado al usarlo, no durante prerender. No sustituirlas por secretos.
+- El CRUD heredado todavía vive en las pantallas y formularios con Supabase. Las pruebas web simulan ese cliente, no consultan el proyecto real. Se sustituye por Hono en fase 3.
+- RLS sin políticas públicas es intencional: no abrir permisos anon para hacer funcionar el CRUD antiguo en la BD nueva.
+- Storage: API Supabase, bucket privado `vehicles` verificado. Adaptador futuro solo backend: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_STORAGE_BUCKET=vehicles`; nunca secretos en VITE_/NEXT_PUBLIC_. Código antiguo usa `vehiculos`/URLs públicas y se sustituirá en fase 3.
 
-## Arquitectura
+## Base de datos y dominio
 
-- Las rutas se definen centralmente en `src/App.tsx` dentro de `MainLayout` (`src/layouts/MainLayout.tsx`, que también posee el sidebar — agregar una ruta implica actualizar ambos).
-- Cada página en `src/pages/` posee su propio CRUD directo contra Supabase (select/insert/update/delete en línea en la página). Los componentes de formulario compartidos están en `src/components/`.
-- Los tipos de filas compartidos están en `src/types.ts`.
-
-## Nombres de tablas Supabase (en español — deben coincidir exactamente)
-
-`clientes`, `tecnicos`, `vehiculos`, `gps`, `simcards`, `instalaciones`, `gps_asignaciones`, `simcard_asignaciones`, `vehiculo_imagenes`
-
-Esquema reconstruido desde el frontend en `apps/api/src/db/esquema.ts`; no es un dump de la BD antigua. Decisiones y preparación del destino en `docs/migracion-bd.md`.
-
-- `npm run db:generate -- --name=descripcion` genera SQL y metadatos en `apps/api/drizzle`; versionar ambos.
-- `npm run db:migrate` carga `.env` raíz sin sobrescribir el entorno; requiere DATABASE_URL. Usa el historial Drizzle, no aplicar SQL manual y luego intentar migrarlo otra vez. `npm run db:verify` inspecciona versión, tablas y RLS con una transacción de solo lectura, sin mostrar credenciales.
-- RLS sin políticas públicas es intencional: la SPA antigua no podrá usar la nueva BD con anon key; el backend llegará en fase 3. No abrir permisos públicos para evitarlo.
-- No usar `drizzle-kit push` en el destino. Cambios de esquema posteriores van en migraciones nuevas.
-- El Excel real y `backups/` están ignorados; solo se permite el futuro fixture anonimizado `tests/fixtures/excel-muestra.xlsx`.
-- Plan Anual y Plan Anual (monitoreo) son equivalentes, confirmado; Plan Anual (Sin monit.) es distinto.
-- Storage acordado: API de Supabase Storage, bucket privado `vehicles` (verificado), sin credenciales S3. Adaptador exclusivo del backend con `SUPABASE_URL`, `SUPABASE_SECRET_KEY` y `SUPABASE_STORAGE_BUCKET=vehicles`; nunca exponer la clave en VITE_/NEXT_PUBLIC_. El código antiguo aún usa `vehiculos` y URLs públicas: se sustituye al migrar el CRUD al backend. Zona horaria: America/Santo_Domingo; moneda DOP (RD$).
-- Skills oficiales en `.agents/skills`, registradas mediante `opencode.json`; revisar las guías aplicables a PostgreSQL/Storage. La arquitectura y migraciones Drizzle del proyecto prevalecen sobre ejemplos de Supabase Auth o CLI.
-
-## Convenciones
-
-- Comentarios de código, textos de UI e identificadores están en español — mantén la consistencia en código nuevo.
-- `tsconfig.app.json` habilita `noUnusedLocals` y `noUnusedParameters`: imports/variables sin usar fallan `npm run build` aunque el lint pase.
-- Toasts con `react-hot-toast` (`Toaster` montado en `App.tsx`); iconos con `lucide-react`.
+- `apps/api/src/db/esquema.ts` fue reconstruido desde frontend, no introspectado. Decisiones en `docs/migracion-bd.md`.
+- `npm run db:generate -- --name=descripcion`: versionar SQL y metadatos de `apps/api/drizzle`. `npm run db:migrate` usa DATABASE_URL e historial Drizzle; no combinar SQL manual y migrador, ni usar drizzle-kit push.
+- `npm run db:verify`: versión/tablas/RLS, transacción de solo lectura y sin credenciales en salida.
+- Tablas exactas: `clientes`, `tecnicos`, `vehiculos`, `gps`, `simcards`, `instalaciones`, `gps_asignaciones`, `simcard_asignaciones`, `vehiculo_imagenes`.
+- Plan Anual y Plan Anual (monitoreo) son equivalentes; Plan Anual (Sin monit.) es distinto. America/Santo_Domingo; moneda DOP (RD$).
+- Excel real y `backups/` ignorados; único fixture permitido: `tests/fixtures/excel-muestra.xlsx` anonimizado.
+- Skills oficiales en `.agents/skills` registradas por `opencode.json`. Arquitectura/migraciones Drizzle prevalecen sobre ejemplos Supabase Auth/CLI.
+- Comentarios y UI nuevos en español. Toasts react-hot-toast (proveedor en app), iconos lucide-react. Tipos heredados compartidos en `apps/web/src/types.ts`.

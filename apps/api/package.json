@@ -1,0 +1,9 @@
+{
+  "name": "@easyway/api", "version": "0.0.0", "private": true, "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:related": "vitest related --run --passWithNoTests"
+  },
+  "dependencies": { "drizzle-orm": "^0.45.4", "postgres": "^3.4.9", "@easyway/shared": "*" }
+}

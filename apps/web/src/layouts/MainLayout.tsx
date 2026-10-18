@@ -1,8 +1,10 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Users, Wrench, Car, Satellite, Cpu, ClipboardList, LayoutDashboard, Search } from 'lucide-react';
 import GlobalSearch from '../components/GlobalSearch';
-import '../styles/global.css';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -14,7 +16,8 @@ const navItems = [
   { to: '/installations', icon: ClipboardList, label: 'Instalaciones' },
 ];
 
-const MainLayout: React.FC = () => {
+const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const pathname = usePathname();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // Intercepta las teclas para abrir la búsqueda con Ctrl+K o Cmd+K
@@ -36,15 +39,16 @@ const MainLayout: React.FC = () => {
     <div className="app-layout">
       <aside className="sidebar">
         {navItems.map((item, index) => (
-          <NavLink
+          <Link
             key={index}
-            to={item.to}
-            className={({ isActive }) => `sidebar-icon ${isActive ? 'active' : ''}`}
-            end={item.to === '/'}
+            href={item.to}
+            aria-label={item.label}
+            aria-current={pathname === item.to ? 'page' : undefined}
+            className={`sidebar-icon ${pathname === item.to ? 'active' : ''}`}
           >
             <item.icon size={24} />
             <span className="tooltip">{item.label}</span>
-          </NavLink>
+          </Link>
         ))}
       </aside>
 
@@ -58,7 +62,7 @@ const MainLayout: React.FC = () => {
         </header>
 
         <main className="page-area">
-          <Outlet />
+          {children}
         </main>
       </div>
 

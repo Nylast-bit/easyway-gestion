@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { supabase, configuracionPublicaDisponible } from '../lib/supabaseClient';
+import { useRouter } from 'next/navigation';
 import { Search, Users, Car, Satellite } from 'lucide-react';
 
 interface GlobalSearchProps {
@@ -11,10 +11,10 @@ interface GlobalSearchProps {
 const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<any[]>([]);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
-    if (search.length > 0) {
+    if (search.length > 0 && configuracionPublicaDisponible) {
       const fetchData = async () => {
         const [cliRes, vehRes, gpsRes] = await Promise.all([
           supabase.from('clientes').select('id, nombre').ilike('nombre', `%${search}%`).limit(3),
@@ -39,7 +39,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const handleNavigate = (path: string) => {
-    navigate(path);
+    router.push(path);
     onClose();
     setSearch('');
   };

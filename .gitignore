@@ -36,3 +36,8 @@ node_modules
 backups/
 *.xlsx
 !tests/fixtures/excel-muestra.xlsx
+.next/
+*.tsbuildinfo
+playwright-report/
+test-results/
+coverage/

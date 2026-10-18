@@ -3,7 +3,8 @@
 ## Alcance y decisiones
 
 El proyecto antiguo no está accesible y no hay datos que conservar. Las nueve
-tablas se reconstruyeron desde `src/types.ts`, páginas y formularios. La fuente
+tablas se reconstruyeron desde los tipos, páginas y formularios (ahora en
+`apps/web/src/types.ts`, `apps/web/src/pantallas` y `apps/web/src/components`). La fuente
 versionada es `apps/api/src/db/esquema.ts`; Drizzle genera
 `apps/api/drizzle/0000_inicial.sql` y sus metadatos. No se hizo introspección.
 
@@ -102,9 +103,9 @@ flujo privado, pues también necesita autorización y URLs temporales en fase 3.
 
 ## Próximas fases
 
-La fase 2 migrará la SPA a Next.js App Router y consolidará npm workspaces, conservando
-Hono como backend separado. Las herramientas de BD ya
-usan la ubicación final `apps/api`, pero las dependencias siguen en el paquete raíz.
+La fase 2 migra la SPA a Next.js App Router en `apps/web` y npm workspaces, conservando
+Hono como backend separado para la fase 3. Las herramientas de BD siguen en raíz,
+con esquema/migraciones en `apps/api` y validación compartida en `packages/shared`.
 Antes de cargar datos reales se incorporarán respaldo/restauración. No se necesita
 copiar Storage ni respaldar una base antigua inexistente. El Excel se carga en fase 6.
 
