@@ -2,7 +2,7 @@ import type { Context } from 'hono';
 import type { z } from 'zod';
 
 export class ErrorHttp extends Error {
-  constructor(public estado: 400 | 401 | 403 | 404 | 409 | 410 | 423 | 429 | 502, mensaje: string, public detalles?: unknown) {
+  constructor(public estado: 400 | 401 | 403 | 404 | 409 | 410 | 413 | 415 | 423 | 429 | 502, mensaje: string, public detalles?: unknown) {
     super(mensaje);
   }
 }

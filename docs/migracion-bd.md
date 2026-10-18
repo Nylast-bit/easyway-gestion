@@ -121,6 +121,12 @@ Añade `usuarios`, `sesiones` y `verificaciones_correo`, todas con RLS sin polí
 - Es aditiva: no modifica tablas existentes. Aplicar con `npm run db:migrate` y crear el
   administrador con `npm run db:crear-admin`.
 
+## Fase 3 — autor de fotos (0003_autor_imagenes)
+
+Añade `vehiculo_imagenes.subida_por` (opcional, `ON DELETE SET NULL` hacia `usuarios`).
+Permite que un técnico borre solo sus fotos y conserva la foto si se elimina la cuenta.
+Aditiva; las filas existentes quedan con autor nulo (solo un admin podrá borrarlas).
+
 ## Verificación del destino
 
 Se comprobó primero que `public` no tenía tablas. Después se aplicaron `0000_inicial`
@@ -130,7 +136,8 @@ La segunda migración añade índices completos para consultar el historial de G
 los índices parciales existentes solo cubren asignaciones activas.
 
 Se ejecutaron pruebas locales con Node 22.22.0 y PostgreSQL 16. Se verificó el bucket
-privado `vehicles`; falta probar operaciones de archivos por API en la fase 3.
+privado `vehicles`. En la fase 3 (`npm run storage:verificar`) se comprobaron subida sin
+sobrescritura, descarga con URL firmada, rechazo de la URL pública y borrado.
 La tarifa pública consultada incluye 1 GB Storage, 5 GB egress y 5 GB cached egress
 en Free; no determina qué plan tiene la organización del usuario.
 

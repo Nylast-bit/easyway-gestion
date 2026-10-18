@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { GpsFila, Persona, VehiculoFila } from '@easyway/shared';
 import { Image as ImageIcon } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
+import GaleriaFotos from './GaleriaFotos';
 import { solicitarApi } from '../lib/api';
 
 export type DatosFormularioVehiculo = {
@@ -117,10 +118,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ onSubmit, initialValues, envi
         </div>
       </div>
 
-      {/* Las fotos vuelven con el almacenamiento privado y URLs temporales (fase 3, bloque 3). */}
-      <p style={{ fontSize: '0.8rem', color: '#6b7280', margin: '0.5rem 0 1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-        <ImageIcon size={14} /> La gestión de fotos se habilitará con el almacenamiento privado.
-      </p>
+      {/* Las fotos se guardan al momento en almacenamiento privado; requieren un vehículo ya creado. */}
+      {initialValues ? <GaleriaFotos vehiculoId={initialValues.id} /> : (
+        <p style={{ fontSize: '0.8rem', color: '#6b7280', margin: '0.5rem 0 1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <ImageIcon size={14} /> Guarda el vehículo para poder agregar fotos.
+        </p>
+      )}
 
       <button type="submit" className="btn-submit" disabled={enviando}>
         {enviando ? 'Guardando…' : initialValues ? 'Guardar Cambios' : 'Agregar Vehículo'}

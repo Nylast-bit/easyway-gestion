@@ -7,11 +7,13 @@ export class ErrorApi extends Error {
 // Cliente mínimo para la API Hono, servida en /api del mismo origen mediante rewrites de Next.
 export async function solicitarApi<T>(ruta: string, opciones: { metodo?: string; cuerpo?: unknown } = {}): Promise<T> {
   let respuesta: Response;
+  // FormData (subida de archivos) viaja como multipart: el navegador pone el Content-Type con su boundary.
+  const formulario = opciones.cuerpo instanceof FormData;
   try {
     respuesta = await fetch(`/api${ruta}`, {
       method: opciones.metodo ?? (opciones.cuerpo === undefined ? 'GET' : 'POST'),
-      headers: opciones.cuerpo === undefined ? undefined : { 'Content-Type': 'application/json' },
-      body: opciones.cuerpo === undefined ? undefined : JSON.stringify(opciones.cuerpo),
+      headers: opciones.cuerpo === undefined || formulario ? undefined : { 'Content-Type': 'application/json' },
+      body: opciones.cuerpo === undefined ? undefined : formulario ? opciones.cuerpo as FormData : JSON.stringify(opciones.cuerpo),
       credentials: 'same-origin',
     });
   } catch {

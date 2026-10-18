@@ -34,6 +34,7 @@ node_modules
 
 # Datos privados y respaldos
 backups/
+.almacen-local/
 *.xlsx
 !tests/fixtures/excel-muestra.xlsx
 .next/

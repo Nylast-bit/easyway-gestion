@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, boolean, check, date, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 const id = () => integer('id').primaryKey().generatedAlwaysAsIdentity();
 const creado = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -77,6 +77,8 @@ export const simcardAsignaciones = pgTable('simcard_asignaciones', {
 export const vehiculoImagenes = pgTable('vehiculo_imagenes', {
   id: id(), vehiculo_id: integer('vehiculo_id').notNull().references(() => vehiculos.id),
   storage_path: text('storage_path').notNull(), created_at: creado(),
+  // Autor de la foto (fase 3): un técnico solo puede borrar las suyas. La foto se conserva si se borra el usuario.
+  subida_por: integer('subida_por').references((): AnyPgColumn => usuarios.id, { onDelete: 'set null' }),
 }, (tabla) => [
   uniqueIndex('vehiculo_imagenes_ruta_unica').on(tabla.storage_path),
   index('vehiculo_imagenes_vehiculo_idx').on(tabla.vehiculo_id),

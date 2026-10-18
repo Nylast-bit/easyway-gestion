@@ -13,6 +13,9 @@ const esquemaServidor = z.object({
   API_PUERTO: z.coerce.number().int().min(1).max(65535).default(3001),
   RESEND_API_KEY: z.string().trim().min(1).optional(),
   CORREO_REMITENTE: z.string().trim().min(3).optional(),
+  SUPABASE_URL: z.url().optional(),
+  SUPABASE_SECRET_KEY: z.string().trim().min(20).optional(),
+  SUPABASE_STORAGE_BUCKET: z.string().trim().regex(/^[a-z0-9_-]{3,63}$/).default('vehicles'),
 });
 
 export type ConfiguracionServidor = ReturnType<typeof validarConfiguracionServidor>;
@@ -24,6 +27,8 @@ export function validarConfiguracionServidor(entorno: Record<string, string | un
   const resultado = esquemaServidor.safeParse({
     NODE_ENV: vacio(entorno.NODE_ENV), API_PUERTO: vacio(entorno.API_PUERTO),
     RESEND_API_KEY: vacio(entorno.RESEND_API_KEY), CORREO_REMITENTE: vacio(entorno.CORREO_REMITENTE),
+    SUPABASE_URL: vacio(entorno.SUPABASE_URL), SUPABASE_SECRET_KEY: vacio(entorno.SUPABASE_SECRET_KEY),
+    SUPABASE_STORAGE_BUCKET: vacio(entorno.SUPABASE_STORAGE_BUCKET),
   });
   if (!resultado.success) throw new Error(`Configuración inválida: ${resultado.error.issues.map(i => i.path.join('.')).join(', ')}`);
   const datos = resultado.data;
@@ -32,6 +37,16 @@ export function validarConfiguracionServidor(entorno: Record<string, string | un
   }
   const produccion = datos.NODE_ENV === 'production';
   if (produccion && !datos.RESEND_API_KEY) throw new Error('En producción se requieren RESEND_API_KEY y CORREO_REMITENTE');
-  return { DATABASE_URL, puerto: datos.API_PUERTO, produccion, resend: datos.RESEND_API_KEY
-    ? { apiKey: datos.RESEND_API_KEY, remitente: datos.CORREO_REMITENTE! } : null };
+  if (Boolean(datos.SUPABASE_URL) !== Boolean(datos.SUPABASE_SECRET_KEY)) {
+    throw new Error('SUPABASE_URL y SUPABASE_SECRET_KEY deben configurarse juntas');
+  }
+  // Una clave publicable no puede firmar ni subir en un bucket privado: se detecta antes de arrancar.
+  if (datos.SUPABASE_SECRET_KEY?.startsWith('sb_publishable_')) throw new Error('SUPABASE_SECRET_KEY debe ser una clave secreta, no publicable');
+  if (produccion && !datos.SUPABASE_URL) throw new Error('En producción se requieren SUPABASE_URL y SUPABASE_SECRET_KEY');
+  return {
+    DATABASE_URL, puerto: datos.API_PUERTO, produccion,
+    resend: datos.RESEND_API_KEY ? { apiKey: datos.RESEND_API_KEY, remitente: datos.CORREO_REMITENTE! } : null,
+    storage: datos.SUPABASE_URL
+      ? { url: datos.SUPABASE_URL, claveSecreta: datos.SUPABASE_SECRET_KEY!, bucket: datos.SUPABASE_STORAGE_BUCKET } : null,
+  };
 }

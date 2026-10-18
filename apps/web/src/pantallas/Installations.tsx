@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import type { InstalacionFila } from '@easyway/shared';
-import { Plus, Pencil, Trash2, ClipboardList } from 'lucide-react';
+import { Plus, Pencil, Trash2, ClipboardList, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Drawer from '../components/Drawer';
 import InstallationForm, { type DatosFormularioInstalacion } from '../components/InstallationForm';
+import AvanceInstalacionForm, { type DatosAvance } from '../components/AvanceInstalacionForm';
+import GaleriaFotos from '../components/GaleriaFotos';
 import { formatearFecha, mensajeError, solicitarApi } from '../lib/api';
+import { useSesion } from '../lib/sesion';
 
 // Función helper para asignar colores a los estados de instalación
 const getInstStatusClass = (status: string) => {
@@ -21,6 +24,9 @@ const Installations: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InstalacionFila | null>(null);
+  // El panel lateral muestra el formulario completo (admin), el avance (técnico) o las fotos del vehículo.
+  const [modo, setModo] = useState<'editar' | 'avance' | 'fotos'>('editar');
+  const esTecnico = useSesion()?.rol === 'tecnico';
 
   const fetchInstallations = async () => {
     try { setInstallations(await solicitarApi<InstalacionFila[]>('/instalaciones')); }
@@ -29,8 +35,19 @@ const Installations: React.FC = () => {
 
   useEffect(() => { fetchInstallations(); }, []);
 
-  const handleOpenAdd = () => { setEditingItem(null); setIsDrawerOpen(true); };
-  const handleOpenEdit = (i: InstalacionFila) => { setEditingItem(i); setIsDrawerOpen(true); };
+  const abrir = (i: InstalacionFila | null, nuevoModo: typeof modo) => { setEditingItem(i); setModo(nuevoModo); setIsDrawerOpen(true); };
+  const handleOpenAdd = () => abrir(null, 'editar');
+  const handleOpenEdit = (i: InstalacionFila) => abrir(i, esTecnico ? 'avance' : 'editar');
+
+  const guardarAvance = async (datos: DatosAvance) => {
+    if (!editingItem) return;
+    try {
+      await solicitarApi(`/instalaciones/${editingItem.id}/avance`, { metodo: 'PATCH', cuerpo: datos });
+      toast.success('Avance guardado');
+      setIsDrawerOpen(false);
+      fetchInstallations();
+    } catch (error) { toast.error(mensajeError(error, 'No se pudo guardar el avance')); }
+  };
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('¿Eliminar este registro?')) return;
@@ -62,8 +79,8 @@ const Installations: React.FC = () => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>Instalaciones</h1>
-        <button className="btn-primary" onClick={handleOpenAdd}><Plus size={18} /> Agregar</button>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>{esTecnico ? 'Mis instalaciones' : 'Instalaciones'}</h1>
+        {!esTecnico && <button className="btn-primary" onClick={handleOpenAdd}><Plus size={18} /> Agregar</button>}
       </div>
 
       <input
@@ -92,8 +109,9 @@ const Installations: React.FC = () => {
                   </div>
                 </div>
                 <div className="entity-actions">
-                  <button className="btn-icon" aria-label="Editar instalación" onClick={() => handleOpenEdit(i)}><Pencil size={18} /></button>
-                  <button className="btn-icon danger" aria-label="Eliminar instalación" onClick={() => handleDelete(i.id)}><Trash2 size={18} /></button>
+                  <button className="btn-icon" aria-label="Fotos del vehículo" title="Fotos del vehículo" onClick={() => abrir(i, 'fotos')}><Camera size={18} /></button>
+                  <button className="btn-icon" aria-label={esTecnico ? 'Actualizar avance' : 'Editar instalación'} onClick={() => handleOpenEdit(i)}><Pencil size={18} /></button>
+                  {!esTecnico && <button className="btn-icon danger" aria-label="Eliminar instalación" onClick={() => handleDelete(i.id)}><Trash2 size={18} /></button>}
                 </div>
               </div>
               <div className="vehicle-tags" style={{ marginTop: '0.5rem' }}>
@@ -109,8 +127,14 @@ const Installations: React.FC = () => {
         )}
       </div>
 
-      <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title={editingItem ? 'Editar Instalación' : 'Nueva Instalación'}>
-        <InstallationForm key={editingItem?.id ?? 'nueva'} onSubmit={handleSubmit} initialValues={editingItem || undefined} />
+      <Drawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        title={modo === 'fotos' ? 'Fotos del vehículo' : modo === 'avance' ? 'Actualizar avance' : editingItem ? 'Editar Instalación' : 'Nueva Instalación'}
+      >
+        {modo === 'fotos' && editingItem && <GaleriaFotos key={`fotos-${editingItem.id}`} vehiculoId={editingItem.vehiculo_id} />}
+        {modo === 'avance' && editingItem && <AvanceInstalacionForm key={`avance-${editingItem.id}`} instalacion={editingItem} onSubmit={guardarAvance} />}
+        {modo === 'editar' && <InstallationForm key={editingItem?.id ?? 'nueva'} onSubmit={handleSubmit} initialValues={editingItem || undefined} />}
       </Drawer>
     </div>
   );

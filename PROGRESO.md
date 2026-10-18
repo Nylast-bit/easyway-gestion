@@ -1,6 +1,6 @@
 # Progreso — Easyway GPS Gestión
 
-**Estado: fase 3 en curso — bloques 1 (autenticación y OTP) y 2 (CRUD y asignaciones transaccionales) implementados; siguiente: Storage de fotos y aislamiento de técnicos.**
+**Estado: fase 3 implementada (bloques 1–3); pendiente aplicar migraciones 0002/0003 en Supabase y crear el administrador real para cerrarla.**
 Las casillas se marcan únicamente cuando la tarea o verificación esté terminada.
 
 ## Fase 1 — Base inicial y Supabase
@@ -42,8 +42,8 @@ Las casillas se marcan únicamente cuando la tarea o verificación esté termina
 - [ ] Aplicar `0002_autenticacion` en Supabase y crear el administrador real.
 - [x] Migrar CRUD, búsquedas y asignaciones a API con transacciones.
 - [x] Portal protegido y retirada de Supabase del frontend (fotos deshabilitadas hasta el adaptador de Storage).
-- [ ] Adaptador Supabase Storage con autorización y URLs temporales; probar archivos.
-- [ ] Pruebas de autorización, aislamiento entre técnicos y rollback (autorización por rol y rollback hechos; falta aislamiento de técnicos).
+- [x] Adaptador Supabase Storage con autorización y URLs temporales; probar archivos.
+- [x] Pruebas de autorización, aislamiento entre técnicos y rollback.
 - [ ] Verificaciones, documentación y commit.
 
 ### Evidencia de fase 3 — bloque 1
@@ -62,6 +62,17 @@ Las casillas se marcan únicamente cuando la tarea o verificación esté termina
 - 3 escenarios Playwright con API simulada y Supabase bloqueado.
 - Humo con pila real (PostgreSQL efímero + API + Next): login, alta encadenada cliente → SIM → GPS → vehículo, 409 al reutilizar el GPS y pantallas mostrando los datos.
 - Lint sin errores ni advertencias; build Next correcto; `@supabase/supabase-js` retirado de la web.
+
+### Evidencia de fase 3 — bloque 3
+- Prueba real contra el bucket privado `vehicles` (`npm run storage:verificar`): subida, no sobrescritura,
+  descarga con URL firmada, URL pública rechazada, borrado y URL firmada inservible tras borrar.
+- 22 pruebas de integración: 5 nuevas de aislamiento y fotos (técnicos solo ven/actualizan lo suyo, 403 en
+  administración, URL temporal que caduca y no se puede alterar, 7 subidas simultáneas → 5 aceptadas,
+  formato por firma, 8 MB, mismo origen, borrado solo de fotos propias, rollback si Storage falla al borrar,
+  borrado de vehículo con sus fotos).
+- 66 pruebas rápidas: 2 guardas, 14 API (almacén local y adaptador Supabase simulado), 19 web (menú por rol,
+  avance de técnico, galería multipart) y 24 shared.
+- Build y lint correctos.
 
 ## Fase 4 — Docker
 - [ ] Imágenes multi-stage de Next.js/API y compose de desarrollo/producción.

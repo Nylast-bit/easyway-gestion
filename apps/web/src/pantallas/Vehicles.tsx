@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { VehiculoFila } from '@easyway/shared';
-import { Plus, Pencil, Trash2, Car } from 'lucide-react';
+import { Plus, Pencil, Trash2, Car, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Drawer from '../components/Drawer';
 import VehicleForm, { type DatosFormularioVehiculo } from '../components/VehicleForm';
@@ -12,6 +12,7 @@ const Vehicles: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<VehiculoFila | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const fetchVehicles = async () => {
     try { setVehicles(await solicitarApi<VehiculoFila[]>('/vehiculos')); }
@@ -83,12 +84,20 @@ const Vehicles: React.FC = () => {
           filteredVehicles.map(v => (
             <div key={v.id} className="vehicle-card">
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <div style={{
-                  width: '64px', height: '64px', borderRadius: '8px', background: 'var(--sidebar-hover)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                }}>
-                  <Car size={24} color="var(--sidebar-active)" />
-                </div>
+                {v.miniatura ? (
+                  <button type="button" onClick={() => setLightboxImage(v.miniatura)} aria-label="Ver foto del vehículo"
+                    style={{ border: 'none', padding: 0, background: 'none', cursor: 'pointer', flexShrink: 0 }}>
+                    <img src={v.miniatura} alt={`${v.marca || 'Vehículo'} ${v.placa || ''}`.trim()}
+                      style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'cover', display: 'block' }} />
+                  </button>
+                ) : (
+                  <div style={{
+                    width: '64px', height: '64px', borderRadius: '8px', background: 'var(--sidebar-hover)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                  }}>
+                    <Car size={24} color="var(--sidebar-active)" />
+                  </div>
+                )}
 
                 <div style={{ flex: 1 }}>
                   <div className="vehicle-header">
@@ -119,7 +128,7 @@ const Vehicles: React.FC = () => {
 
       <Drawer
         isOpen={isDrawerOpen}
-        onClose={() => isSubmitting ? null : setIsDrawerOpen(false)}
+        onClose={() => { if (isSubmitting) return; setIsDrawerOpen(false); fetchVehicles(); }}
         title={editingVehicle ? 'Editar Vehículo' : 'Nuevo Vehículo'}
       >
         <VehicleForm
@@ -129,6 +138,18 @@ const Vehicles: React.FC = () => {
           enviando={isSubmitting}
         />
       </Drawer>
+
+      {/* Visor de imagen: la URL es temporal y firmada por la API */}
+      {lightboxImage && (
+        <div className="modal-overlay" onClick={() => setLightboxImage(null)} style={{ padding: '1rem' }}>
+          <img src={lightboxImage} alt="Vista completa" className="image-lightbox" onClick={e => e.stopPropagation()} />
+          <button className="btn-icon danger" aria-label="Cerrar vista"
+            style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '0.5rem', borderRadius: '50%' }}
+            onClick={() => setLightboxImage(null)}>
+            <X size={24} />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

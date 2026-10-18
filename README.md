@@ -33,9 +33,11 @@ la API Hono (`/api`), que es la única con `DATABASE_URL` y claves de Supabase.
 La BD tiene RLS sin políticas públicas; el backend usa el rol propietario y aplica su
 propia autorización. No abrir RLS ni exponer claves privadas en la web.
 
-El bucket `vehicles` es privado y se verificaron autenticación/listado con la API
-de Supabase Storage. El adaptador de fotos con enlaces temporales llega en el bloque 3
-de la fase 3; hasta entonces la gestión de fotos está deshabilitada en la UI.
+Las fotos de vehículos viven en el bucket privado `vehicles` de Supabase Storage y se
+muestran con enlaces firmados que caducan a los 10 minutos. Sin `SUPABASE_URL`/`SUPABASE_SECRET_KEY`,
+la API de desarrollo guarda las fotos en `.almacen-local/` (ignorado por Git) con el mismo
+comportamiento. `npm run storage:verificar` comprueba el bucket real con un archivo de prueba
+que se borra al terminar.
 
 ## Autenticación
 
@@ -65,6 +67,15 @@ de la fase 3; hasta entonces la gestión de fotos está deshabilitada en la UI.
   el nuevo. Si el equipo no está disponible, no se guarda nada (409).
 - Marcar un GPS como Retirado, Dañado o Disponible lo retira del vehículo.
 - No se pueden borrar registros con historial (vehículos con instalaciones, GPS asignados…): 409.
+  Borrar un vehículo sin historial elimina también sus fotos.
+- Fotos: `GET /api/fotos?vehiculo_id=`, `POST /api/fotos` (multipart `vehiculo_id` + `archivo`;
+  JPG/PNG/WebP, máx. 8 MB, 5 por vehículo) y `DELETE /api/fotos/:id`.
+
+## Técnicos
+
+Una cuenta con rol técnico debe estar vinculada a su ficha (`tecnico_id`). En la web solo ve
+"Mis instalaciones": puede actualizar estado y notas de sus trabajos y subir fotos de esos
+vehículos; solo borra las fotos que subió. No ve clientes, inventario ni trabajos de otros técnicos.
 
 ## Verificación
 
@@ -76,6 +87,7 @@ de la fase 3; hasta entonces la gestión de fotos está deshabilitada en la UI.
 | `npm run test:int` | PostgreSQL 16 efímero: migraciones y flujos de autenticación de la API; requiere Docker, nunca usa DATABASE_URL |
 | `npm test` | unitarias + integración |
 | `npm run test:e2e` | Chromium, Next aislado en 3100 con API simulada; detener antes cualquier `next dev` local |
+| `npm run test:capturas` | Capturas de todas las pantallas en móvil, tablet, laptop y PC (`capturas/`); falla con desbordes o texto recortado |
 | `npm run build` | typecheck completo y build Next.js |
 | `npm run preview` | servidor Next de producción después del build |
 
@@ -102,7 +114,7 @@ las pruebas rápidas. Docker y Playwright no se ejecutan en pre-commit.
 - `npx tsx scripts/db/verificar-storage.ts`: metadatos del bucket privado.
 
 Ver [docs/migracion-bd.md](docs/migracion-bd.md). Las migraciones 0000/0001 están
-aplicadas en Supabase PostgreSQL 17.11; 0002 (autenticación) está pendiente de aplicar. El Excel real no está importado ni versionado;
+aplicadas en Supabase PostgreSQL 17.11; 0002 (autenticación) y 0003 (autor de fotos) están pendientes de aplicar. El Excel real no está importado ni versionado;
 su importador transaccional se construirá en la fase 6.
 
 Skills oficiales Supabase en `.agents/skills`, registradas mediante `opencode.json`.

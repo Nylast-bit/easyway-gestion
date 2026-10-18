@@ -1,7 +1,11 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { afterAll, beforeAll, beforeEach, expect, test } from 'vitest';
 import { iniciarPostgresEfimero } from '../../../../scripts/db/postgres-efimero';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { crearApp } from '../app';
+import { crearAlmacenLocal } from '../almacen/local';
 import { crearBaseDatos } from '../db/cliente';
 import { gps, gpsAsignaciones, simcardAsignaciones, usuarios, vehiculos } from '../db/esquema';
 import { hashearContrasena } from '../auth/criptografia';
@@ -47,7 +51,7 @@ async function iniciar(usuario: string, rol: 'admin' | 'tecnico') {
 beforeAll(async () => {
   base = await iniciarPostgresEfimero();
   conexion = crearBaseDatos(base.url, { max: 6 });
-  app = crearApp({ bd: conexion.bd, enviador: { enviar: async () => {} }, produccion: false });
+  app = crearApp({ almacen: crearAlmacenLocal({ directorio: mkdtempSync(join(tmpdir(), 'easyway-almacen-')) }), bd: conexion.bd, enviador: { enviar: async () => {} }, produccion: false });
 }, 180000);
 
 afterAll(async () => {

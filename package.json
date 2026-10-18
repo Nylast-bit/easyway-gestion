@@ -25,7 +25,8 @@
     "db:migrate": "tsx scripts/db/migrar.ts",
     "db:verify": "tsx scripts/db/verificar.ts",
     "dev:api": "npm run dev --workspace=@easyway/api",
-    "db:crear-admin": "tsx scripts/db/crear-admin.ts"
+    "db:crear-admin": "tsx scripts/db/crear-admin.ts",
+    "storage:verificar": "tsx apps/api/src/verificar-storage.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",

@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import type { UsuarioSesion } from '@easyway/shared';
 import GlobalSearch from '../components/GlobalSearch';
 import { ErrorApi, solicitarApi } from '../lib/api';
+import { ContextoSesion, RUTAS_TECNICO } from '../lib/sesion';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -38,16 +39,27 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return () => { activo = false; };
   }, [router, pathname]);
 
+  // Un técnico solo usa sus instalaciones; las rutas de administración responderían 403.
+  const esTecnico = usuario?.rol === 'tecnico';
+  const rutaPermitida = !esTecnico || RUTAS_TECNICO.includes(pathname ?? '/');
+  useEffect(() => {
+    if (usuario && !rutaPermitida) router.replace(RUTAS_TECNICO[0]);
+  }, [usuario, rutaPermitida, router]);
+  const elementos = esTecnico ? navItems.filter(item => RUTAS_TECNICO.includes(item.to)) : navItems;
+
   const cerrarSesion = async () => {
     try { await solicitarApi('/auth/logout', { metodo: 'POST' }); }
     catch { toast.error('No se pudo cerrar la sesión en el servidor'); }
     router.replace('/login');
   };
 
+  const esTecnicoRef = React.useRef(false);
+  esTecnicoRef.current = esTecnico;
+
   // Intercepta las teclas para abrir la búsqueda con Ctrl+K o Cmd+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k' && !esTecnicoRef.current) {
         e.preventDefault(); // ¡Evita que el navegador abra su propia búsqueda!
         setIsSearchOpen(true);
       }
@@ -62,7 +74,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="app-layout">
       <aside className="sidebar">
-        {navItems.map((item, index) => (
+        {usuario && elementos.map((item, index) => (
           <Link
             key={index}
             href={item.to}
@@ -78,10 +90,12 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       <div className="main-content">
         <header className="top-header">
-          <div className="global-search" onClick={() => setIsSearchOpen(true)}>
-            <Search size={18} />
-            <span>Buscar... (Ctrl + K)</span>
-          </div>
+          {esTecnico ? <div /> : (
+            <div className="global-search" onClick={() => setIsSearchOpen(true)}>
+              <Search size={18} />
+              <span>Buscar... (Ctrl + K)</span>
+            </div>
+          )}
           <div className="cabecera-usuario">
             <div className="cabecera-nombre">
               <span>{usuario?.nombre ?? ' '}</span>
@@ -95,7 +109,8 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </header>
 
         <main className="page-area">
-          {children}
+          {/* El contenido espera a conocer la sesión: evita peticiones con permisos que no corresponden. */}
+          {usuario && rutaPermitida && <ContextoSesion.Provider value={usuario}>{children}</ContextoSesion.Provider>}
         </main>
       </div>
 

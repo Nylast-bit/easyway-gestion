@@ -89,7 +89,7 @@ export interface VehiculoFila {
   marca: string | null; modelo: string | null; año: number | null;
   placa: string | null; chasis: string | null; color: string | null;
   gps: { id: number; imei: string; modelo: string | null } | null;
-  imagenes: number; created_at: string;
+  imagenes: number; miniatura: string | null; created_at: string;
 }
 
 export interface GpsFila {
@@ -116,3 +116,16 @@ export interface InstalacionFila {
 export interface Resumen { clientes: number; vehiculos: number; gps: number; simcards: number }
 
 export interface ResultadoBusqueda { tipo: 'cliente' | 'vehiculo' | 'gps'; id: number; etiqueta: string }
+
+// Avance de una instalación: lo único que un técnico puede cambiar de sus propios trabajos.
+export const esquemaAvanceInstalacion = z.object({
+  estado: z.enum(estadosInstalacion),
+  notas: textoOpcional(2000),
+});
+export type DatosAvanceInstalacion = z.output<typeof esquemaAvanceInstalacion>;
+
+export const FOTOS_MAXIMAS_POR_VEHICULO = 5;
+export const TAMANO_MAXIMO_FOTO = 8 * 1024 * 1024;
+
+// URL temporal de lectura (caduca); nunca se guarda en el cliente más allá de la vista actual.
+export interface FotoVehiculo { id: number; url: string; created_at: string; propia: boolean; autor: string | null }
