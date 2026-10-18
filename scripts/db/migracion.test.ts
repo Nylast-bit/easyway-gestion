@@ -18,8 +18,8 @@ test('crea las tablas y repetir la migración no duplica su registro', async () 
   await migrar();
   const tablas = await cliente`SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public'`;
   expect(tablas.map(t => t.tablename).sort()).toEqual([
-    'clientes', 'gps', 'gps_asignaciones', 'instalaciones', 'sesiones', 'simcard_asignaciones',
-    'simcards', 'tecnicos', 'usuarios', 'vehiculo_imagenes', 'vehiculos', 'verificaciones_correo',
+    'auditoria', 'cargos', 'clientes', 'gps', 'gps_asignaciones', 'instalaciones', 'pago_aplicaciones', 'pagos', 'planes', 'servicios', 'sesiones', 'simcard_asignaciones',
+    'simcards', 'tecnicos', 'tipos_servicio', 'usuarios', 'vehiculo_imagenes', 'vehiculos', 'verificaciones_correo',
   ]);
   expect(tablas.every(t => t.rowsecurity)).toBe(true);
   const [registro] = await cliente`SELECT count(*)::int AS cantidad FROM drizzle.__drizzle_migrations`;
@@ -43,7 +43,7 @@ test('protege relaciones, identificadores y una sola asignación activa por equi
   await cliente`UPDATE gps_asignaciones SET fecha_fin = now() WHERE gps_id = ${equipo.id}`;
   await cliente`INSERT INTO gps_asignaciones (gps_id, vehiculo_id) VALUES (${equipo.id}, ${vehiculo.id})`;
   await expect(cliente`DELETE FROM clientes WHERE id = ${persona.id}`).rejects.toMatchObject({ code: '23503' });
-  await cliente`INSERT INTO instalaciones (vehiculo_id, gps_id) VALUES (${vehiculo.id}, ${equipo.id})`;
+  await cliente`INSERT INTO instalaciones (vehiculo_id, gps_id, tipo_servicio_id) VALUES (${vehiculo.id}, ${equipo.id}, (SELECT id FROM tipos_servicio LIMIT 1))`;
 });
 
 test('RLS deniega filas a un rol sin políticas incluso si recibe permisos SQL', async () => {

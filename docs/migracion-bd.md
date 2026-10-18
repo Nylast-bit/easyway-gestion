@@ -127,6 +127,20 @@ Añade `vehiculo_imagenes.subida_por` (opcional, `ON DELETE SET NULL` hacia `usu
 Permite que un técnico borre solo sus fotos y conserva la foto si se elimina la cuenta.
 Aditiva; las filas existentes quedan con autor nulo (solo un admin podrá borrarlas).
 
+## Fase 5 — modelo ampliado (0004_modelo_ampliado, 0005_retirar_tipo_texto)
+
+- Nuevas tablas: `tipos_servicio`, `planes`, `servicios`, `cargos`, `pagos`, `pago_aplicaciones`, `auditoria` (RLS, sin políticas).
+- `clientes`: `tipo` (Particular/Empresa), `documento`, `notas`. `vehiculos`: `tipo` (Carro/Motor/Camión/Otro).
+  `gps`: `fecha_vencimiento`.
+- `instalaciones`: `tipo` (texto) pasa a `tipo_servicio_id`. La 0004 está **editada a mano** para no perder
+  datos: añade la columna nula, siembra el catálogo, crea tipos para textos existentes no reconocidos
+  (agrupando mayúsculas/espacios), mapea y después la hace obligatoria; la 0005 elimina el texto.
+  Probado en `scripts/db/migracion-0004.test.ts` partiendo de una base en 0003 con datos.
+- `vehiculo_id` y `gps_id` de instalaciones admiten null salvo si la instalación está `Aprobada` (check);
+  las existentes quedan aprobadas. Campos de aprobación, propuesta y costo del técnico para la fase 7.
+- Siembra `Plan Anual` (Anual, RD$5,500). Cargos/pagos se anulan con motivo (checks); un servicio solo
+  puede facturar una vez cada periodo (índice único parcial).
+
 ## Verificación del destino
 
 Se comprobó primero que `public` no tenía tablas. Después se aplicaron `0000_inicial`

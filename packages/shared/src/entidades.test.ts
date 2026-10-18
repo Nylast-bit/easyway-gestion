@@ -26,8 +26,8 @@ test('GPS y simcard: IMEI de 15 dígitos, fechas coherentes', () => {
 });
 
 test('instalación: requiere vehículo y GPS, fecha ISO con zona y tipo conocido', () => {
-  const datos = esquemaInstalacion.parse({ vehiculo_id: 1, gps_id: '2', simcard_id: '', tecnico_id: null, fecha_instalacion: '2026-10-18T16:30:00.000Z' });
-  expect(datos).toMatchObject({ simcard_id: null, tecnico_id: null, tipo: 'Instalación', estado: 'En Proceso' });
-  expect(esquemaInstalacion.safeParse({ vehiculo_id: 1, gps_id: 2, fecha_instalacion: '2026-10-18T16:30' }).success).toBe(false);
-  expect(esquemaInstalacion.safeParse({ vehiculo_id: 1, gps_id: 2, tipo: 'Otro' }).success).toBe(false);
+  const datos = esquemaInstalacion.parse({ vehiculo_id: 1, gps_id: '2', tipo_servicio_id: '1', simcard_id: '', tecnico_id: null, fecha_instalacion: '2026-10-18T16:30:00.000Z' });
+  expect(datos).toMatchObject({ simcard_id: null, tecnico_id: null, tipo_servicio_id: 1, estado: 'En Proceso' });
+  expect(esquemaInstalacion.safeParse({ vehiculo_id: 1, gps_id: 2, tipo_servicio_id: 1, fecha_instalacion: '2026-10-18T16:30' }).success).toBe(false);
+  expect(esquemaInstalacion.safeParse({ vehiculo_id: 1, gps_id: 2 }).success).toBe(false);
 });

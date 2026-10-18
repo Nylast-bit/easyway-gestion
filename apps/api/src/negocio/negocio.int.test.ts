@@ -182,7 +182,7 @@ test('instalaciones, resumen y búsqueda global', async () => {
   const equipo = await crear('/gps', { imei: nuevoImei() });
   const vehiculo = await crear('/vehiculos', { cliente_id: cliente.id, marca: 'isuzu', placa: 'L000123' });
   const instalacion = await crear('/instalaciones', {
-    vehiculo_id: vehiculo.id, gps_id: equipo.id, tecnico_id: tec.id, simcard_id: '',
+    tipo_servicio_id: 1, vehiculo_id: vehiculo.id, gps_id: equipo.id, tecnico_id: tec.id, simcard_id: '',
     fecha_instalacion: '2026-10-18T16:30:00.000Z', asunto: 'Nueva unidad',
   });
   expect(instalacion).toMatchObject({
@@ -192,7 +192,7 @@ test('instalaciones, resumen y búsqueda global', async () => {
   const editada = await actualizar(`/instalaciones/${instalacion.id}`, { ...instalacion, simcard_id: null, estado: 'Completado', tecnico_id: null });
   expect(editada.datos).toMatchObject({ estado: 'Completado', tecnico_nombre: null });
   expect((await api(`/tecnicos/${tec.id}`, { metodo: 'DELETE' })).estado).toBe(204);
-  expect((await api('/instalaciones', { cuerpo: { vehiculo_id: 999, gps_id: equipo.id } })).estado).toBe(409);
+  expect((await api('/instalaciones', { cuerpo: { tipo_servicio_id: 1, vehiculo_id: 999, gps_id: equipo.id } })).estado).toBe(409);
 
   expect((await api('/resumen')).datos).toEqual({ clientes: 2, vehiculos: 1, gps: 1, simcards: 0 });
   const busqueda = (await api('/buscar?q=50%25')).datos;

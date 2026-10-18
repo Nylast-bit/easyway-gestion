@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, type LucideIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
-import type { Persona } from '@easyway/shared';
+import type { Cliente, Persona } from '@easyway/shared';
 import Drawer from './Drawer';
 import EntityForm, { type DatosFormularioPersona } from './EntityForm';
 import { mensajeError, solicitarApi } from '../lib/api';
@@ -85,7 +85,7 @@ const ListaPersonas: React.FC<ListaPersonasProps> = ({ titulo, ruta, singular, i
               <div className="entity-info">
                 <div className="avatar">{iniciales(persona.nombre)}</div>
                 <div className="entity-details">
-                  <h3>{persona.nombre}</h3>
+                  <h3>{persona.nombre}{ruta === '/clientes' && (persona as Cliente).tipo === 'Empresa' && <span className="status-tag status-gray" style={{ marginLeft: '0.5rem' }}>Empresa</span>}</h3>
                   <p>📞 {persona.telefono || 'Sin teléfono'} | ✉️ {persona.correo || 'Sin correo'}</p>
                 </div>
               </div>
@@ -106,6 +106,7 @@ const ListaPersonas: React.FC<ListaPersonasProps> = ({ titulo, ruta, singular, i
         <EntityForm
           key={editando?.id ?? 'nuevo'}
           etiqueta={singular}
+          esCliente={ruta === '/clientes'}
           onSubmit={guardar}
           initialValues={editando ?? undefined}
         />

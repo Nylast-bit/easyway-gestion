@@ -3,7 +3,7 @@ import { estadosGps, type GpsFila, type SimcardFila } from '@easyway/shared';
 import SearchableSelect from './SearchableSelect';
 import { solicitarApi } from '../lib/api';
 
-export type DatosFormularioGps = { imei: string; modelo: string; estado: GpsFila['estado']; simcard_id: string | number };
+export type DatosFormularioGps = { imei: string; modelo: string; estado: GpsFila['estado']; simcard_id: string | number; fecha_vencimiento: string };
 
 interface GpsFormProps {
   onSubmit: (data: DatosFormularioGps) => void;
@@ -15,7 +15,8 @@ const GpsForm: React.FC<GpsFormProps> = ({ onSubmit, initialValues }) => {
     imei: initialValues?.imei || '',
     modelo: initialValues?.modelo || '',
     estado: initialValues?.estado || 'Disponible',
-    simcard_id: initialValues?.simcard?.id ?? ''
+    simcard_id: initialValues?.simcard?.id ?? '',
+    fecha_vencimiento: initialValues?.fecha_vencimiento ?? ''
   });
 
   const [simcards, setSimcards] = useState<{ id: number; numero: string }[]>([]);
@@ -56,6 +57,12 @@ const GpsForm: React.FC<GpsFormProps> = ({ onSubmit, initialValues }) => {
           placeholder="Buscar simcard disponible..."
           allowClear={true}
         />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label" htmlFor="gps-vence">Vence el</label>
+        <input id="gps-vence" type="date" name="fecha_vencimiento" className="form-input" value={formData.fecha_vencimiento} onChange={handleChange} />
+        <small style={{ color: '#6b7280' }}>Se fija a 1 año al instalarlo en un vehículo; cámbialo si el cliente pagó otro periodo.</small>
       </div>
 
       <div className="form-group">

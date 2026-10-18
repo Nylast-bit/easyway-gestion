@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Users, Wrench, Car, Satellite, Cpu, ClipboardList, LayoutDashboard, Search, LogOut, UserCog } from 'lucide-react';
+import { Users, Wrench, Car, Satellite, Cpu, ClipboardList, LayoutDashboard, Search, LogOut, UserCog, Receipt, CalendarClock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { UsuarioSesion } from '@easyway/shared';
 import GlobalSearch from '../components/GlobalSearch';
@@ -18,6 +18,8 @@ const navItems = [
   { to: '/gps', icon: Satellite, label: 'GPS' },
   { to: '/simcards', icon: Cpu, label: 'Simcards' },
   { to: '/installations', icon: ClipboardList, label: 'Instalaciones' },
+  { to: '/billing', icon: Receipt, label: 'Cobros' },
+  { to: '/expirations', icon: CalendarClock, label: 'Vencimientos' },
   { to: '/users', icon: UserCog, label: 'Usuarios' },
 ];
 

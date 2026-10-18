@@ -43,3 +43,11 @@ export const desdeFechaHoraLocal = (valor: string) => (valor ? new Date(valor).t
 
 export const formatearFecha = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleDateString('es-DO', { timeZone: 'America/Santo_Domingo' }) : 'Sin fecha';
+
+// Importes en pesos dominicanos: RD$5,500.00
+export const formatearDinero = (monto: number) =>
+  `RD$${monto.toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Fechas de calendario (YYYY-MM-DD) sin conversión de zona: 2026-11-01 → 01/11/2026.
+export const formatearDia = (fecha: string | null | undefined) =>
+  fecha ? fecha.split('-').reverse().join('/') : 'Sin fecha';

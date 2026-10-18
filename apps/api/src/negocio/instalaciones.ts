@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { and, desc, eq, sql, type SQL } from 'drizzle-orm';
 import { esquemaAvanceInstalacion, esquemaInstalacion, type DatosInstalacion, type InstalacionFila } from '@easyway/shared';
 import type { BaseDatos } from '../db/cliente';
-import { clientes, gps, instalaciones, simcards, tecnicos, vehiculos } from '../db/esquema';
+import { clientes, gps, instalaciones, simcards, tecnicos, tiposServicio, vehiculos } from '../db/esquema';
 import type { Entorno } from '../auth/middleware';
 import { leerId } from '../http/erroresBd';
 import { ErrorHttp, leerJson } from '../http/validacion';
@@ -17,17 +17,20 @@ export function crearRutasInstalaciones(bd: BaseDatos) {
       instalacion: instalaciones,
       marca: vehiculos.marca, modelo: vehiculos.modelo, placa: vehiculos.placa,
       cliente_id: clientes.id, cliente_nombre: clientes.nombre,
-      gps_imei: gps.imei, simcard_numero: simcards.numero, tecnico_nombre: tecnicos.nombre,
+      gps_imei: gps.imei, simcard_numero: simcards.numero, tecnico_nombre: tecnicos.nombre, tipo: tiposServicio.nombre,
     }).from(instalaciones)
+      .innerJoin(tiposServicio, eq(tiposServicio.id, instalaciones.tipo_servicio_id))
       .innerJoin(vehiculos, eq(vehiculos.id, instalaciones.vehiculo_id))
       .innerJoin(clientes, eq(clientes.id, vehiculos.cliente_id))
       .innerJoin(gps, eq(gps.id, instalaciones.gps_id))
       .leftJoin(simcards, eq(simcards.id, instalaciones.simcard_id))
       .leftJoin(tecnicos, eq(tecnicos.id, instalaciones.tecnico_id))
-      .where(and(...filtros))
+      // Los trabajos pendientes de aprobación (fase 7) se consultan en su propia cola.
+      .where(and(eq(instalaciones.aprobacion, 'Aprobada'), ...filtros))
       .orderBy(sql`${instalaciones.fecha_instalacion} DESC NULLS LAST`, desc(instalaciones.created_at));
     return filas.map(({ instalacion, marca, modelo, placa, cliente_id, cliente_nombre, ...nombres }) => ({
-      ...instalacion,
+      ...instalacion, vehiculo_id: instalacion.vehiculo_id!, gps_id: instalacion.gps_id!,
+      costo_pagado_at: instalacion.costo_pagado_at?.toISOString() ?? null,
       fecha_instalacion: instalacion.fecha_instalacion?.toISOString() ?? null,
       created_at: instalacion.created_at.toISOString(),
       vehiculo: { marca, modelo, placa, cliente_id, cliente_nombre },

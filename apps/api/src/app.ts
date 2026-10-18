@@ -17,6 +17,10 @@ import { crearRutasSimcards } from './negocio/simcards';
 import { crearRutasInstalaciones } from './negocio/instalaciones';
 import { crearRutasConsultas } from './negocio/consultas';
 import { crearRutasFotos } from './negocio/fotos';
+import { crearRutasPlanes, crearRutasTiposServicio } from './negocio/catalogos';
+import { crearRutasCobros } from './negocio/cobros';
+import { crearRutasVencimientos } from './negocio/vencimientos';
+import { crearRutasAuditoria } from './negocio/auditoria';
 
 export interface DependenciasApp {
   bd: BaseDatos;
@@ -41,9 +45,10 @@ export function crearApp({ bd, enviador, almacen, produccion, reloj = () => new 
     app.use(prefijo, ...middlewares);
     app.use(`${prefijo}/*`, ...middlewares);
   };
-  for (const prefijo of ['/usuarios', '/resumen', '/buscar', '/clientes', '/tecnicos', '/vehiculos', '/gps', '/simcards']) proteger(prefijo, sesion, admin);
+  for (const prefijo of ['/usuarios', '/resumen', '/buscar', '/clientes', '/tecnicos', '/vehiculos', '/gps', '/simcards',
+    '/planes', '/servicios', '/cargos', '/pagos', '/cobros', '/vencimientos', '/auditoria']) proteger(prefijo, sesion, admin);
   // Admin y técnicos; cada ruta aplica el aislamiento por ficha de técnico.
-  for (const prefijo of ['/instalaciones', '/fotos']) proteger(prefijo, sesion);
+  for (const prefijo of ['/instalaciones', '/fotos', '/tipos-servicio']) proteger(prefijo, sesion);
 
   app.get('/salud', c => c.json({ estado: 'ok' }));
   app.route('/auth', crearRutasAutenticacion(autenticacion, produccion));
@@ -56,6 +61,15 @@ export function crearApp({ bd, enviador, almacen, produccion, reloj = () => new 
   app.route('/simcards', crearRutasSimcards(bd));
   app.route('/instalaciones', crearRutasInstalaciones(bd));
   app.route('/fotos', crearRutasFotos(bd, almacen));
+  app.route('/tipos-servicio', crearRutasTiposServicio(bd));
+  app.route('/planes', crearRutasPlanes(bd));
+  const cobros = crearRutasCobros(bd, reloj);
+  app.route('/servicios', cobros.rutasServicios);
+  app.route('/cargos', cobros.rutasCargos);
+  app.route('/pagos', cobros.rutasPagos);
+  app.route('/cobros', cobros.rutasCobros);
+  app.route('/vencimientos', crearRutasVencimientos(bd, reloj));
+  app.route('/auditoria', crearRutasAuditoria(bd));
 
   // Enlaces firmados del almacén local (desarrollo): la firma con caducidad es la autorización.
   const { leerFirmado } = almacen;

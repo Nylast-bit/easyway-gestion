@@ -38,13 +38,23 @@
 - Primer admin: `npm run db:crear-admin` (interactivo con contraseña oculta, o `ADMIN_*` en el entorno; idempotente). El resto de cuentas en `/users` (pantalla Usuarios, admin). Un admin no puede desactivarse ni quitarse el rol; desactivar, cambiar rol/ficha o restablecer contraseña borra las sesiones de esa cuenta.
 - `npm run dev` de la API usa `node --watch --import tsx` (no `tsx watch`, que en Windows se quedaba sin escuchar).
 
+## Cobros y vencimientos (fase 5)
+
+- Cobros = a clientes. `servicios`: plan por vehículo (uno activo por vehículo) con `proximo_cobro`; `POST /cargos/generar` crea un cargo por periodo (índice único servicio+periodo: idempotente y seguro en paralelo).
+- Pagos se reparten en `pago_aplicaciones` (por defecto a los cargos más antiguos; sobrante = saldo a favor). Saldos e importes en céntimos enteros en código y `numeric(12,2)` en BD; bloqueo `FOR UPDATE` de cargos en orden de id.
+- Nada se borra: cargos y pagos se anulan con motivo; un cargo con pagos vigentes no se anula. Facturas/NCF solo como referencia (`referencia_factura`).
+- Vigencias: asignar GPS a vehículo fija `gps.fecha_vencimiento` a 1 año; SIM a 1 año si no tenía fecha. Editables (`PUT /vencimientos/gps|simcard/:id`).
+- `registrarAuditoria(tx, …)` dentro de la misma transacción en toda acción sensible. Fechas de negocio con `fechaEnRD`/`sumarMeses` de shared.
+
 ## Base de datos y dominio
 
 - `apps/api/src/db/esquema.ts` fue reconstruido desde frontend, no introspectado. Decisiones en `docs/migracion-bd.md`.
 - `npm run db:generate -- --name=descripcion`: versionar SQL y metadatos de `apps/api/drizzle`. `npm run db:migrate` usa DATABASE_URL e historial Drizzle; no combinar SQL manual y migrador, ni usar drizzle-kit push.
 - `npm run db:verify`: versión/tablas/RLS, transacción de solo lectura y sin credenciales en salida.
-- Tablas exactas: `clientes`, `tecnicos`, `vehiculos`, `gps`, `simcards`, `instalaciones`, `gps_asignaciones`, `simcard_asignaciones`, `vehiculo_imagenes` (con `subida_por`), `usuarios`, `sesiones`, `verificaciones_correo`.
-- Plan Anual y Plan Anual (monitoreo) son equivalentes; Plan Anual (Sin monit.) es distinto. America/Santo_Domingo; moneda DOP (RD$).
+- Tablas exactas: `clientes`, `tecnicos`, `vehiculos`, `gps`, `simcards`, `instalaciones`, `gps_asignaciones`, `simcard_asignaciones`, `vehiculo_imagenes` (con `subida_por`), `usuarios`, `sesiones`, `verificaciones_correo`, `tipos_servicio`, `planes`, `servicios`, `cargos`, `pagos`, `pago_aplicaciones`, `auditoria`.
+- Plan vigente: "Plan Anual" RD$5,500 (sembrado en 0004). Plan Anual y Plan Anual (monitoreo) son equivalentes; Plan Anual (Sin monit.) es distinto. America/Santo_Domingo; moneda DOP (RD$).
+- Instalaciones usan `tipo_servicio_id` (catálogo `tipos_servicio`); `aprobacion` (Pendiente/Aprobada/Rechazada), `propuesta` y costo del técnico preparan la fase 7.
 - Excel real y `backups/` ignorados; único fixture permitido: `tests/fixtures/excel-muestra.xlsx` anonimizado.
 - Skills oficiales en `.agents/skills` registradas por `opencode.json`. Arquitectura/migraciones Drizzle prevalecen sobre ejemplos Supabase Auth/CLI.
+- Cambios de UI: `npm run test:capturas` (móvil/tablet/laptop/PC) y revisar las imágenes en `capturas/`; las pantallas nuevas se añaden a `e2e/capturas.spec.ts` con textos largos.
 - Comentarios y UI nuevos en español. Toasts react-hot-toast (proveedor en app), iconos lucide-react. Contratos Zod y tipos de respuesta de la API en `packages/shared/src/entidades.ts` (la web los importa de `@easyway/shared`).

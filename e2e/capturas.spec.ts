@@ -36,17 +36,56 @@ const simcards = [
 const instalaciones = [
   {
     id: 1, vehiculo_id: 7, gps_id: 11, simcard_id: 5, tecnico_id: 1, fecha_instalacion: '2026-10-18T16:30:00.000Z',
-    tipo: 'Instalación', asunto: 'Instalación inicial con corte de corriente y botón de pánico', estado: 'Completado', created_at: '',
+    tipo_servicio_id: 1, tipo: 'Instalación', aprobacion: 'Aprobada', costo_tecnico: 1200, costo_pagado_at: null, asunto: 'Instalación inicial con corte de corriente y botón de pánico', estado: 'Completado', created_at: '',
     notas: 'El cliente solicitó ubicar el equipo bajo el tablero del lado del copiloto. Se probó el corte de motor en ruta.',
     vehiculo: { marca: 'TOYOTA', modelo: 'HILUX DOBLE CABINA', placa: 'L123456', cliente_id: 1, cliente_nombre: clientes[0].nombre },
     gps_imei: gps[0].imei, simcard_numero: '8091802704', tecnico_nombre: tecnicos[0].nombre,
   },
   {
     id: 2, vehiculo_id: 8, gps_id: 12, simcard_id: null, tecnico_id: null, fecha_instalacion: null,
-    tipo: 'Mantenimiento', asunto: null, estado: 'En Proceso', created_at: '', notas: null,
+    tipo_servicio_id: 3, tipo: 'Mantenimiento', aprobacion: 'Aprobada', costo_tecnico: null, costo_pagado_at: null, asunto: null, estado: 'En Proceso', created_at: '', notas: null,
     vehiculo: { marca: 'HONDA', modelo: 'CR-V', placa: null, cliente_id: 2, cliente_nombre: clientes[1].nombre },
     gps_imei: gps[1].imei, simcard_numero: null, tecnico_nombre: null,
   },
+];
+
+const usuarios = [
+  { id: 1, nombre: 'Ana Gabriela Administradora', usuario: 'admin', correo: 'ana.gabriela.administradora@magna.com.do', rol: 'admin', tecnico_id: null, activo: true, correo_verificado: true, bloqueado_hasta: null, tecnico_nombre: null, created_at: '2026-10-01T12:00:00Z' },
+  { id: 2, nombre: tecnicos[0].nombre, usuario: 'pedro.martinez', correo: null, rol: 'tecnico', tecnico_id: 1, activo: true, correo_verificado: false, bloqueado_hasta: '2026-10-18T17:00:00Z', tecnico_nombre: tecnicos[0].nombre, created_at: '2026-10-02T12:00:00Z' },
+  { id: 3, nombre: 'Cuenta Desactivada De Prueba', usuario: null, correo: 'pendiente.de.verificar@ejemplo.com.do', rol: 'tecnico', tecnico_id: null, activo: false, correo_verificado: false, bloqueado_hasta: null, tecnico_nombre: null, created_at: '2026-10-03T12:00:00Z' },
+];
+
+// Cobros y vencimientos (fase 5) con importes grandes y conceptos largos.
+const planes = [
+  { id: 1, nombre: 'Plan Anual', periodicidad: 'Anual', precio: 5500, activo: true, servicios_activos: 1284 },
+  { id: 2, nombre: 'Plan Anual (Sin monitoreo) histórico importado del Excel', periodicidad: 'Anual', precio: 0, activo: false, servicios_activos: 0 },
+];
+const cargoBase = { cliente_id: 1, cliente_nombre: clientes[0].nombre, servicio_id: 1, motivo_anulacion: null, created_at: '' };
+const estadoCuenta = {
+  cliente: { id: 1, nombre: clientes[0].nombre }, total_cargado: 1250000, total_pagado: 1100500.5, saldo_pendiente: 149499.5,
+  saldo_vencido: 99000, saldo_a_favor: 12500,
+  servicios: [{ id: 1, vehiculo_id: 7, plan_id: 1, plan_nombre: 'Plan Anual', periodicidad: 'Anual', precio: 5500, fecha_inicio: '2025-11-01',
+    proximo_cobro: '2027-11-01', estado: 'Activo', notas: null,
+    vehiculo: { marca: 'TOYOTA', modelo: 'HILUX DOBLE CABINA', placa: 'L123456', cliente_id: 1, cliente_nombre: clientes[0].nombre } }],
+  cargos: [
+    { ...cargoBase, id: 10, concepto: 'Plan Anual · L123456', periodo_inicio: '2025-11-01', periodo_fin: '2026-10-31', monto: 5500, pagado: 0, saldo: 5500,
+      fecha_vencimiento: '2025-11-01', vencido: true, estado: 'Pendiente', referencia_factura: 'FACT/2026/00247' },
+    { ...cargoBase, id: 11, concepto: 'Plan Anual · L123456', periodo_inicio: '2026-11-01', periodo_fin: '2027-10-31', monto: 5500, pagado: 1500.5, saldo: 3999.5,
+      fecha_vencimiento: '2026-11-01', vencido: false, estado: 'Parcial', referencia_factura: null },
+    { ...cargoBase, id: 12, servicio_id: null, concepto: 'Venta de equipo adicional con instalación de botón de pánico y corte de motor', periodo_inicio: null, periodo_fin: null,
+      monto: 2700, pagado: 0, saldo: 0, fecha_vencimiento: '2026-09-01', vencido: false, estado: 'Anulado', referencia_factura: null,
+      motivo_anulacion: 'Cortesía acordada con el cliente por retraso en la instalación' },
+  ],
+  pagos: [{ id: 5, cliente_id: 1, cliente_nombre: clientes[0].nombre, fecha: '2026-10-05', monto: 1250000, metodo: 'Transferencia',
+    referencia: 'Transferencia BHD 0098812233445566 · FACT/2026/00240', notas: null, aplicado: 1237500, sin_aplicar: 12500, anulado: false,
+    motivo_anulacion: null, aplicaciones: [], created_at: '' }],
+};
+const vencimientos = [
+  { tipo: 'gps', id: 11, identificador: gps[0].imei, fecha: '2026-10-10', dias_restantes: -8,
+    vehiculo: { id: 7, descripcion: 'TOYOTA HILUX DOBLE CABINA (L123456)', cliente_nombre: clientes[0].nombre } },
+  { tipo: 'simcard', id: 5, identificador: '8091802704', fecha: '2026-10-25', dias_restantes: 7, vehiculo: null },
+  { tipo: 'servicio', id: 1, identificador: 'Plan Anual', fecha: '2026-11-01', dias_restantes: 14,
+    vehiculo: { id: 7, descripcion: 'TOYOTA HILUX DOBLE CABINA (L123456)', cliente_nombre: clientes[0].nombre } },
 ];
 
 async function simularApi(page: Page) {
@@ -63,6 +102,13 @@ async function simularApi(page: Page) {
       { fecha_inicio: '2026-01-15T12:00:00Z', fecha_fin: '2026-03-01T11:00:00Z', gps: { id: 13, imei: gps[2].imei, modelo: gps[2].modelo } },
     ],
     '/api/instalaciones': instalaciones,
+    '/api/usuarios': usuarios,
+    '/api/tipos-servicio': [{ id: 1, nombre: 'Instalación', activo: true }, { id: 3, nombre: 'Mantenimiento', activo: true }],
+    '/api/planes': planes,
+    '/api/cobros/resumen': { pendiente: 1499999.5, vencido: 999000, clientes_con_deuda: 2, cobrado_mes: 12500000, por_generar: 18,
+      deudores: [{ cliente_id: 1, cliente_nombre: clientes[0].nombre, saldo: 149499.5, vencido: 99000 }, { cliente_id: 2, cliente_nombre: clientes[1].nombre, saldo: 5500, vencido: 0 }] },
+    '/api/cobros/estado-cuenta/1': estadoCuenta,
+    '/api/vencimientos?dias=30': vencimientos,
     '/api/buscar?q=car': [
       { tipo: 'cliente', id: 1, etiqueta: clientes[0].nombre },
       { tipo: 'vehiculo', id: 7, etiqueta: 'TOYOTA HILUX DOBLE CABINA (L123456)' },
@@ -114,6 +160,11 @@ for (const tamano of TAMANOS) {
           return resultado;
         });
         expect.soft(recortados, `${nombre}: texto recortado en ${tamano.nombre}`).toEqual([]);
+        // Contenido que sobresale visiblemente de su tarjeta (sin overflow oculto no se recorta, pero se sale).
+        const desbordados = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('.stat-card, .entity-card, .vehicle-card, .cuenta-totales > div')]
+          .filter(tarjeta => tarjeta.scrollWidth > tarjeta.clientWidth + 1)
+          .map(tarjeta => (tarjeta.textContent ?? '').trim().slice(0, 50)));
+        expect.soft(desbordados, `${nombre}: contenido fuera de su tarjeta en ${tamano.nombre}`).toEqual([]);
       };
 
       // Login y verificación por OTP (sin sesión).
@@ -134,7 +185,8 @@ for (const tamano of TAMANOS) {
       const pantallas = [
         ['03-dashboard', '/', 'Dashboard'], ['04-clientes', '/clients', 'Clientes'], ['05-tecnicos', '/technicians', 'Técnicos'],
         ['06-vehiculos', '/vehicles', 'Vehículos'], ['07-gps', '/gps', 'GPS'], ['08-simcards', '/simcards', 'Simcards'],
-        ['09-instalaciones', '/installations', 'Instalaciones'],
+        ['09-instalaciones', '/installations', 'Instalaciones'], ['14-usuarios', '/users', 'Usuarios'],
+        ['16-cobros', '/billing', 'Cobros'], ['19-vencimientos', '/expirations', 'Vencimientos'],
       ] as const;
       for (const [nombre, ruta, titulo] of pantallas) {
         await page.goto(ruta);
@@ -157,6 +209,22 @@ for (const tamano of TAMANOS) {
       await page.getByRole('button', { name: 'Ver historial' }).first().click();
       await expect(page.getByText('Historial de 8091802704')).toBeVisible();
       await capturar('12-historial-simcard');
+
+      await page.goto('/users');
+      await page.getByRole('button', { name: /Agregar/ }).click();
+      await expect(page.getByText('Nueva cuenta')).toBeVisible();
+      await capturar('15-formulario-usuario');
+
+      await page.goto('/billing');
+      await page.getByRole('button', { name: new RegExp(clientes[0].nombre) }).click();
+      await expect(page.getByText(`Estado de cuenta · ${clientes[0].nombre}`)).toBeVisible();
+      await page.getByRole('button', { name: /Registrar pago/ }).click();
+      await capturar('17-estado-cuenta');
+
+      await page.goto('/billing');
+      await page.getByRole('button', { name: /Planes/ }).click();
+      await expect(page.getByText('Plan Anual (Sin monitoreo) histórico importado del Excel')).toBeVisible();
+      await capturar('18-planes');
 
       await page.goto('/');
       await page.locator('.global-search').click();

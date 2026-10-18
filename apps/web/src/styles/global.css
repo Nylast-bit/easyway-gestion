@@ -966,3 +966,39 @@ body {
 }
 .cabecera-salir:hover { color: var(--danger-color); border-color: var(--danger-color); }
 @media (max-width: 640px) { .cabecera-nombre { display: none; } }
+
+/* --- Cabeceras de página con varias acciones --- */
+.cabecera-pagina { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.cabecera-acciones { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* --- Estado de cuenta --- */
+.cuenta-totales { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }
+.cuenta-totales div { background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.75rem; display: flex; flex-direction: column; min-width: 0; }
+.cuenta-totales small { color: var(--text-secondary); font-size: 0.75rem; }
+.cuenta-totales strong { font-size: 1rem; overflow-wrap: anywhere; }
+.cuenta-totales .cuenta-alerta strong { color: #b91c1c; }
+.cuenta-acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.cuenta-formulario { border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; background: var(--bg-main); }
+.cuenta-ayuda { font-size: 0.8rem; color: var(--text-secondary); margin: -0.25rem 0 0.75rem; }
+.cuenta-botones { display: flex; gap: 0.5rem; }
+.cuenta-titulo { font-size: 1rem; margin: 1.25rem 0 0.5rem; }
+.cuenta-vacio { color: var(--text-secondary); font-size: 0.9rem; }
+.cuenta-fila { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border-color); }
+.cuenta-fila > div:first-child { min-width: 0; overflow-wrap: anywhere; font-size: 0.9rem; }
+.cuenta-fila small { display: block; color: var(--text-secondary); font-size: 0.78rem; margin-top: 0.15rem; }
+.cuenta-fila-acciones { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.cuenta-importe { font-weight: 600; text-align: right; font-size: 0.9rem; }
+.cuenta-deudor { width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+@media (max-width: 640px) {
+    .cuenta-totales { grid-template-columns: 1fr; }
+    .cuenta-fila { flex-direction: column; align-items: flex-start; }
+    .cuenta-fila-acciones { justify-content: flex-start; }
+}
+
+/* Importes en tarjetas: se adaptan al ancho y nunca salen de la tarjeta (RD$12,500,000.00 en móvil). */
+.stat-card { min-width: 0; }
+.stat-card .stat-importe { font-size: clamp(1.15rem, 4.5vw, 1.75rem); overflow-wrap: anywhere; line-height: 1.2; }
+.stats-grid.stats-dinero { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 1rem; }
+
+/* Selector de plazo: cada botón en una sola línea. */
+.cabecera-acciones button { white-space: nowrap; }

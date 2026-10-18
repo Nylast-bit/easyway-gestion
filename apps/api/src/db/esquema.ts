@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { type AnyPgColumn, boolean, check, date, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, boolean, check, date, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 const id = () => integer('id').primaryKey().generatedAlwaysAsIdentity();
 const creado = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -10,9 +10,22 @@ export const estadoGps = pgEnum('estado_gps', ['Disponible', 'Instalado', 'Retir
 export const estadoSim = pgEnum('estado_simcard', ['Disponible', 'Asignada', 'Suspendida', 'Vencida']);
 export const estadoInstalacion = pgEnum('estado_instalacion', ['En Proceso', 'Completado', 'Cancelado']);
 export const rolUsuario = pgEnum('rol_usuario', ['admin', 'tecnico']);
+// Fase 5: modelo ampliado.
+export const tipoCliente = pgEnum('tipo_cliente', ['Particular', 'Empresa']);
+export const tipoVehiculo = pgEnum('tipo_vehiculo', ['Carro', 'Motor', 'Camión', 'Otro']);
+export const periodicidadPlan = pgEnum('periodicidad_plan', ['Mensual', 'Anual']);
+export const estadoServicio = pgEnum('estado_servicio', ['Activo', 'Suspendido', 'Cancelado']);
+export const estadoAprobacion = pgEnum('estado_aprobacion', ['Pendiente', 'Aprobada', 'Rechazada']);
+export const metodoPago = pgEnum('metodo_pago', ['Efectivo', 'Transferencia', 'Tarjeta', 'Cheque', 'Otro']);
+
+// Importes en pesos dominicanos con dos decimales; las sumas se hacen en SQL con numeric.
+const dinero = (nombre: string) => numeric(nombre, { precision: 12, scale: 2, mode: 'number' });
+const usuarioRef = (nombre: string) => integer(nombre).references((): AnyPgColumn => usuarios.id, { onDelete: 'set null' });
 
 export const clientes = pgTable('clientes', {
   id: id(), nombre: text('nombre').notNull(), telefono: text('telefono'), correo: text('correo'), created_at: creado(),
+  // Cédula o RNC: opcional, el Excel no lo trae.
+  tipo: tipoCliente('tipo').notNull().default('Particular'), documento: text('documento'), notas: text('notas'),
 }).enableRLS();
 
 export const tecnicos = pgTable('tecnicos', {
@@ -23,11 +36,14 @@ export const vehiculos = pgTable('vehiculos', {
   id: id(), cliente_id: integer('cliente_id').notNull().references(() => clientes.id),
   marca: text('marca'), modelo: text('modelo'), año: integer('año'),
   placa: text('placa'), chasis: text('chasis'), color: text('color'), created_at: creado(),
+  tipo: tipoVehiculo('tipo').notNull().default('Carro'),
 }, (tabla) => [index('vehiculos_cliente_idx').on(tabla.cliente_id)]).enableRLS();
 
 export const gps = pgTable('gps', {
   id: id(), imei: text('imei').notNull(), modelo: text('modelo'),
   estado: estadoGps('estado').notNull().default('Disponible'), created_at: creado(),
+  // Vigencia del servicio del equipo: por defecto 1 año tras la instalación, editable.
+  fecha_vencimiento: date('fecha_vencimiento'),
 }, (tabla) => [
   uniqueIndex('gps_imei_unico').on(tabla.imei),
   check('gps_imei_formato', sql`${tabla.imei} ~ '^[0-9]{15}$'`),
@@ -38,19 +54,36 @@ export const simcards = pgTable('simcards', {
   fecha_vencimiento: date('fecha_vencimiento'), estado: estadoSim('estado').notNull().default('Disponible'), created_at: creado(),
 }, (tabla) => [uniqueIndex('simcards_numero_unico').on(tabla.numero)]).enableRLS();
 
+export const tiposServicio = pgTable('tipos_servicio', {
+  id: id(), nombre: text('nombre').notNull(), activo: boolean('activo').notNull().default(true), created_at: creado(),
+}, (tabla) => [uniqueIndex('tipos_servicio_nombre_unico').on(sql`lower(${tabla.nombre})`)]).enableRLS();
+
+// Un trabajo registrado por un técnico queda "Pendiente": vehículo y GPS pueden no existir aún
+// (van en `propuesta`). Al aprobar se crean/enlazan en una transacción y se fija el costo del técnico.
 export const instalaciones = pgTable('instalaciones', {
-  id: id(), vehiculo_id: integer('vehiculo_id').notNull().references(() => vehiculos.id),
-  gps_id: integer('gps_id').notNull().references(() => gps.id),
+  id: id(), vehiculo_id: integer('vehiculo_id').references(() => vehiculos.id),
+  gps_id: integer('gps_id').references(() => gps.id),
   simcard_id: integer('simcard_id').references(() => simcards.id),
   tecnico_id: integer('tecnico_id').references(() => tecnicos.id),
   fecha_instalacion: timestamp('fecha_instalacion', { withTimezone: true }),
-  tipo: text('tipo').notNull().default('Instalación'), asunto: text('asunto'), notas: text('notas'),
+  tipo_servicio_id: integer('tipo_servicio_id').notNull().references(() => tiposServicio.id),
+  asunto: text('asunto'), notas: text('notas'),
   estado: estadoInstalacion('estado').notNull().default('En Proceso'), created_at: creado(),
+  aprobacion: estadoAprobacion('aprobacion').notNull().default('Aprobada'),
+  propuesta: jsonb('propuesta'),
+  registrada_por: usuarioRef('registrada_por'), revisada_por: usuarioRef('revisada_por'),
+  revisada_at: timestamp('revisada_at', { withTimezone: true }), motivo_rechazo: text('motivo_rechazo'),
+  costo_tecnico: dinero('costo_tecnico'),
+  costo_pagado_at: timestamp('costo_pagado_at', { withTimezone: true }), costo_pago_referencia: text('costo_pago_referencia'),
 }, (tabla) => [
   index('instalaciones_vehiculo_idx').on(tabla.vehiculo_id),
   index('instalaciones_gps_idx').on(tabla.gps_id),
   index('instalaciones_simcard_idx').on(tabla.simcard_id),
   index('instalaciones_tecnico_idx').on(tabla.tecnico_id),
+  index('instalaciones_aprobacion_idx').on(tabla.aprobacion),
+  check('instalaciones_aprobada_completa', sql`${tabla.aprobacion} <> 'Aprobada' OR (${tabla.vehiculo_id} IS NOT NULL AND ${tabla.gps_id} IS NOT NULL)`),
+  check('instalaciones_costo_positivo', sql`${tabla.costo_tecnico} IS NULL OR ${tabla.costo_tecnico} >= 0`),
+  check('instalaciones_pago_con_costo', sql`${tabla.costo_pagado_at} IS NULL OR ${tabla.costo_tecnico} IS NOT NULL`),
 ]).enableRLS();
 
 export const gpsAsignaciones = pgTable('gps_asignaciones', {
@@ -122,4 +155,75 @@ export const verificacionesCorreo = pgTable('verificaciones_correo', {
 }, (tabla) => [
   uniqueIndex('verificaciones_desafio_unico').on(tabla.desafio_hash),
   index('verificaciones_usuario_idx').on(tabla.usuario_id),
+]).enableRLS();
+
+// Catálogo de planes. Hoy solo se vende el Plan Anual; las variantes históricas quedan inactivas.
+export const planes = pgTable('planes', {
+  id: id(), nombre: text('nombre').notNull(), periodicidad: periodicidadPlan('periodicidad').notNull(),
+  precio: dinero('precio').notNull(), activo: boolean('activo').notNull().default(true), created_at: creado(),
+}, (tabla) => [
+  uniqueIndex('planes_nombre_unico').on(sql`lower(${tabla.nombre})`),
+  check('planes_precio_positivo', sql`${tabla.precio} >= 0`),
+]).enableRLS();
+
+// Plan contratado para un vehículo. `proximo_cobro` es el inicio del siguiente periodo por facturar.
+export const servicios = pgTable('servicios', {
+  id: id(), vehiculo_id: integer('vehiculo_id').notNull().references(() => vehiculos.id),
+  plan_id: integer('plan_id').notNull().references(() => planes.id),
+  precio: dinero('precio').notNull(), fecha_inicio: date('fecha_inicio').notNull(), proximo_cobro: date('proximo_cobro').notNull(),
+  estado: estadoServicio('estado').notNull().default('Activo'), notas: text('notas'), created_at: creado(),
+}, (tabla) => [
+  uniqueIndex('servicios_activo_unico').on(tabla.vehiculo_id).where(sql`${tabla.estado} = 'Activo'`),
+  index('servicios_vehiculo_idx').on(tabla.vehiculo_id),
+  index('servicios_plan_idx').on(tabla.plan_id),
+  check('servicios_precio_positivo', sql`${tabla.precio} >= 0`),
+  check('servicios_fechas', sql`${tabla.proximo_cobro} >= ${tabla.fecha_inicio}`),
+]).enableRLS();
+
+// Cargo a un cliente: periodo de un servicio o concepto suelto (venta, reinstalación...).
+// Un cargo anulado no cuenta en el saldo; nunca se borra.
+export const cargos = pgTable('cargos', {
+  id: id(), cliente_id: integer('cliente_id').notNull().references(() => clientes.id),
+  servicio_id: integer('servicio_id').references(() => servicios.id),
+  concepto: text('concepto').notNull(), periodo_inicio: date('periodo_inicio'), periodo_fin: date('periodo_fin'),
+  monto: dinero('monto').notNull(), fecha_vencimiento: date('fecha_vencimiento').notNull(),
+  referencia_factura: text('referencia_factura'), creado_por: usuarioRef('creado_por'), created_at: creado(),
+  anulado_at: timestamp('anulado_at', { withTimezone: true }), anulado_por: usuarioRef('anulado_por'), motivo_anulacion: text('motivo_anulacion'),
+}, (tabla) => [
+  // Idempotencia: un servicio no puede facturar dos veces el mismo periodo.
+  uniqueIndex('cargos_periodo_unico').on(tabla.servicio_id, tabla.periodo_inicio).where(sql`${tabla.servicio_id} IS NOT NULL AND ${tabla.anulado_at} IS NULL`),
+  index('cargos_cliente_idx').on(tabla.cliente_id),
+  check('cargos_monto_positivo', sql`${tabla.monto} > 0`),
+  check('cargos_periodo', sql`${tabla.periodo_fin} IS NULL OR ${tabla.periodo_inicio} IS NULL OR ${tabla.periodo_fin} >= ${tabla.periodo_inicio}`),
+  check('cargos_anulacion_motivo', sql`${tabla.anulado_at} IS NULL OR ${tabla.motivo_anulacion} IS NOT NULL`),
+]).enableRLS();
+
+export const pagos = pgTable('pagos', {
+  id: id(), cliente_id: integer('cliente_id').notNull().references(() => clientes.id),
+  fecha: date('fecha').notNull(), monto: dinero('monto').notNull(), metodo: metodoPago('metodo').notNull(),
+  referencia: text('referencia'), notas: text('notas'), registrado_por: usuarioRef('registrado_por'), created_at: creado(),
+  anulado_at: timestamp('anulado_at', { withTimezone: true }), anulado_por: usuarioRef('anulado_por'), motivo_anulacion: text('motivo_anulacion'),
+}, (tabla) => [
+  index('pagos_cliente_idx').on(tabla.cliente_id),
+  check('pagos_monto_positivo', sql`${tabla.monto} > 0`),
+  check('pagos_anulacion_motivo', sql`${tabla.anulado_at} IS NULL OR ${tabla.motivo_anulacion} IS NOT NULL`),
+]).enableRLS();
+
+// Qué parte de cada pago cubre cada cargo. Los totales se validan en la transacción con bloqueo.
+export const pagoAplicaciones = pgTable('pago_aplicaciones', {
+  id: id(), pago_id: integer('pago_id').notNull().references(() => pagos.id),
+  cargo_id: integer('cargo_id').notNull().references(() => cargos.id), monto: dinero('monto').notNull(),
+}, (tabla) => [
+  uniqueIndex('pago_aplicaciones_unica').on(tabla.pago_id, tabla.cargo_id),
+  index('pago_aplicaciones_cargo_idx').on(tabla.cargo_id),
+  check('pago_aplicaciones_monto_positivo', sql`${tabla.monto} > 0`),
+]).enableRLS();
+
+// Registro inmutable de acciones sensibles (aprobaciones, cobros, anulaciones, cuentas, importaciones).
+export const auditoria = pgTable('auditoria', {
+  id: id(), usuario_id: usuarioRef('usuario_id'), accion: text('accion').notNull(),
+  entidad: text('entidad').notNull(), entidad_id: integer('entidad_id'), detalle: jsonb('detalle'), created_at: creado(),
+}, (tabla) => [
+  index('auditoria_entidad_idx').on(tabla.entidad, tabla.entidad_id),
+  index('auditoria_fecha_idx').on(tabla.created_at),
 ]).enableRLS();

@@ -1,7 +1,11 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import type { BaseDatos } from '../db/cliente';
 import { gps, gpsAsignaciones, simcardAsignaciones, simcards } from '../db/esquema';
+import { fechaEnRD, sumarMeses } from '@easyway/shared';
 import { ErrorHttp } from '../http/validacion';
+
+// Vigencia por defecto de GPS y SIM tras instalarse (acordado con el usuario).
+export const VIGENCIA_MESES = 12;
 
 // Transacción de Drizzle: mismo API de consultas que BaseDatos.
 export type Transaccion = Parameters<Parameters<BaseDatos['transaction']>[0]>[0];
@@ -28,7 +32,8 @@ export async function asignarGpsAVehiculo(tx: Transaccion, vehiculoId: number, g
   if (!equipo) throw new ErrorHttp(400, 'El GPS seleccionado no existe');
   if (equipo.estado !== 'Disponible') throw new ErrorHttp(409, `El GPS seleccionado no está disponible (estado: ${equipo.estado})`);
   await tx.insert(gpsAsignaciones).values({ gps_id: gpsId, vehiculo_id: vehiculoId, fecha_inicio: ahora });
-  await tx.update(gps).set({ estado: 'Instalado' }).where(eq(gps.id, gpsId));
+  // Cada instalación renueva la vigencia del equipo: 1 año (editable después).
+  await tx.update(gps).set({ estado: 'Instalado', fecha_vencimiento: sumarMeses(fechaEnRD(ahora), VIGENCIA_MESES) }).where(eq(gps.id, gpsId));
 }
 
 /** Igual que asignarGpsAVehiculo, para la simcard de un GPS. */
@@ -45,11 +50,13 @@ export async function asignarSimcardAGps(tx: Transaccion, gpsId: number, simcard
   }
   if (simcardId === null || activas.some(a => a.simcard_id === simcardId)) return;
 
-  const [sim] = await tx.select({ estado: simcards.estado }).from(simcards).where(eq(simcards.id, simcardId)).for('update');
+  const [sim] = await tx.select({ estado: simcards.estado, fecha_vencimiento: simcards.fecha_vencimiento }).from(simcards).where(eq(simcards.id, simcardId)).for('update');
   if (!sim) throw new ErrorHttp(400, 'La simcard seleccionada no existe');
   if (sim.estado !== 'Disponible') throw new ErrorHttp(409, `La simcard seleccionada no está disponible (estado: ${sim.estado})`);
   await tx.insert(simcardAsignaciones).values({ simcard_id: simcardId, gps_id: gpsId, fecha_inicio: ahora });
-  await tx.update(simcards).set({ estado: 'Asignada' }).where(eq(simcards.id, simcardId));
+  // La SIM conserva su vencimiento si ya lo tiene (p. ej. del Excel); si no, 1 año desde la asignación.
+  await tx.update(simcards).set({ estado: 'Asignada', fecha_vencimiento: sim.fecha_vencimiento ?? sumarMeses(fechaEnRD(ahora), VIGENCIA_MESES) })
+    .where(eq(simcards.id, simcardId));
 }
 
 /** Retira el GPS de cualquier vehículo (al marcarlo Retirado, Dañado o Disponible). */

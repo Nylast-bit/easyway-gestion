@@ -29,6 +29,20 @@
       "when": 1792341929920,
       "tag": "0003_autor_imagenes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792345713525,
+      "tag": "0004_modelo_ampliado",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792345744816,
+      "tag": "0005_retirar_tipo_texto",
+      "breakpoints": true
     }
   ]
 }

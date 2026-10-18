@@ -84,8 +84,8 @@ beforeEach(async () => {
   const vehiculoB = (await crear('/vehiculos', { cliente_id: cliente.id, placa: 'B1' })).id;
   const g1 = await crear('/gps', { imei: '863829070000001' });
   const g2 = await crear('/gps', { imei: '863829070000002' });
-  const instalacionA = (await crear('/instalaciones', { vehiculo_id: vehiculoA, gps_id: g1.id, tecnico_id: tecA.id })).id;
-  const instalacionB = (await crear('/instalaciones', { vehiculo_id: vehiculoB, gps_id: g2.id, tecnico_id: tecB.id })).id;
+  const instalacionA = (await crear('/instalaciones', { tipo_servicio_id: 1, vehiculo_id: vehiculoA, gps_id: g1.id, tecnico_id: tecA.id })).id;
+  const instalacionB = (await crear('/instalaciones', { tipo_servicio_id: 1, vehiculo_id: vehiculoB, gps_id: g2.id, tecnico_id: tecB.id })).id;
   escenario = { vehiculoA, vehiculoB, instalacionA, instalacionB };
   await iniciar('tecnico.a', 'tecnico', tecA.id);
   await iniciar('tecnico.b', 'tecnico', tecB.id);
@@ -153,7 +153,7 @@ test('fotos: un técnico solo borra las suyas; si Storage falla el registro se c
   // El técnico B también trabaja en el vehículo A: puede ver sus fotos pero no borrar las de A.
   const tecB = (await api('/tecnicos', 'admin')).datos.find((t: { nombre: string }) => t.nombre === 'Técnico B').id;
   const gps = (await api('/gps', 'admin', { cuerpo: { imei: '863829070000003' } })).datos;
-  await api('/instalaciones', 'admin', { cuerpo: { vehiculo_id: vehiculoA, gps_id: gps.id, tecnico_id: tecB, tipo: 'Mantenimiento' } });
+  await api('/instalaciones', 'admin', { cuerpo: { vehiculo_id: vehiculoA, gps_id: gps.id, tecnico_id: tecB, tipo_servicio_id: 3 } });
   const fotoA = (await subirFoto('tecnico.a', vehiculoA)).datos;
   const vistaB = (await api(`/fotos?vehiculo_id=${vehiculoA}`, 'tecnico.b')).datos;
   expect(vistaB).toEqual([expect.objectContaining({ id: fotoA.id, propia: false })]);

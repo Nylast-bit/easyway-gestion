@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { GpsFila, Persona, VehiculoFila } from '@easyway/shared';
+import { tiposVehiculo, type GpsFila, type Persona, type VehiculoFila } from '@easyway/shared';
 import { Image as ImageIcon } from 'lucide-react';
 import SearchableSelect from './SearchableSelect';
 import GaleriaFotos from './GaleriaFotos';
@@ -14,6 +14,7 @@ export type DatosFormularioVehiculo = {
   placa: string;
   chasis: string;
   color: string;
+  tipo: string;
 };
 
 interface VehicleFormProps {
@@ -32,7 +33,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ onSubmit, initialValues, envi
     año: initialValues?.año ?? '',
     placa: initialValues?.placa || '',
     chasis: initialValues?.chasis || '',
-    color: initialValues?.color || ''
+    color: initialValues?.color || '',
+    tipo: initialValues?.tipo ?? 'Carro'
   });
 
   const [clients, setClients] = useState<Persona[]>([]);
@@ -108,6 +110,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({ onSubmit, initialValues, envi
       </div>
 
       <div className="form-row">
+        <div className="form-group">
+          <label className="form-label" htmlFor="veh-tipo">Tipo de vehículo</label>
+          <select id="veh-tipo" className="form-select" value={formData.tipo} onChange={e => setFormData(prev => ({ ...prev, tipo: e.target.value }))}>
+            {tiposVehiculo.map(tipo => <option key={tipo} value={tipo}>{tipo}</option>)}
+          </select>
+        </div>
         <div className="form-group">
           <label className="form-label" htmlFor="veh-color">Color</label>
           <input id="veh-color" type="text" name="color" className="form-input" value={formData.color} onChange={handleTextChange} maxLength={30} />

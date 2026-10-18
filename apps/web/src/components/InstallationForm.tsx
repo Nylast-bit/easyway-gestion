@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { estadosInstalacion, tiposInstalacion, type GpsFila, type InstalacionFila, type Persona, type SimcardFila, type VehiculoFila } from '@easyway/shared';
+import { estadosInstalacion, type GpsFila, type InstalacionFila, type Persona, type SimcardFila, type TipoServicioFila, type VehiculoFila } from '@easyway/shared';
 import SearchableSelect from './SearchableSelect';
 import { aFechaHoraLocal, desdeFechaHoraLocal, solicitarApi } from '../lib/api';
 
@@ -9,7 +9,7 @@ export type DatosFormularioInstalacion = {
   simcard_id: string | number;
   tecnico_id: string | number;
   fecha_instalacion: string | null;
-  tipo: string;
+  tipo_servicio_id: string | number;
   asunto: string;
   notas: string;
   estado: string;
@@ -30,7 +30,7 @@ const InstallationForm: React.FC<InstallationFormProps> = ({ onSubmit, initialVa
     tecnico_id: initialValues?.tecnico_id ?? '' as string | number,
     // datetime-local muestra hora local; se convierte a ISO con zona al enviar.
     fecha_instalacion: aFechaHoraLocal(initialValues?.fecha_instalacion),
-    tipo: initialValues?.tipo || 'Instalación',
+    tipo_servicio_id: initialValues?.tipo_servicio_id ?? '' as string | number,
     asunto: initialValues?.asunto || '',
     notas: initialValues?.notas || '',
     estado: initialValues?.estado || 'En Proceso'
@@ -42,6 +42,7 @@ const InstallationForm: React.FC<InstallationFormProps> = ({ onSubmit, initialVa
   const [gpsList, setGpsList] = useState<OpcionSelect[]>([]);
   const [simcards, setSimcards] = useState<OpcionSelect[]>([]);
   const [technicians, setTechnicians] = useState<OpcionSelect[]>([]);
+  const [tiposServicio, setTiposServicio] = useState<TipoServicioFila[]>([]);
   const [selectedClient, setSelectedClient] = useState<string | number>(initialValues?.vehiculo.cliente_id ?? '');
 
   useEffect(() => {
@@ -54,6 +55,10 @@ const InstallationForm: React.FC<InstallationFormProps> = ({ onSubmit, initialVa
         opciones<GpsFila>('/gps?estado=Disponible', g => ({ id: g.id, label: `${g.imei} (${g.modelo || 'N/A'})` })),
         opciones<SimcardFila>('/simcards?estado=Disponible', s => ({ id: s.id, label: s.numero })),
       ]);
+      const tipos = await solicitarApi<TipoServicioFila[]>('/tipos-servicio').catch(() => [] as TipoServicioFila[]);
+      // Tipos inactivos solo se muestran si ya están en esta instalación.
+      setTiposServicio(tipos.filter(t => t.activo || t.id === initialValues?.tipo_servicio_id));
+      if (!initialValues && tipos.length) setFormData(prev => (prev.tipo_servicio_id ? prev : { ...prev, tipo_servicio_id: tipos.find(t => t.activo)?.id ?? '' }));
       setClients(cli);
       setTechnicians(tec);
       // Al editar se conservan como opción el GPS y la SIM registrados aunque ya no estén disponibles.
@@ -166,8 +171,8 @@ const InstallationForm: React.FC<InstallationFormProps> = ({ onSubmit, initialVa
       <div className="form-row">
         <div className="form-group">
           <label className="form-label" htmlFor="inst-tipo">Tipo</label>
-          <select id="inst-tipo" name="tipo" className="form-select" value={formData.tipo} onChange={handleChange}>
-            {tiposInstalacion.map(tipo => <option key={tipo}>{tipo}</option>)}
+          <select id="inst-tipo" name="tipo_servicio_id" className="form-select" value={formData.tipo_servicio_id} onChange={handleChange} required>
+            {tiposServicio.map(tipo => <option key={tipo.id} value={tipo.id}>{tipo.nombre}</option>)}
           </select>
         </div>
 

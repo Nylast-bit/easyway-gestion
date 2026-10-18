@@ -1,6 +1,6 @@
 # Progreso — Easyway GPS Gestión
 
-**Estado: fase 3 implementada y migrada en Supabase; dominio de correo verificado. Para cerrarla: administrador real y pruebas manuales.**
+**Estado: fase 5 implementada (pendiente aplicar 0004/0005 en Supabase). Siguiente: fase 6 — importación Excel.**
 Las casillas se marcan únicamente cuando la tarea o verificación esté terminada.
 
 ## Fase 1 — Base inicial y Supabase
@@ -41,7 +41,7 @@ Las casillas se marcan únicamente cuando la tarea o verificación esté termina
 - [x] Verificación de correo por OTP (Resend, plantilla HTML con colores de la marca); cuentas solo con usuario sin OTP.
 - [x] Aplicar `0002_autenticacion` y `0003_autor_imagenes` en Supabase (historial verificado: 0000–0003).
 - [x] Gestión de cuentas: seed interactivo del primer admin y pantalla Usuarios (alta, edición, activación, contraseña).
-- [ ] Crear el administrador real (`npm run db:crear-admin`, lo ejecuta el usuario).
+- [x] Crear el administrador real (`npm run db:crear-admin`, ejecutado por el usuario).
 - [x] Verificar el dominio remitente `easywagps.com` en Resend (DKIM y registros de envío verificados).
 - [ ] Pruebas manuales del usuario en la plataforma.
 - [x] Migrar CRUD, búsquedas y asignaciones a API con transacciones.
@@ -78,30 +78,45 @@ Las casillas se marcan únicamente cuando la tarea o verificación esté termina
   avance de técnico, galería multipart) y 24 shared.
 - Build y lint correctos.
 
-## Fase 4 — Docker
-- [ ] Imágenes multi-stage de Next.js/API y compose de desarrollo/producción.
-- [ ] PostgreSQL, almacenamiento portable y respaldos con retención.
-- [ ] Configuración validada, healthchecks y prueba de restauración.
-- [ ] Verificaciones, documentación y commit.
+## Orden acordado (2026-10-18)
+Fases 5 → 6 → 7 → 8; la fase 4 (Docker) queda al final. Decisiones de negocio:
+- Cobros = a clientes, por plan recurrente por vehículo. Hoy solo se vende el Plan Anual a RD$5,500;
+  otros planes se crearán desde la app. Variantes históricas del Excel se importan como planes inactivos.
+- Facturas fiscales (NCF/FACT) siguen en el sistema actual: la plataforma guarda solo la referencia.
+- Vencimientos: GPS/IMEI a 1 año de la instalación y SIM a 1 año; ambos editables por equipo.
+- Técnicos registran trabajos desde campo (incluso cliente/vehículo nuevo) y quedan pendientes de
+  aprobación. Al aprobar, el admin fija el costo del técnico (variable según dificultad) y luego lo marca pagado.
+- Importación desde la hoja "Data de instalaciones e cliente" (la hoja "Simcards" solo completa fechas de SIM).
 
 ## Fase 5 — Modelo ampliado
-- [ ] Clientes, vehículos, SIM, planes y tipos de servicio.
-- [ ] Tarifas, aprobación, pagos y auditoría.
-- [ ] Migraciones/seed y restricciones verificadas.
-- [ ] Verificaciones, documentación y commit.
+- [x] Clientes (tipo, documento), vehículos (tipo), planes, servicios por vehículo y tipos de servicio.
+- [x] Vencimientos editables de GPS y SIM; aprobación y costo de técnico en instalaciones (campos; flujo en fase 7).
+- [x] Cobros: cargos por periodo, pagos con aplicación a cargos, anulación y estado de cuenta.
+- [x] Auditoría de acciones sensibles.
+- [x] Migraciones/seed y restricciones verificadas (incluida la conservación de datos de 0004).
+- [ ] Aplicar 0004/0005 en Supabase.
+- [x] Verificaciones, documentación y commit.
+
+### Evidencia de fase 5
+- 34 pruebas de integración: 7 nuevas de cobros (catálogos y auditoría, generación idempotente y en paralelo,
+  pago automático/parcial/sobrante, validación de aplicaciones, anulaciones, 3 pagos simultáneos sin
+  sobreaplicar, vencimientos y resumen) y 1 de migración que conserva los tipos existentes.
+- 67 pruebas rápidas (26 shared con periodos de fin de mes/bisiestos, 14 API, 25 web, 2 guardas).
+- Capturas en 4 tamaños de Cobros, estado de cuenta, Planes y Vencimientos; se corrigieron importes que se
+  salían de las tarjetas en móvil y se añadió esa comprobación a las capturas.
 
 ## Fase 6 — Importación Excel
 - [ ] Fixture anonimizado y normalizadores completos.
-- [ ] Análisis/staging, vista previa, alias y advertencias por fila.
+- [ ] Análisis/staging, vista previa, alias (técnicos, planes, tipos) y advertencias por fila.
 - [ ] Confirmación transaccional, idempotencia, reporte y reversión segura.
 - [ ] Pruebas de conteos, duplicados y rollback.
 - [ ] Verificaciones, documentación y commit.
 
-## Fase 7 — Técnicos y pagos
-- [ ] Portal móvil, nueva instalación, fotos e historial propio.
-- [ ] Aprobación admin y asignaciones atómicas.
-- [ ] Pagos, reportes, usuarios y auditoría de reversiones.
-- [ ] E2e técnico → aprobación → pago.
+## Fase 7 — Técnicos, aprobación y cobros
+- [ ] Portal móvil del técnico: nueva instalación (cliente/vehículo nuevos), fotos e historial propio.
+- [ ] Cola de aprobación del admin, costo del técnico y asignaciones atómicas.
+- [ ] Costos de técnicos pagados/pendientes, reportes y auditoría de reversiones.
+- [ ] E2e técnico → aprobación → costo pagado.
 - [ ] Verificaciones, documentación y commit.
 
 ## Fase 8 — Extras y CI completo
@@ -110,4 +125,10 @@ Las casillas se marcan únicamente cuando la tarea o verificación esté termina
 - [ ] Baja lógica y exportaciones Excel.
 - [ ] GitHub Actions con cobertura, integración, e2e y builds Docker.
 - [ ] Protección de main (requiere permisos del repositorio).
+- [ ] Verificaciones, documentación y commit.
+
+## Fase 4 — Docker (al final, por decisión del usuario)
+- [ ] Imágenes multi-stage de Next.js/API y compose de desarrollo/producción.
+- [ ] PostgreSQL, almacenamiento portable y respaldos con retención.
+- [ ] Configuración validada, healthchecks y prueba de restauración.
 - [ ] Verificaciones, documentación y commit.

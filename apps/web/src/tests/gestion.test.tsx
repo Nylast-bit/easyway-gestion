@@ -45,7 +45,7 @@ test('clientes: lista desde la API, crea con POST y muestra el error de negocio 
   fireEvent.click(screen.getByRole('button', { name: /Agregar/ }));
   fireEvent.change(screen.getByLabelText('Nombre Completo *'), { target: { value: 'Flota Norte' } });
   fireEvent.click(screen.getByRole('button', { name: 'Agregar Cliente' }));
-  await waitFor(() => expect(llamadas.find(l => l.metodo === 'POST')?.cuerpo).toEqual({ nombre: 'Flota Norte', telefono: '', correo: '' }));
+  await waitFor(() => expect(llamadas.find(l => l.metodo === 'POST')?.cuerpo).toEqual({ nombre: 'Flota Norte', telefono: '', correo: '', tipo: 'Particular', documento: '', notas: '' }));
 });
 
 test('vehículos: al editar conserva el GPS instalado y envía todo en un PUT', async () => {
@@ -81,21 +81,23 @@ test('GPS: muestra simcard y vehículo activos y avisa que se retirará al cambi
 test('instalaciones: envía la fecha local como instante ISO', async () => {
   const instalacion = {
     id: 9, vehiculo_id: 7, gps_id: 11, simcard_id: null, tecnico_id: null, fecha_instalacion: '2026-10-18T16:30:00.000Z',
-    tipo: 'Instalación', asunto: 'Nueva unidad', notas: null, estado: 'En Proceso', created_at: '',
+    tipo_servicio_id: 1, tipo: 'Instalación', aprobacion: 'Aprobada', costo_tecnico: null, costo_pagado_at: null, asunto: 'Nueva unidad', notas: null, estado: 'En Proceso', created_at: '',
     vehiculo: { marca: 'TOYOTA', modelo: 'HILUX', placa: 'L123456', cliente_id: 3, cliente_nombre: 'Transporte Caribe' },
     gps_imei: '863829070755440', simcard_numero: null, tecnico_nombre: null,
   };
   const llamadas = simularApi({
     'GET /api/instalaciones': () => Response.json([instalacion]),
     'PUT /api/instalaciones/9': () => Response.json(instalacion),
+    'GET /api/tipos-servicio': () => Response.json([{ id: 1, nombre: 'Instalación', activo: true }, { id: 3, nombre: 'Mantenimiento', activo: true }]),
   });
   render(<Installations />);
   expect(await screen.findByText('Instalación: Nueva unidad')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Editar instalación' }));
+  await screen.findByRole('option', { name: 'Mantenimiento' });
   fireEvent.change(screen.getByLabelText('Fecha y Hora *'), { target: { value: '2026-10-19T08:15' } });
   fireEvent.click(screen.getByRole('button', { name: 'Guardar Cambios' }));
   await waitFor(() => expect(llamadas.find(l => l.metodo === 'PUT')).toBeDefined());
   const cuerpo = llamadas.find(l => l.metodo === 'PUT')!.cuerpo as Record<string, unknown>;
-  expect(cuerpo).toMatchObject({ vehiculo_id: 7, gps_id: 11, simcard_id: '', estado: 'En Proceso' });
+  expect(cuerpo).toMatchObject({ vehiculo_id: 7, gps_id: 11, simcard_id: '', estado: 'En Proceso', tipo_servicio_id: 1 });
   expect(cuerpo.fecha_instalacion).toBe(new Date('2026-10-19T08:15').toISOString());
 });

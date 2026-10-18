@@ -6,7 +6,7 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
 
 // Base efímera independiente de DATABASE_URL: nunca ejecutar pruebas contra el destino real.
-export async function iniciarPostgresEfimero() {
+export async function iniciarPostgresEfimero(opciones: { migraciones?: string } = {}) {
   const nombre = `easyway-prueba-${randomUUID()}`;
   const docker = (...args: string[]) => execFileSync('docker', args, { encoding: 'utf8', timeout: 120000 }).trim();
   docker('run', '--detach', '--rm', '--name', nombre, '-e', 'POSTGRES_PASSWORD=prueba-local',
@@ -24,8 +24,8 @@ export async function iniciarPostgresEfimero() {
       try { await cliente`SELECT 1`; break; }
       catch (error) { if (intento === 29) throw error; await setTimeout(500); }
     }
-    const migrar = () => migrate(drizzle(cliente!), { migrationsFolder: 'apps/api/drizzle' });
-    await migrar();
+    const migrar = (carpeta = 'apps/api/drizzle') => migrate(drizzle(cliente!), { migrationsFolder: carpeta });
+    await migrar(opciones.migraciones);
     return { url, cliente, migrar, detener };
   } catch (error) {
     await detener();

@@ -72,6 +72,18 @@ que se borra al terminar.
 - Fotos: `GET /api/fotos?vehiculo_id=`, `POST /api/fotos` (multipart `vehiculo_id` + `archivo`;
   JPG/PNG/WebP, máx. 8 MB, 5 por vehículo) y `DELETE /api/fotos/:id`.
 
+## Cobros y vencimientos
+
+- **Cobros** (menú): resumen de lo pendiente, vencido y cobrado en el mes; clientes con saldo y su
+  estado de cuenta. Desde ahí se asigna un plan a cada vehículo, se registran pagos (se aplican a
+  los cargos más antiguos; lo que sobra queda a favor), se crean cargos sueltos y se anulan cargos o
+  pagos con motivo. Las facturas fiscales siguen en el sistema contable: se anota su número/NCF.
+- **Generar cargos** crea un cargo por cada periodo vencido de los planes activos; repetirlo no duplica.
+- **Planes**: catálogo editable (hoy Plan Anual RD$5,500). Un plan se desactiva, no se borra.
+- **Vencimientos** (menú): GPS (1 año desde la instalación), SIM (1 año si no tenía fecha) y planes por
+  cobrar en 30/60/90 días o 1 año, con los vencidos primero; la fecha de GPS/SIM se puede corregir.
+- Todas estas acciones quedan en la auditoría (`GET /api/auditoria`).
+
 ## Técnicos
 
 Una cuenta con rol técnico debe estar vinculada a su ficha (`tecnico_id`). En la web solo ve
@@ -116,7 +128,8 @@ las pruebas rápidas. Docker y Playwright no se ejecutan en pre-commit.
 - `npx tsx scripts/db/verificar-storage.ts`: metadatos del bucket privado.
 
 Ver [docs/migracion-bd.md](docs/migracion-bd.md). Las migraciones 0000/0001 están
-aplicadas en Supabase PostgreSQL 17.11, junto con 0002 (autenticación) y 0003 (autor de fotos). El Excel real no está importado ni versionado;
+aplicadas en Supabase PostgreSQL 17.11, junto con 0002 (autenticación) y 0003 (autor de fotos).
+0004 (modelo ampliado) y 0005 (retira el tipo en texto) están pendientes de aplicar. El Excel real no está importado ni versionado;
 su importador transaccional se construirá en la fase 6.
 
 Skills oficiales Supabase en `.agents/skills`, registradas mediante `opencode.json`.
