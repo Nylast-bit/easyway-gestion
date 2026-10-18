@@ -1,6 +1,6 @@
 # Progreso — Easyway GPS Gestión
 
-**Fase actual: 2 — Next.js, monorepo y calidad.**
+**Estado: fase 2 completada. Próxima: fase 3 — API, autenticación y transacciones (sin iniciar).**
 Las casillas se marcan únicamente cuando la tarea o verificación esté terminada.
 
 ## Fase 1 — Base inicial y Supabase
@@ -24,7 +24,7 @@ Las casillas se marcan únicamente cuando la tarea o verificación esté termina
 - [x] Configurar husky/lint-staged: lint, tipos del workspace afectado y tests relacionados rápidos.
 - [x] Bloquear secretos, respaldos y Excel real en commits.
 - [x] Ejecutar lint, typecheck, unitarias, integración, e2e y build.
-- [ ] Actualizar README/AGENTS y hacer commit de fase 2.
+- [x] Actualizar README/AGENTS y hacer commit de fase 2 (`4248509`).
 
 ### Evidencia de fase 2
 - 31 pruebas rápidas: 2 guardas de commits, 4 API, 8 web y 17 shared.
