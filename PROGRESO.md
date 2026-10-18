@@ -1,6 +1,6 @@
 # Progreso — Easyway GPS Gestión
 
-**Estado: fase 3 implementada (bloques 1–3); pendiente aplicar migraciones 0002/0003 en Supabase y crear el administrador real para cerrarla.**
+**Estado: fase 3 implementada y migrada en Supabase; para cerrarla faltan el administrador real y verificar el dominio en Resend.**
 Las casillas se marcan únicamente cuando la tarea o verificación esté terminada.
 
 ## Fase 1 — Base inicial y Supabase
@@ -39,7 +39,9 @@ Las casillas se marcan únicamente cuando la tarea o verificación esté termina
 - [x] Hono, contratos/validación Zod y configuración del backend (autenticación; contratos CRUD en el bloque 2).
 - [x] Migrar usuarios/sesiones; login, bloqueo temporal, roles y seed admin.
 - [x] Verificación de correo por OTP (Resend, plantilla HTML con colores de la marca); cuentas solo con usuario sin OTP.
-- [ ] Aplicar `0002_autenticacion` en Supabase y crear el administrador real.
+- [x] Aplicar `0002_autenticacion` y `0003_autor_imagenes` en Supabase (historial verificado: 0000–0003).
+- [ ] Crear el administrador real (`npm run db:crear-admin`, lo ejecuta el usuario).
+- [ ] Verificar el dominio remitente `easywagps.com` en Resend (DKIM y registros de envío pendientes en DNS).
 - [x] Migrar CRUD, búsquedas y asignaciones a API con transacciones.
 - [x] Portal protegido y retirada de Supabase del frontend (fotos deshabilitadas hasta el adaptador de Storage).
 - [x] Adaptador Supabase Storage con autorización y URLs temporales; probar archivos.

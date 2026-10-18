@@ -13,7 +13,7 @@ export function conectar() {
   if (url.hostname.endsWith('.pooler.supabase.com') && url.port === '6543') {
     throw new Error('Usa conexión directa o pooler de sesión, no pooler de transacciones para migrar');
   }
-  return postgres(cadena, { max: 1, connect_timeout: 10 });
+  return postgres(cadena, { max: 1, connect_timeout: 10, onnotice: () => {} });
 }
 
 export function informarError(error: unknown) {

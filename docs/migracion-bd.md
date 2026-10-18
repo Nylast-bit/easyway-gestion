@@ -135,6 +135,12 @@ RLS habilitado y cero políticas públicas en PostgreSQL 17.11. No se importaron
 La segunda migración añade índices completos para consultar el historial de GPS/SIM;
 los índices parciales existentes solo cubren asignaciones activas.
 
+En la fase 3 se aplicaron `0002_autenticacion` y `0003_autor_imagenes` con `npm run db:migrate`
+tras comprobar con `npm run db:historial` que el destino tenía exactamente 0000 y 0001. Resultado
+verificado en solo lectura: 12 tablas con RLS y 0 políticas públicas, restricciones de `usuarios`,
+claves foráneas (cascada en sesiones/verificaciones, `SET NULL` en `subida_por`) e índices únicos.
+La API arrancó contra el destino real con Resend y Storage configurados.
+
 Se ejecutaron pruebas locales con Node 22.22.0 y PostgreSQL 16. Se verificó el bucket
 privado `vehicles`. En la fase 3 (`npm run storage:verificar`) se comprobaron subida sin
 sobrescritura, descarga con URL firmada, rechazo de la URL pública y borrado.

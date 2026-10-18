@@ -110,11 +110,12 @@ las pruebas rápidas. Docker y Playwright no se ejecutan en pre-commit.
 - `npm run db:generate -- --name=descripcion`: generar SQL y metadatos tras editar Drizzle.
 - `npm run db:migrate`: aplicar migraciones pendientes usando DATABASE_URL.
 - `npm run db:verify`: versión, tablas y RLS en modo solo lectura.
+- `npm run db:historial`: compara las migraciones aplicadas en el destino con las del repositorio (solo lectura).
 - `npm run db:crear-admin`: primer administrador a partir de variables `ADMIN_*`.
 - `npx tsx scripts/db/verificar-storage.ts`: metadatos del bucket privado.
 
 Ver [docs/migracion-bd.md](docs/migracion-bd.md). Las migraciones 0000/0001 están
-aplicadas en Supabase PostgreSQL 17.11; 0002 (autenticación) y 0003 (autor de fotos) están pendientes de aplicar. El Excel real no está importado ni versionado;
+aplicadas en Supabase PostgreSQL 17.11, junto con 0002 (autenticación) y 0003 (autor de fotos). El Excel real no está importado ni versionado;
 su importador transaccional se construirá en la fase 6.
 
 Skills oficiales Supabase en `.agents/skills`, registradas mediante `opencode.json`.

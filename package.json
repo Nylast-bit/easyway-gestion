@@ -24,6 +24,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db/migrar.ts",
     "db:verify": "tsx scripts/db/verificar.ts",
+    "db:historial": "tsx scripts/db/historial.ts",
     "dev:api": "npm run dev --workspace=@easyway/api",
     "db:crear-admin": "tsx scripts/db/crear-admin.ts",
     "test:capturas": "playwright test --project=capturas",
