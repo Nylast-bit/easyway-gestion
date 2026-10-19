@@ -20,7 +20,7 @@
     "test:unit": "node --test scripts/calidad.test.mjs && npm run test --workspaces",
     "test:int": "vitest run --config vitest.config.ts",
     "test:e2e": "playwright test --project=chromium",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db/migrar.ts",
     "db:verify": "tsx scripts/db/verificar.ts",
