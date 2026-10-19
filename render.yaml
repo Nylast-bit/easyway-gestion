@@ -9,7 +9,7 @@ services:
     # El plan free se duerme tras 15 min sin uso (primer login lento, ~1 min); starter queda siempre activo.
     plan: starter
     branch: master
-    # tsx y typescript están en los devDependencies de la raíz: se instalan aunque NODE_ENV sea production.
+    # tsx (arranque) es dependencia de apps/api; --include=dev deja también husky y typescript de la raíz.
     buildCommand: npm ci --include=dev
     startCommand: npm run start --workspace=@easyway/api
     healthCheckPath: /api/salud
