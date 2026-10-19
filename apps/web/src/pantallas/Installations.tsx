@@ -7,6 +7,7 @@ import InstallationForm, { type DatosFormularioInstalacion } from '../components
 import AvanceInstalacionForm, { type DatosAvance } from '../components/AvanceInstalacionForm';
 import GaleriaFotos from '../components/GaleriaFotos';
 import FiltrosInstalaciones from '../components/FiltrosInstalaciones';
+import BotonInstalar from '../components/BotonInstalar';
 import { consultaDe, filtroInicial, type Filtro } from '../lib/filtrosInstalaciones';
 import { formatearFecha, mensajeError, solicitarApi } from '../lib/api';
 import { useSesion } from '../lib/sesion';
@@ -90,9 +91,9 @@ const Installations: React.FC = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div className="cabecera-pagina">
         <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>{esTecnico ? 'Mis instalaciones' : 'Instalaciones'}</h1>
-        {!esTecnico && <button className="btn-primary" onClick={handleOpenAdd}><Plus size={18} /> Agregar</button>}
+        {esTecnico ? <BotonInstalar /> : <button className="btn-primary" onClick={handleOpenAdd}><Plus size={18} /> Agregar</button>}
       </div>
 
       <FiltrosInstalaciones filtro={filtro} onCambio={setFiltro} resumen={resumen} esTecnico={esTecnico} />

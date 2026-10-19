@@ -5,6 +5,7 @@ import { tiposVehiculo, type ClienteCampo, type ResumenCostoTecnico, type TipoSe
 import Drawer from '../components/Drawer';
 import GaleriaFotos from '../components/GaleriaFotos';
 import FotosPendientes from '../components/FotosPendientes';
+import BotonInstalar from '../components/BotonInstalar';
 import { prepararFoto } from '../lib/imagenes';
 import { aFechaHoraLocal, desdeFechaHoraLocal, formatearDinero, formatearFecha, mensajeError, solicitarApi } from '../lib/api';
 
@@ -107,7 +108,10 @@ const TrabajoCampo: React.FC = () => {
     <div>
       <div className="cabecera-pagina">
         <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>Trabajo de campo</h1>
-        <button className="btn-primary" onClick={nuevo}><Plus size={18} /> Nuevo trabajo</button>
+        <div className="cabecera-acciones">
+          <BotonInstalar />
+          <button className="btn-primary" onClick={nuevo}><Plus size={18} /> Nuevo trabajo</button>
+        </div>
       </div>
 
       {costos && (

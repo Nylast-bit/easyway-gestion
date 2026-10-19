@@ -64,6 +64,13 @@
 - Web: técnico entra a `/field` (Trabajo de campo) y `/installations` (`RUTAS_TECNICO`); admin `/approvals` y `/technician-costs`.
 - Filtros de instalaciones: `GET /instalaciones` y `/instalaciones/resumen` aceptan `desde`/`hasta` (fechas RD, -04:00), `tecnico` (id o `sin`), `tipo_servicio_id`, `estado` (`esquemaFiltroInstalaciones`); para un técnico se ignora `tecnico` y siempre se aplica su alcance. Periodos relativos con `rangoPeriodo` de shared. Usuarios muestra "Técnicos sin cuenta" con atajo de alta ligado a la ficha.
 
+## PWA (antes de Docker)
+
+- Manifiesto estático `apps/web/public/manifest.webmanifest` (enlazado en `metadata.manifest`; no usar `app/manifest.ts`: el validador que genera `next dev` deja imports sin usar y rompe `typecheck`). Iconos en `public/iconos` generados con `npx tsx scripts/generar-iconos.ts`.
+- `public/sw.js`: nunca intercepta `/api` ni guarda páginas del portal (dependen de la sesión); solo cachea `/_next/static`, `/iconos` y `offline.html`. Subir `VERSION` al cambiar lo precargado. Se registra solo en producción (`lib/pwa.ts`); en desarrollo se desregistra. El navegador integrado de la app no permite service workers: probar con Chromium de Playwright o Chrome sobre `next build`.
+- `proxy.ts` excluye `manifest.webmanifest`, `sw.js`, `offline.html` e `iconos/`. Instalar exige HTTPS (o localhost). Con `output: 'standalone'` hay que copiar `apps/web/public` y `.next/static` junto a `server.js` (fase Docker).
+- Botón "Descargar app" (`BotonInstalar`) en Trabajo de campo y Mis instalaciones del técnico: diálogo nativo si existe `beforeinstallprompt`; en iPhone y demás, pasos manuales.
+
 ## Base de datos y dominio
 
 - `apps/api/src/db/esquema.ts` fue reconstruido desde frontend, no introspectado. Decisiones en `docs/migracion-bd.md`.

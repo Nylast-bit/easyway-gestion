@@ -127,6 +127,14 @@ Una cuenta con rol técnico debe estar vinculada a su ficha (`tecnico_id`).
 - **Costos técnicos** (admin): deuda por técnico, marcar trabajos como pagados con referencia (todo o nada) y
   desmarcar con motivo auditado.
 
+## App para técnicos (PWA)
+
+El portal se instala en el teléfono como app: en *Trabajo de campo* o *Mis instalaciones* el técnico toca
+**Descargar app**. En Android (Chrome/Edge) aparece el diálogo de instalación; en iPhone se indican los pasos
+(Safari → Compartir → *Añadir a pantalla de inicio*). Se abre a pantalla completa y sin conexión muestra un
+aviso para reintentar. Requiere servir el portal por HTTPS. Los datos y las fotos siempre van a la API: la
+app no guarda información de clientes en el teléfono.
+
 ## Verificación
 
 | Comando | Qué ejecuta |

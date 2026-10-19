@@ -13,5 +13,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!login|api|_next/static|_next/image|favicon.svg|icons.svg).*)'],
+  // Archivos públicos de la PWA (manifiesto, service worker, iconos, página sin conexión) no requieren sesión.
+  matcher: ['/((?!login|api|_next/static|_next/image|favicon.svg|icons.svg|manifest.webmanifest|sw.js|offline.html|iconos/).*)'],
 };

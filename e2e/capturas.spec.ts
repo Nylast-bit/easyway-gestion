@@ -343,6 +343,13 @@ for (const tamano of TAMANOS) {
       await page.goto('/field');
       await expect(page.getByRole('heading', { name: 'Trabajo de campo' })).toBeVisible();
       await capturar('21-trabajo-campo');
+      // Instrucciones para instalar la PWA (sin diálogo nativo en el navegador de pruebas).
+      await page.getByRole('button', { name: /Descargar app/ }).click();
+      await expect(page.getByText('Instalar la app')).toBeVisible();
+      await expect.poll(() => page.locator('.instalar-ayuda img').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
+      await capturar('21d-instalar-app');
+      await page.goto('/field');
+      await expect(page.getByRole('heading', { name: 'Trabajo de campo' })).toBeVisible();
       await page.getByRole('button', { name: /Nuevo trabajo/ }).click();
       await page.getByRole('button', { name: 'Es un cliente nuevo' }).click();
       await capturar('21b-nuevo-trabajo');
@@ -351,6 +358,9 @@ for (const tamano of TAMANOS) {
       await expect(page.getByText('Fotos — 4/10')).toBeVisible();
       await page.getByText('Fotos — 4/10').scrollIntoViewIfNeeded();
       await capturar('21c-nuevo-trabajo-fotos');
+      await page.goto('/installations');
+      await expect(page.getByRole('heading', { name: 'Mis instalaciones' })).toBeVisible();
+      await capturar('21e-mis-instalaciones');
 
       // Contraseña temporal: el portal pide cambiarla antes de mostrar nada.
       await page.route('**/api/auth/sesion', route => route.fulfill({

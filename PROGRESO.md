@@ -156,6 +156,13 @@ Fases 5 → 6 → 7 → 8; la fase 4 (Docker) queda al final. Decisiones de nego
 - [ ] Protección de main (requiere permisos del repositorio).
 - [ ] Verificaciones, documentación y commit.
 
+## Fase PWA — App instalable para técnicos (antes de Docker)
+- [x] Manifiesto, iconos de la marca y metadatos (tema #00b494, apple-touch-icon, pantalla completa).
+- [x] Service worker: estáticos en caché, página sin conexión y `/api` siempre a la red.
+- [x] Botón "Descargar app" en Trabajo de campo y Mis instalaciones (diálogo nativo o pasos para iPhone/otros).
+- [x] Pruebas web, e2e, capturas en 4 tamaños y prueba del service worker en Chromium real (registro, caché y modo sin conexión).
+- [ ] Probar la instalación en teléfonos reales (Android e iPhone) con el portal en HTTPS.
+
 ## Fase 4 — Docker (al final, por decisión del usuario)
 - [ ] Imágenes multi-stage de Next.js/API y compose de desarrollo/producción.
 - [ ] PostgreSQL, almacenamiento portable y respaldos con retención.
