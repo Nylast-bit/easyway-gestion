@@ -4,7 +4,7 @@
 
 - Seguimiento verificable en `PROGRESO.md`: actualizar casillas al terminar cada tarea. No marcar una fase completa sin checks y commit.
 - npm workspaces: `apps/web` es Next.js App Router; `apps/api` es Hono (`crearApp` inyectable en `src/app.ts`, entrada `src/servidor.ts`) + Drizzle; `packages/shared` exporta TS/Zod directamente (`src/index.ts`).
-- Usar npm y Node 22 (`engines: 22.x`). Único lockfile: `package-lock.json` (el `pnpm-lock.yaml` de la etapa Vite se eliminó: si existe, Vercel usa pnpm y falla). En Vercel: preset Next.js y Root Directory `apps/web`; la API Hono se despliega aparte y la web la alcanza por `API_URL`.
+- Usar npm y Node 22 (`engines: 22.x`). Único lockfile: `package-lock.json` (el `pnpm-lock.yaml` de la etapa Vite se eliminó: si existe, Vercel usa pnpm y falla). En Vercel: preset Next.js, Root Directory `apps/web` e instalación desde la raíz (`apps/web/vercel.json`: `npm ci --include=dev`; dentro del workspace npm solo instalaría sus dependencias y faltarían typescript y husky); la API Hono se despliega aparte y la web la alcanza por `API_URL`.
 - Rutas protegidas en `apps/web/src/app/(portal)` (layout con MainLayout); `/login` queda fuera. Pantallas en `src/pantallas`, nunca `src/pages` (Next crearía rutas Pages Router duplicadas). Sidebar en `src/layouts/MainLayout.tsx`: actualizar al añadir rutas.
 
 ## Comandos y comprobaciones
