@@ -12,6 +12,17 @@ const API_URL = (process.env.API_URL || 'http://127.0.0.1:3001').replace(/\/$/, 
 const config: NextConfig = {
   output: 'standalone',
   transpilePackages: ['@easyway/shared'],
+  // El service worker se revisa en cada visita para que una versión nueva llegue sin reinstalar la app.
+  async headers() {
+    return [{
+      source: '/sw.js',
+      headers: [
+        { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
+        { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self'" },
+      ],
+    }];
+  },
   async rewrites() {
     return [{ source: '/api/:ruta*', destination: `${API_URL}/api/:ruta*` }];
   },
