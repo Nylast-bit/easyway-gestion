@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { type AnyPgColumn, boolean, check, date, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, boolean, check, date, index, integer, jsonb, numeric, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 const id = () => integer('id').primaryKey().generatedAlwaysAsIdentity();
 const creado = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -75,7 +75,10 @@ export const instalaciones = pgTable('instalaciones', {
   revisada_at: timestamp('revisada_at', { withTimezone: true }), motivo_rechazo: text('motivo_rechazo'),
   costo_tecnico: dinero('costo_tecnico'),
   costo_pagado_at: timestamp('costo_pagado_at', { withTimezone: true }), costo_pago_referencia: text('costo_pago_referencia'),
+  // Clave del borrador del técnico (cola sin conexión): evita duplicar el trabajo al reintentar.
+  clave_idempotencia: uuid('clave_idempotencia'),
 }, (tabla) => [
+  uniqueIndex('instalaciones_clave_idempotencia_unica').on(tabla.clave_idempotencia),
   index('instalaciones_vehiculo_idx').on(tabla.vehiculo_id),
   index('instalaciones_gps_idx').on(tabla.gps_id),
   index('instalaciones_simcard_idx').on(tabla.simcard_id),

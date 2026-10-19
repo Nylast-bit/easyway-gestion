@@ -162,6 +162,11 @@ Fases 5 → 6 → 7 → 8; la fase 4 (Docker) queda al final. Decisiones de nego
 - [x] Botón "Descargar app" en Trabajo de campo y Mis instalaciones (diálogo nativo o pasos para iPhone/otros).
 - [x] Pruebas web, e2e, capturas en 4 tamaños y prueba del service worker en Chromium real (registro, caché y modo sin conexión).
 - [ ] Probar la instalación en teléfonos reales (Android e iPhone) con el portal en HTTPS.
+- [x] Cola sin conexión: trabajos y fotos en IndexedDB, envío al volver la señal (online, Background Sync, Reintentar), Descartar y borrado al cerrar sesión.
+- [x] Idempotencia de `POST /campo/trabajos` (`clave_idempotencia`, migración 0009) con prueba de integración (reintentos y envíos en paralelo).
+- [x] Pruebas web de la cola simulando sin conexión, prueba del service worker y capturas en 4 tamaños.
+- [ ] Aplicar la migración 0009 en Supabase (pendiente de autorización).
+- [ ] Probar la cola en teléfonos reales (modo avión en Android e iPhone).
 
 ## Fase 4 — Docker (al final, por decisión del usuario)
 - [ ] Imágenes multi-stage de Next.js/API y compose de desarrollo/producción.

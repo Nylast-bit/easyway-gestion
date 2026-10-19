@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Camera, Plus, Smartphone } from 'lucide-react';
+import { Camera, CloudOff, Plus, RotateCw, Smartphone, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tiposVehiculo, type ClienteCampo, type ResumenCostoTecnico, type TipoServicioFila, type TrabajoCampo as Trabajo, type VehiculoCampo } from '@easyway/shared';
 import Drawer from '../components/Drawer';
@@ -8,6 +8,11 @@ import FotosPendientes from '../components/FotosPendientes';
 import BotonInstalar from '../components/BotonInstalar';
 import { prepararFoto } from '../lib/imagenes';
 import { aFechaHoraLocal, desdeFechaHoraLocal, formatearDinero, formatearFecha, mensajeError, solicitarApi } from '../lib/api';
+import { useSesion } from '../lib/sesion';
+import {
+  aFotoBorrador, descartarBorrador, enviarBorrador, enviarPendientes, esFalloTransitorio, guardarBorrador, listarBorradores, nuevaClave,
+  sinConexion, suscribirCola, type Borrador,
+} from '../lib/colaCampo';
 
 const claseAprobacion = { Pendiente: 'status-yellow', Aprobada: 'status-green', Rechazada: 'status-red' } as const;
 const formularioVacio = () => ({
@@ -18,6 +23,9 @@ const formularioVacio = () => ({
 
 // Pantalla del técnico en campo: registra trabajos (quedan pendientes de aprobación) y ve su historial y costos.
 const TrabajoCampo: React.FC = () => {
+  const usuario = useSesion();
+  const [borradores, setBorradores] = useState<Borrador[]>([]);
+  const [reintentando, setReintentando] = useState(false);
   const [trabajos, setTrabajos] = useState<Trabajo[]>([]);
   const [costos, setCostos] = useState<ResumenCostoTecnico | null>(null);
   const [tipos, setTipos] = useState<TipoServicioFila[]>([]);
@@ -38,6 +46,19 @@ const TrabajoCampo: React.FC = () => {
       setCostos(resumen);
     } catch (error) { toast.error(mensajeError(error, 'No se pudieron cargar tus trabajos')); }
   }, []);
+
+  // Trabajos guardados en el teléfono sin señal; cuando alguno se envía, se recarga la lista del servidor.
+  useEffect(() => {
+    if (!usuario) return;
+    let previos = -1;
+    const leer = () => listarBorradores(usuario.id).then(lista => {
+      if (previos > lista.length) void cargar();
+      previos = lista.length;
+      setBorradores(lista);
+    }).catch(() => setBorradores([]));
+    void leer();
+    return suscribirCola(() => void leer());
+  }, [usuario, cargar]);
 
   useEffect(() => {
     void cargar();
@@ -76,30 +97,72 @@ const TrabajoCampo: React.FC = () => {
     const vehiculoNuevo = f.vehiculoNuevo || !f.cliente;
     setEnviando(true);
     try {
-      const creado = await solicitarApi<Trabajo>('/campo/trabajos', { cuerpo: {
-        cliente_id: f.clienteNuevo ? null : f.cliente?.id ?? null,
-        cliente_nuevo: f.clienteNuevo ? f.nuevoCliente : null,
-        vehiculo_id: vehiculoNuevo ? null : f.vehiculo_id || null,
-        vehiculo_nuevo: vehiculoNuevo ? f.nuevoVehiculo : null,
-        imei: f.imei, sim: f.sim, tipo_servicio_id: f.tipo_servicio_id, fecha_instalacion: desdeFechaHoraLocal(f.fecha), notas: f.notas,
-      } });
-      // El trabajo ya está guardado: las fotos se suben después, una a una; si alguna falla se puede reintentar desde "Mis trabajos".
+      // Las fotos se reducen antes de nada: así lo que se guarda sin señal ya ocupa poco.
       let fallidas = 0;
+      const fotosListas: Borrador['fotos'] = [];
       for (const [i, original] of archivos.entries()) {
-        setProgreso(`Subiendo fotos ${i + 1}/${archivos.length}…`);
-        try {
-          const formulario = new FormData();
-          formulario.set('archivo', await prepararFoto(original));
-          await solicitarApi(`/fotos/trabajo/${creado.id}`, { cuerpo: formulario });
-        } catch { fallidas++; }
+        setProgreso(`Preparando fotos ${i + 1}/${archivos.length}…`);
+        try { fotosListas.push(await aFotoBorrador(await prepararFoto(original))); } catch { fallidas++; }
       }
-      if (fallidas) toast.error(`${fallidas} foto(s) no se pudieron subir; agrégalas desde “Mis trabajos”.`);
-      toast.success('Trabajo enviado; queda pendiente de aprobación');
-      setAbierto(false);
-      setArchivos([]);
-      void cargar();
-    } catch (error) { toast.error(mensajeError(error, 'No se pudo registrar el trabajo')); }
+      const clave = nuevaClave();
+      const borrador: Borrador = {
+        clave, usuario_id: usuario?.id ?? 0, creado: new Date().toISOString(), trabajo_id: null, fotos: fotosListas, fotos_fallidas: fallidas, error: null,
+        cuerpo: {
+          cliente_id: f.clienteNuevo ? null : f.cliente?.id ?? null,
+          cliente_nuevo: f.clienteNuevo ? f.nuevoCliente : null,
+          vehiculo_id: vehiculoNuevo ? null : f.vehiculo_id || null,
+          vehiculo_nuevo: vehiculoNuevo ? f.nuevoVehiculo : null,
+          imei: f.imei, sim: f.sim, tipo_servicio_id: f.tipo_servicio_id, fecha_instalacion: desdeFechaHoraLocal(f.fecha), notas: f.notas,
+          clave_idempotencia: clave,
+        },
+        resumen: {
+          tipo: tipos.find(t => String(t.id) === f.tipo_servicio_id)?.nombre ?? 'Trabajo',
+          cliente: f.clienteNuevo ? `${f.nuevoCliente.nombre} · nuevo` : f.cliente?.nombre ?? 'Sin cliente',
+          vehiculo: vehiculoNuevo
+            ? `${[f.nuevoVehiculo.marca, f.nuevoVehiculo.modelo].filter(Boolean).join(' ') || 'Vehículo'} (${f.nuevoVehiculo.placa || 'S/P'}) · nuevo`
+            : vehiculos.find(v => String(v.id) === f.vehiculo_id)?.descripcion ?? 'Vehículo',
+          imei: f.imei.replace(/\s+/g, ''), fecha: desdeFechaHoraLocal(f.fecha),
+        },
+      };
+      const cerrar = () => { setAbierto(false); setArchivos([]); };
+      // Sin señal (o si se corta a mitad): el trabajo queda en el teléfono y se envía solo al volver la conexión.
+      const guardarSinSenal = async () => {
+        await guardarBorrador(borrador);
+        toast.success('Sin señal: el trabajo quedó guardado en el teléfono y se enviará al volver la señal');
+        cerrar();
+      };
+      if (usuario && sinConexion()) return await guardarSinSenal();
+      try {
+        // El trabajo se crea primero; las fotos después, una a una. Si alguna se rechaza se agrega desde "Mis trabajos".
+        const resultado = await enviarBorrador(borrador, { guardado: false, progreso: setProgreso });
+        if (resultado.fotos_fallidas) toast.error(`${resultado.fotos_fallidas} foto(s) no se pudieron subir; agrégalas desde “Mis trabajos”.`);
+        toast.success('Trabajo enviado; queda pendiente de aprobación');
+        cerrar();
+        void cargar();
+      } catch (error) {
+        if (!usuario || !esFalloTransitorio(error)) throw error;
+        await guardarSinSenal();
+      }
+    } catch (error) { toast.error(mensajeError(error, 'No se pudo registrar el trabajo ni guardarlo en el teléfono')); }
     finally { setEnviando(false); setProgreso(''); }
+  };
+
+  const reintentar = async () => {
+    if (!usuario) return;
+    setReintentando(true);
+    try {
+      const { enviados, fotos_fallidas } = await enviarPendientes(usuario.id, { conError: true });
+      if (enviados) toast.success(enviados === 1 ? 'Trabajo enviado; queda pendiente de aprobación' : `Se enviaron ${enviados} trabajos`);
+      else toast.error(sinConexion() ? 'Sigue sin señal; se enviará al volver la conexión' : 'No se pudo enviar; revisa el aviso del trabajo');
+      if (fotos_fallidas) toast.error(`${fotos_fallidas} foto(s) no se pudieron subir; agrégalas desde “Mis trabajos”.`);
+    } catch { toast.error('No se pudo leer la cola del teléfono'); }
+    finally { setReintentando(false); }
+  };
+
+  const descartar = async (b: Borrador) => {
+    const fotos = b.fotos.length ? ` con ${b.fotos.length} foto(s)` : '';
+    if (!window.confirm(`¿Descartar el trabajo de ${b.resumen.cliente}? Se borrará del teléfono${fotos}.`)) return;
+    await descartarBorrador(b.clave).catch(() => toast.error('No se pudo descartar'));
   };
 
   const pedirVehiculoNuevo = f.clienteNuevo || f.vehiculoNuevo || (f.cliente !== null && vehiculos.length === 0);
@@ -124,7 +187,27 @@ const TrabajoCampo: React.FC = () => {
 
       <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem' }}>Mis trabajos</h2>
       <div className="entity-list">
-        {trabajos.length === 0 ? (
+        {borradores.map(b => (
+          <div key={b.clave} className="vehicle-card borrador-campo" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
+              <div style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
+                <div className="vehicle-title">{b.resumen.tipo} · {b.resumen.cliente}</div>
+                <div className="vehicle-owner">{b.resumen.vehiculo} · IMEI {b.resumen.imei}</div>
+              </div>
+              <span className="status-tag status-gray borrador-etiqueta"><CloudOff size={13} /> Sin enviar</span>
+            </div>
+            <p className={b.error ? 'borrador-aviso importacion-error' : 'borrador-aviso'}>
+              {b.error ? `No se pudo enviar: ${b.error}` : b.trabajo_id ? 'Trabajo recibido; faltan fotos · se enviarán al volver la señal' : 'Sin enviar · se enviará al volver la señal'}
+            </p>
+            <div className="vehicle-tags" style={{ marginTop: '0.5rem' }}>
+              <span className="vehicle-tag">{formatearFecha(b.resumen.fecha)}</span>
+              {b.fotos.length > 0 && <span className="vehicle-tag">{b.fotos.length} foto(s) en el teléfono</span>}
+              <button type="button" className="login-enlace" disabled={reintentando} onClick={() => void reintentar()}><RotateCw size={14} /> Reintentar</button>
+              <button type="button" className="login-enlace borrador-descartar" onClick={() => void descartar(b)}><Trash2 size={14} /> Descartar</button>
+            </div>
+          </div>
+        ))}
+        {trabajos.length === 0 && borradores.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
             <Smartphone size={48} style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
             <p>Aún no has registrado trabajos.</p>

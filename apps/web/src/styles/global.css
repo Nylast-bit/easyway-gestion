@@ -1082,3 +1082,9 @@ body {
 .instalar-ayuda ol { margin: 0; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.6rem; }
 .instalar-ayuda svg { vertical-align: -3px; color: var(--sidebar-active); }
 .instalar-aviso { background: #fef3c7; color: #92400e; border-radius: 8px; padding: 0.6rem 0.75rem; font-size: 0.85rem; }
+
+/* Cola sin conexión: trabajos guardados en el teléfono hasta que vuelve la señal */
+.borrador-campo { border: 1px dashed #9ca3af; }
+.borrador-etiqueta { display: inline-flex; align-items: center; gap: 0.3rem; align-self: flex-start; white-space: nowrap; }
+.borrador-aviso { font-size: 0.85rem; margin-top: 0.4rem; color: var(--text-secondary); overflow-wrap: anywhere; }
+.borrador-descartar { color: #b91c1c; }

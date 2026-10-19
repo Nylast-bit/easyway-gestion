@@ -10,6 +10,7 @@ import GlobalSearch from '../components/GlobalSearch';
 import CambiarContrasena from '../components/CambiarContrasena';
 import { ErrorApi, solicitarApi } from '../lib/api';
 import { ContextoSesion, RUTAS_TECNICO } from '../lib/sesion';
+import { listarBorradores, useEnvioAutomatico, vaciarCola } from '../lib/colaCampo';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -55,7 +56,14 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [usuario, rutaPermitida, router]);
   const elementos = esTecnico ? navItems.filter(item => RUTAS_TECNICO.includes(item.to)) : navItems.filter(item => item.to !== '/field');
 
+  // Trabajos guardados sin señal: se envían solos al abrir la app o volver la conexión.
+  useEnvioAutomatico(esTecnico && usuario?.tecnico_id && !usuario.debe_cambiar_contrasena ? usuario.id : null);
+
   const cerrarSesion = async () => {
+    // Los borradores no sobreviven al cierre de sesión: el teléfono puede pasar a otra persona.
+    const pendientes = usuario ? await listarBorradores(usuario.id).catch(() => []) : [];
+    if (pendientes.length && !window.confirm(`Tienes ${pendientes.length} trabajo(s) sin enviar. Si cierras sesión se borrarán del teléfono. ¿Cerrar sesión?`)) return;
+    await vaciarCola().catch(() => {});
     try { await solicitarApi('/auth/logout', { metodo: 'POST' }); }
     catch { toast.error('No se pudo cerrar la sesión en el servidor'); }
     router.replace('/login');

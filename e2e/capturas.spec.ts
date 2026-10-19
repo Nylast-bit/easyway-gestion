@@ -358,6 +358,32 @@ for (const tamano of TAMANOS) {
       await expect(page.getByText('Fotos — 4/10')).toBeVisible();
       await page.getByText('Fotos — 4/10').scrollIntoViewIfNeeded();
       await capturar('21c-nuevo-trabajo-fotos');
+      // Cola sin conexión: borradores guardados en IndexedDB; el envío falla por falta de red y siguen en cola.
+      await page.route('**/api/campo/trabajos', route => (route.request().method() === 'POST' ? route.abort('internetdisconnected') : route.fulfill({ json: trabajosTecnico })));
+      await page.route('**/api/fotos/trabajo/**', route => route.abort('internetdisconnected'));
+      await page.evaluate(async ({ cliente, vehiculo }) => {
+        const bd = await new Promise<IDBDatabase>((resolver, rechazar) => {
+          const peticion = indexedDB.open('easyway-campo', 1);
+          peticion.onupgradeneeded = () => peticion.result.createObjectStore('borradores', { keyPath: 'clave' });
+          peticion.onsuccess = () => resolver(peticion.result);
+          peticion.onerror = () => rechazar(peticion.error);
+        });
+        const foto = { nombre: 'tablero.jpg', tipo: 'image/jpeg', datos: new ArrayBuffer(8) };
+        const base = (n: number) => ({
+          clave: `0000000${n}-0000-4000-8000-000000000000`, usuario_id: 1, creado: `2026-10-18T1${n}:00:00Z`, trabajo_id: null, fotos_fallidas: 0, error: null as string | null,
+          cuerpo: {}, fotos: [foto, foto, foto], resumen: { tipo: 'Reinstalación con cambio de equipo', cliente: `${cliente} · nuevo`, vehiculo, imei: '863829070000001', fecha: '2026-10-18T14:00:00Z' },
+        });
+        const tx = bd.transaction('borradores', 'readwrite');
+        tx.objectStore('borradores').put(base(1));
+        tx.objectStore('borradores').put({ ...base(2), trabajo_id: 99, fotos: [foto] });
+        tx.objectStore('borradores').put({ ...base(3), error: 'El vehículo elegido no pertenece a ese cliente; revisa el cliente y vuelve a registrar el trabajo.' });
+        await new Promise(resolver => { tx.oncomplete = resolver; });
+        bd.close();
+      }, { cliente: clientes[0].nombre, vehiculo: 'TOYOTA HILUX DOBLE CABINA 4X4 (L123456) · nuevo' });
+      await page.goto('/field');
+      await expect(page.getByText('Sin enviar · se enviará al volver la señal')).toBeVisible();
+      await capturar('21f-trabajos-sin-enviar');
+      await page.evaluate(() => new Promise(resolver => { indexedDB.deleteDatabase('easyway-campo').onsuccess = resolver; }));
       await page.goto('/installations');
       await expect(page.getByRole('heading', { name: 'Mis instalaciones' })).toBeVisible();
       await capturar('21e-mis-instalaciones');

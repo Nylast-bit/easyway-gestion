@@ -132,8 +132,14 @@ Una cuenta con rol técnico debe estar vinculada a su ficha (`tecnico_id`).
 El portal se instala en el teléfono como app: en *Trabajo de campo* o *Mis instalaciones* el técnico toca
 **Descargar app**. En Android (Chrome/Edge) aparece el diálogo de instalación; en iPhone se indican los pasos
 (Safari → Compartir → *Añadir a pantalla de inicio*). Se abre a pantalla completa y sin conexión muestra un
-aviso para reintentar. Requiere servir el portal por HTTPS. Los datos y las fotos siempre van a la API: la
-app no guarda información de clientes en el teléfono.
+aviso para reintentar. Requiere servir el portal por HTTPS. El service worker nunca guarda respuestas de la
+API ni páginas del portal.
+
+**Sin señal**: si al tocar *Enviar trabajo* no hay conexión, el trabajo y sus fotos (ya reducidas) quedan
+guardados en el teléfono y aparecen en *Mis trabajos* como "Sin enviar · se enviará al volver la señal". Se
+envían solos al volver la conexión (también con la app cerrada en Android, por Background Sync), o con
+**Reintentar**; **Descartar** los borra. Cada borrador lleva una clave de idempotencia: si un envío se corta y
+se repite, la API devuelve el mismo trabajo en vez de duplicarlo. Al cerrar sesión se borran del teléfono.
 
 ## Verificación
 

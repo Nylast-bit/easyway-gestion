@@ -33,6 +33,8 @@ export const esquemaTrabajoCampo = z.object({
   tipo_servicio_id: idObligatorio('un tipo de servicio'),
   fecha_instalacion: z.iso.datetime({ offset: true, error: 'Fecha y hora inválidas' }),
   notas: textoOpcional(2000),
+  // Clave que genera el teléfono para cada borrador: un reenvío con la misma clave devuelve el trabajo ya creado.
+  clave_idempotencia: z.uuid('Clave de envío inválida').nullable().optional().transform(v => v ?? null),
 }).refine(d => Boolean(d.cliente_id) !== Boolean(d.cliente_nuevo), { message: 'Elige un cliente o registra uno nuevo', path: ['cliente_id'] })
   .refine(d => Boolean(d.vehiculo_id) !== Boolean(d.vehiculo_nuevo), { message: 'Elige un vehículo o registra uno nuevo', path: ['vehiculo_id'] })
   .refine(d => !d.vehiculo_id || d.cliente_id, { message: 'Un vehículo existente pertenece a un cliente existente', path: ['vehiculo_id'] });

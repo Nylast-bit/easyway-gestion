@@ -127,7 +127,7 @@ export function crearRutasCampo(bd: BaseDatos) {
       const usuario = c.get('usuario');
       const ficha = exigirTecnico(usuario);
       const datos = await leerJson(c, esquemaTrabajoCampo);
-      const id = await bd.transaction(async tx => {
+      const { id, repetido } = await bd.transaction(async tx => {
         if (datos.cliente_id) {
           const [cliente] = await tx.select({ id: clientes.id }).from(clientes).where(eq(clientes.id, datos.cliente_id));
           if (!cliente) throw new ErrorHttp(400, 'El cliente elegido no existe');
@@ -140,15 +140,24 @@ export function crearRutasCampo(bd: BaseDatos) {
         if (!tipo?.activo) throw new ErrorHttp(400, 'Tipo de servicio no disponible');
         const propuesta: PropuestaCampo = { cliente_id: datos.cliente_id, cliente_nuevo: datos.cliente_nuevo, vehiculo_nuevo: datos.vehiculo_nuevo, imei: datos.imei, sim: datos.sim };
         // Nada toca inventario ni asignaciones hasta que un administrador lo apruebe.
+        // Con clave de idempotencia, un reenvío del mismo borrador (cola sin conexión) no inserta otra fila:
+        // el índice único hace que dos envíos simultáneos esperen uno al otro y solo uno cree el trabajo.
         const [fila] = await tx.insert(instalaciones).values({
           aprobacion: 'Pendiente', estado: 'Completado', vehiculo_id: datos.vehiculo_id, tecnico_id: ficha, registrada_por: usuario.id,
           tipo_servicio_id: datos.tipo_servicio_id, fecha_instalacion: new Date(datos.fecha_instalacion), notas: datos.notas, propuesta,
-        }).returning({ id: instalaciones.id });
+          clave_idempotencia: datos.clave_idempotencia,
+        }).onConflictDoNothing({ target: instalaciones.clave_idempotencia }).returning({ id: instalaciones.id });
+        if (!fila) {
+          const [previo] = await tx.select({ id: instalaciones.id, registrada_por: instalaciones.registrada_por }).from(instalaciones)
+            .where(eq(instalaciones.clave_idempotencia, datos.clave_idempotencia!));
+          if (previo?.registrada_por !== usuario.id) throw new ErrorHttp(409, 'Esa clave de envío ya se usó');
+          return { id: previo.id, repetido: true };
+        }
         await registrarAuditoria(tx, usuario, 'registrar', 'instalacion', fila.id, { imei: datos.imei, cliente_nuevo: Boolean(datos.cliente_nuevo), vehiculo_nuevo: Boolean(datos.vehiculo_nuevo) });
-        return fila.id;
+        return { id: fila.id, repetido: false };
       });
       const [trabajo] = await listarTrabajos(bd, [eq(instalaciones.id, id)]);
-      return c.json(trabajo, 201);
+      return c.json(trabajo, repetido ? 200 : 201);
     })
     .get('/costos', async c => {
       const ficha = exigirTecnico(c.get('usuario'));

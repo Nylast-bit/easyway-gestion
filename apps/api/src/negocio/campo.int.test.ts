@@ -216,3 +216,26 @@ test('fotos del trabajo: máximo 10 por trabajo y no cuentan en el límite de 5 
   expect((await app.request('/api/fotos', { method: 'POST', body: formulario, headers: { Cookie: sesiones.admin } })).status).toBe(201);
   expect(await contar('vehiculo_imagenes')).toBe(11);
 });
+
+test('idempotencia: reenviar el mismo borrador (o en paralelo) no duplica el trabajo; la clave no se comparte', async () => {
+  const clave = '6f1d2c1e-8a4b-4c3d-9e2f-0a1b2c3d4e5f';
+  const cuerpo = trabajo({ cliente_nuevo: { nombre: 'Cliente sin señal' }, vehiculo_nuevo: { placa: 'A000777' }, imei: '863829070000777', clave_idempotencia: clave });
+  const primero = await api('/campo/trabajos', { quien: 'tec.a', cuerpo });
+  expect(primero.estado).toBe(201);
+  // Reintento tras perder la respuesta: mismo trabajo, 200 y sin otra auditoría.
+  const reintento = await api('/campo/trabajos', { quien: 'tec.a', cuerpo });
+  expect(reintento.estado).toBe(200);
+  expect(reintento.datos.id).toBe(primero.datos.id);
+  // Envíos simultáneos con otra clave (evento online + Background Sync): uno crea, el otro recibe el mismo.
+  const otra = { ...cuerpo, clave_idempotencia: '7a2e3d4f-9b5c-4d6e-8f70-1b2c3d4e5f60' };
+  const paralelos = await Promise.all([1, 2, 3].map(() => api('/campo/trabajos', { quien: 'tec.a', cuerpo: otra })));
+  expect(paralelos.map(r => r.estado).sort()).toEqual([200, 200, 201]);
+  expect(new Set(paralelos.map(r => r.datos.id)).size).toBe(1);
+  expect(await contar('instalaciones')).toBe(2);
+  expect(Number((await base!.cliente`SELECT count(*)::int AS n FROM auditoria WHERE accion = 'registrar'`)[0].n)).toBe(2);
+  // Otro técnico no puede reutilizar (ni descubrir) un trabajo ajeno con la clave.
+  expect((await api('/campo/trabajos', { quien: 'tec.b', cuerpo })).estado).toBe(409);
+  // Sin clave sigue funcionando como antes y una clave mal formada se rechaza.
+  expect((await api('/campo/trabajos', { quien: 'tec.a', cuerpo: { ...cuerpo, clave_idempotencia: null } })).estado).toBe(201);
+  expect((await api('/campo/trabajos', { quien: 'tec.a', cuerpo: { ...cuerpo, clave_idempotencia: 'no-es-uuid' } })).estado).toBe(400);
+});

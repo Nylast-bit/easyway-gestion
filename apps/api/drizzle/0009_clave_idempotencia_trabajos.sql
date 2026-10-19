@@ -1,0 +1,2 @@
+ALTER TABLE "instalaciones" ADD COLUMN "clave_idempotencia" uuid;--> statement-breakpoint
+CREATE UNIQUE INDEX "instalaciones_clave_idempotencia_unica" ON "instalaciones" USING btree ("clave_idempotencia");

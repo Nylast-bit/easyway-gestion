@@ -64,6 +64,13 @@
       "when": 1792416177733,
       "tag": "0008_fotos_trabajos",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792419394082,
+      "tag": "0009_clave_idempotencia_trabajos",
+      "breakpoints": true
     }
   ]
 }
