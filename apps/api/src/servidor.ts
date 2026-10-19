@@ -23,8 +23,8 @@ const almacen = configuracion.storage
   : crearAlmacenLocal({ directorio: fileURLToPath(new URL('../../../.almacen-local', import.meta.url)) });
 
 const app = crearApp({ bd, enviador, almacen, produccion: configuracion.produccion });
-const servidor = serve({ fetch: app.fetch, port: configuracion.puerto, hostname: '127.0.0.1' }, info => {
-  console.info(`API Easyway escuchando en http://127.0.0.1:${info.port}/api`);
+const servidor = serve({ fetch: app.fetch, port: configuracion.puerto, hostname: configuracion.host }, info => {
+  console.info(`API Easyway escuchando en http://${configuracion.host}:${info.port}/api`);
 });
 
 for (const senal of ['SIGINT', 'SIGTERM'] as const) {

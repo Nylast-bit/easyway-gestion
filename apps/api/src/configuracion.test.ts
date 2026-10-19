@@ -24,6 +24,14 @@ test('servidor: sin Resend en desarrollo usa correo simulado; en producción lo 
   });
 });
 
+test('servidor: puerto y host de Render (PORT, API_HOST) sin perder los valores locales', () => {
+  const DATABASE_URL = 'postgres://usuario:clave@localhost:5432/prueba';
+  expect(validarConfiguracionServidor({ DATABASE_URL })).toMatchObject({ puerto: 3001, host: '127.0.0.1' });
+  expect(validarConfiguracionServidor({ DATABASE_URL, PORT: '10000', API_HOST: '0.0.0.0' })).toMatchObject({ puerto: 10000, host: '0.0.0.0' });
+  expect(validarConfiguracionServidor({ DATABASE_URL, PORT: '10000', API_PUERTO: '3001' }).puerto).toBe(3001);
+  expect(() => validarConfiguracionServidor({ DATABASE_URL, API_HOST: 'ejemplo.com' })).toThrow('API_HOST');
+});
+
 test('servidor: Storage opcional en desarrollo, completo y con clave secreta', () => {
   const DATABASE_URL = 'postgres://usuario:clave@localhost:5432/prueba';
   expect(validarConfiguracionServidor({ DATABASE_URL }).storage).toBeNull();

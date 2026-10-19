@@ -1,0 +1,45 @@
+# Blueprint de Render para la API Hono (apps/api). La web Next va en Vercel y llega aquí por API_URL.
+# Render → New → Blueprint → este repositorio. Las variables con `sync: false` se piden al crear el servicio.
+services:
+  - type: web
+    name: easyway-api
+    runtime: node
+    # Ohio: misma zona que Supabase (us-east-2), menor latencia con la base de datos.
+    region: ohio
+    # El plan free se duerme tras 15 min sin uso (primer login lento, ~1 min); starter queda siempre activo.
+    plan: starter
+    branch: master
+    # tsx y typescript están en los devDependencies de la raíz: se instalan aunque NODE_ENV sea production.
+    buildCommand: npm ci --include=dev
+    startCommand: npm run start --workspace=@easyway/api
+    healthCheckPath: /api/salud
+    # Solo redesplegar cuando cambia algo que usa la API.
+    buildFilter:
+      paths:
+        - apps/api/**
+        - packages/shared/**
+        - package.json
+        - package-lock.json
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      # Render pasa el puerto en PORT; la API debe escuchar en todas las interfaces.
+      - key: API_HOST
+        value: 0.0.0.0
+      # Session pooler de Supabase (aws-0-us-east-2.pooler.supabase.com:5432, usuario postgres.<ref>).
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      # Clave secreta (sb_secret_…), nunca la publicable.
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: vehicles
+      - key: RESEND_API_KEY
+        sync: false
+      # Ej.: Easyway GPS <no-reply@tu-dominio-verificado.com>
+      - key: CORREO_REMITENTE
+        sync: false

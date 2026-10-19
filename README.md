@@ -141,6 +141,14 @@ envían solos al volver la conexión (también con la app cerrada en Android, po
 **Reintentar**; **Descartar** los borra. Cada borrador lleva una clave de idempotencia: si un envío se corta y
 se repite, la API devuelve el mismo trabajo en vez de duplicarlo. Al cerrar sesión se borran del teléfono.
 
+## Despliegue
+
+- **Web (Vercel)**: preset Next.js, Root Directory `apps/web` (instala desde la raíz con `apps/web/vercel.json`).
+  Variable `API_URL=https://<servicio>.onrender.com`; el navegador solo habla con `/api` del mismo dominio.
+- **API (Render)**: *New → Blueprint* con este repositorio (`render.yaml`). Pide `DATABASE_URL` (Session pooler
+  de Supabase), `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `RESEND_API_KEY` y `CORREO_REMITENTE`. Comprobar con
+  `https://<servicio>.onrender.com/api/salud` → `{"estado":"ok"}`.
+
 ## Verificación
 
 | Comando | Qué ejecuta |

@@ -11,6 +11,8 @@ export function validarConfiguracion(entorno: Record<string, string | undefined>
 const esquemaServidor = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   API_PUERTO: z.coerce.number().int().min(1).max(65535).default(3001),
+  // En local solo 127.0.0.1; en Render y similares 0.0.0.0 para recibir tráfico del balanceador.
+  API_HOST: z.union([z.literal('127.0.0.1'), z.literal('0.0.0.0'), z.literal('::')]).default('127.0.0.1'),
   RESEND_API_KEY: z.string().trim().min(1).optional(),
   CORREO_REMITENTE: z.string().trim().min(3).optional(),
   SUPABASE_URL: z.url().optional(),
@@ -25,7 +27,8 @@ export function validarConfiguracionServidor(entorno: Record<string, string | un
   const { DATABASE_URL } = validarConfiguracion(entorno);
   const vacio = (valor?: string) => (valor?.trim() ? valor : undefined);
   const resultado = esquemaServidor.safeParse({
-    NODE_ENV: vacio(entorno.NODE_ENV), API_PUERTO: vacio(entorno.API_PUERTO),
+    // Render (y otros PaaS) asignan el puerto en PORT; API_PUERTO tiene prioridad si se define.
+    NODE_ENV: vacio(entorno.NODE_ENV), API_PUERTO: vacio(entorno.API_PUERTO) ?? vacio(entorno.PORT), API_HOST: vacio(entorno.API_HOST),
     RESEND_API_KEY: vacio(entorno.RESEND_API_KEY), CORREO_REMITENTE: vacio(entorno.CORREO_REMITENTE),
     SUPABASE_URL: vacio(entorno.SUPABASE_URL), SUPABASE_SECRET_KEY: vacio(entorno.SUPABASE_SECRET_KEY),
     SUPABASE_STORAGE_BUCKET: vacio(entorno.SUPABASE_STORAGE_BUCKET),
@@ -44,7 +47,7 @@ export function validarConfiguracionServidor(entorno: Record<string, string | un
   if (datos.SUPABASE_SECRET_KEY?.startsWith('sb_publishable_')) throw new Error('SUPABASE_SECRET_KEY debe ser una clave secreta, no publicable');
   if (produccion && !datos.SUPABASE_URL) throw new Error('En producción se requieren SUPABASE_URL y SUPABASE_SECRET_KEY');
   return {
-    DATABASE_URL, puerto: datos.API_PUERTO, produccion,
+    DATABASE_URL, puerto: datos.API_PUERTO, host: datos.API_HOST, produccion,
     resend: datos.RESEND_API_KEY ? { apiKey: datos.RESEND_API_KEY, remitente: datos.CORREO_REMITENTE! } : null,
     storage: datos.SUPABASE_URL
       ? { url: datos.SUPABASE_URL, claveSecreta: datos.SUPABASE_SECRET_KEY!, bucket: datos.SUPABASE_STORAGE_BUCKET } : null,
