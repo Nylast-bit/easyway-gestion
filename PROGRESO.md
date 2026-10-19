@@ -165,7 +165,7 @@ Fases 5 → 6 → 7 → 8; la fase 4 (Docker) queda al final. Decisiones de nego
 - [x] Cola sin conexión: trabajos y fotos en IndexedDB, envío al volver la señal (online, Background Sync, Reintentar), Descartar y borrado al cerrar sesión.
 - [x] Idempotencia de `POST /campo/trabajos` (`clave_idempotencia`, migración 0009) con prueba de integración (reintentos y envíos en paralelo).
 - [x] Pruebas web de la cola simulando sin conexión, prueba del service worker y capturas en 4 tamaños.
-- [ ] Aplicar la migración 0009 en Supabase (pendiente de autorización).
+- [x] Migración 0009 aplicada en Supabase y verificada (`db:verify`, `db:historial`).
 - [ ] Probar la cola en teléfonos reales (modo avión en Android e iPhone).
 
 ## Fase 4 — Docker (al final, por decisión del usuario)
