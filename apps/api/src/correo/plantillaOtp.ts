@@ -15,7 +15,23 @@ const escapar = (valor: string) => valor.replace(/[&<>"']/g, caracter =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[caracter]!);
 
 // Maquetación con tablas y estilos en línea: es lo que Outlook, Gmail y clientes móviles respetan.
-export function crearCorreoOtp(datos: { para: string; nombre: string; codigo: string; minutos: number }): MensajeCorreo {
+export type PropositoCodigo = 'verificar' | 'recuperar';
+
+const TEXTOS: Record<PropositoCodigo, { titulo: string; tipo: string; explicacion: string; aviso: string }> = {
+  verificar: {
+    titulo: 'Verifica tu correo', tipo: 'verificación',
+    explicacion: 'Introduce este código en la pantalla de inicio de sesión para confirmar que esta dirección te pertenece.',
+    aviso: 'Si no intentaste iniciar sesión en Easyway GPS Gestión, ignora este mensaje; tu cuenta sigue protegida por tu contraseña.',
+  },
+  recuperar: {
+    titulo: 'Restablece tu contraseña', tipo: 'recuperación',
+    explicacion: 'Recibimos una solicitud para restablecer tu contraseña. Introduce este código en la pantalla de recuperación y elige una contraseña nueva.',
+    aviso: 'Si no pediste restablecer tu contraseña, ignora este mensaje: tu contraseña actual sigue funcionando.',
+  },
+};
+
+export function crearCorreoOtp(datos: { para: string; nombre: string; codigo: string; minutos: number; proposito?: PropositoCodigo }): MensajeCorreo {
+  const t = TEXTOS[datos.proposito ?? 'verificar'];
   const nombre = escapar(datos.nombre.split(' ')[0] || datos.nombre);
   const casillas = [...datos.codigo].map(digito => `<td style="padding:0 4px;">
     <div style="width:44px;height:56px;line-height:56px;border-radius:10px;background:${COLOR.claro};border:1px solid ${COLOR.principal};font-family:'Courier New',Courier,monospace;font-size:28px;font-weight:700;color:${COLOR.texto};text-align:center;">${digito}</div></td>`).join('');
@@ -27,10 +43,10 @@ export function crearCorreoOtp(datos: { para: string; nombre: string; codigo: st
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
-<title>Verifica tu correo</title>
+<title>${t.titulo}</title>
 </head>
 <body style="margin:0;padding:0;background:${COLOR.fondo};-webkit-text-size-adjust:100%;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Tu código de verificación de Easyway GPS es ${datos.codigo}. Caduca en ${datos.minutos} minutos.</div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Tu código de ${t.tipo} de Easyway GPS es ${datos.codigo}. Caduca en ${datos.minutos} minutos.</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${COLOR.fondo};">
 <tr><td align="center" style="padding:32px 16px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#ffffff;border:1px solid ${COLOR.borde};border-radius:16px;overflow:hidden;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
@@ -41,9 +57,9 @@ export function crearCorreoOtp(datos: { para: string; nombre: string; codigo: st
       </tr></table>
     </td></tr>
     <tr><td style="padding:32px 32px 8px;">
-      <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;color:${COLOR.texto};">Verifica tu correo</h1>
+      <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;color:${COLOR.texto};">${t.titulo}</h1>
       <p style="margin:0 0 8px;font-size:15px;line-height:1.6;color:${COLOR.texto};">Hola ${nombre},</p>
-      <p style="margin:0;font-size:15px;line-height:1.6;color:${COLOR.secundario};">Introduce este código en la pantalla de inicio de sesión para confirmar que esta dirección te pertenece.</p>
+      <p style="margin:0;font-size:15px;line-height:1.6;color:${COLOR.secundario};">${t.explicacion}</p>
     </td></tr>
     <tr><td align="center" style="padding:24px 16px;">
       <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>${casillas}</tr></table>
@@ -56,7 +72,7 @@ export function crearCorreoOtp(datos: { para: string; nombre: string; codigo: st
       </table>
     </td></tr>
     <tr><td style="padding:20px 32px;border-top:1px solid ${COLOR.borde};font-size:12px;line-height:1.5;color:${COLOR.secundario};">
-      Si no intentaste iniciar sesión en Easyway GPS Gestión, ignora este mensaje; tu cuenta sigue protegida por tu contraseña.
+      ${t.aviso}
     </td></tr>
   </table>
   <p style="margin:16px 0 0;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:12px;color:${COLOR.secundario};">Easyway GPS · República Dominicana</p>
@@ -68,11 +84,11 @@ export function crearCorreoOtp(datos: { para: string; nombre: string; codigo: st
   const texto = [
     `Hola ${datos.nombre.split(' ')[0] || datos.nombre},`,
     '',
-    `Tu código de verificación de Easyway GPS es: ${datos.codigo}`,
+    `Tu código de ${t.tipo} de Easyway GPS es: ${datos.codigo}`,
     `Caduca en ${datos.minutos} minutos y solo puede usarse una vez.`,
     '',
-    'Si no intentaste iniciar sesión, ignora este mensaje.',
+    t.aviso,
   ].join('\n');
 
-  return { para: datos.para, asunto: `${datos.codigo} es tu código de verificación de Easyway GPS`, html, texto };
+  return { para: datos.para, asunto: `${datos.codigo} es tu código de ${t.tipo} de Easyway GPS`, html, texto };
 }

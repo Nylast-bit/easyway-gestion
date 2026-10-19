@@ -143,6 +143,8 @@ Fases 5 → 6 → 7 → 8; la fase 4 (Docker) queda al final. Decisiones de nego
 - [x] Filtros de instalaciones por periodo (semana, mes, mes anterior, año, rango), técnico (incl. sin técnico), tipo y estado, con resumen por técnico y tipo.
 - [x] Usuarios: aviso de técnicos sin cuenta con atajo de alta ligado a su ficha.
 - [x] Pruebas: integración de filtros y aislamiento, unitarias web/shared, e2e y capturas en 4 tamaños.
+- [x] Recuperación de contraseña: código por correo, o usuario + cédula con contraseña temporal; cambio obligatorio al entrar con contraseña temporal o puesta por un admin (migración 0007).
+- [ ] Aplicar la migración 0007 en Supabase.
 
 ## Fase 8 — Extras y CI completo
 - [ ] Dashboard, stock mínimo y vencimientos.

@@ -7,6 +7,7 @@ import { Users, Wrench, Car, Satellite, Cpu, ClipboardList, LayoutDashboard, Sea
 import toast from 'react-hot-toast';
 import type { UsuarioSesion } from '@easyway/shared';
 import GlobalSearch from '../components/GlobalSearch';
+import CambiarContrasena from '../components/CambiarContrasena';
 import { ErrorApi, solicitarApi } from '../lib/api';
 import { ContextoSesion, RUTAS_TECNICO } from '../lib/sesion';
 
@@ -77,6 +78,16 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Contraseña temporal o puesta por un admin: no se muestra el portal hasta cambiarla (la API también lo exige).
+  if (usuario?.debe_cambiar_contrasena) return (
+    <main className="login-pagina">
+      <section className="login-tarjeta" aria-labelledby="login-titulo">
+        <div className="login-marca"><span className="login-logo" aria-hidden="true">E</span><span>Easyway GPS</span></div>
+        <CambiarContrasena usuario={usuario} onCambiada={setUsuario} onSalir={cerrarSesion} />
+      </section>
+    </main>
+  );
 
   return (
     <div className="app-layout">

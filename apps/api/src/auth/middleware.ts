@@ -19,13 +19,17 @@ export function borrarCookieSesion(c: Context, segura: boolean) {
 export const leerTokenSesion = (c: Context) => getCookie(c, COOKIE_SESION);
 
 // Borra la cookie inválida para que la web no quede en un ciclo de redirecciones.
-export function requerirSesion(servicio: ServicioAutenticacion, segura: boolean): MiddlewareHandler<Entorno> {
+// Con una contraseña pendiente de cambio solo pasan las rutas que lo permiten (sesión y cambio).
+export function requerirSesion(servicio: ServicioAutenticacion, segura: boolean, opciones: { permitirCambioPendiente?: boolean } = {}): MiddlewareHandler<Entorno> {
   return async (c, siguiente) => {
     const token = leerTokenSesion(c);
     const usuario = token ? await servicio.obtenerSesion(token) : null;
     if (!usuario) {
       if (token) borrarCookieSesion(c, segura);
       throw new ErrorHttp(401, 'Sesión no iniciada o caducada');
+    }
+    if (usuario.debe_cambiar_contrasena && !opciones.permitirCambioPendiente) {
+      throw new ErrorHttp(403, 'Debes cambiar tu contraseña antes de continuar', { cambiar_contrasena: true });
     }
     c.set('usuario', usuario);
     await siguiente();

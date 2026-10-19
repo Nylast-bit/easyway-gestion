@@ -18,7 +18,7 @@ export function crearRutasUsuarios(bd: BaseDatos) {
     return filas.map(({ u, tecnico_nombre }) => ({
       id: u.id, nombre: u.nombre, usuario: u.usuario, correo: u.correo, rol: u.rol, tecnico_id: u.tecnico_id,
       activo: u.activo, correo_verificado: Boolean(u.correo_verificado_at),
-      bloqueado_hasta: u.bloqueado_hasta?.toISOString() ?? null, tecnico_nombre, created_at: u.created_at.toISOString(),
+      bloqueado_hasta: u.bloqueado_hasta?.toISOString() ?? null, tecnico_nombre, cedula: u.cedula, created_at: u.created_at.toISOString(),
     }));
   }
 
@@ -35,6 +35,8 @@ export function crearRutasUsuarios(bd: BaseDatos) {
       const [creado] = await bd.insert(usuarios).values({
         nombre: datos.nombre, usuario: datos.usuario ?? null, correo: datos.correo ?? null,
         contrasena_hash: await hashearContrasena(datos.contrasena), rol: datos.rol, tecnico_id: datos.tecnico_id ?? null,
+        // La contraseña inicial la conoce el admin: la persona la cambia al entrar por primera vez.
+        cedula: datos.cedula ?? null, debe_cambiar_contrasena: true,
       }).returning({ id: usuarios.id });
       return c.json({ usuario: await uno(creado.id) }, 201);
     })
@@ -59,7 +61,7 @@ export function crearRutasUsuarios(bd: BaseDatos) {
       const { contrasena } = await leerJson(c, esquemaRestablecerContrasena);
       await bd.transaction(async tx => {
         const [fila] = await tx.update(usuarios)
-          .set({ contrasena_hash: await hashearContrasena(contrasena), intentos_fallidos: 0, bloqueado_hasta: null })
+          .set({ contrasena_hash: await hashearContrasena(contrasena), intentos_fallidos: 0, bloqueado_hasta: null, debe_cambiar_contrasena: true })
           .where(eq(usuarios.id, id)).returning({ id: usuarios.id });
         if (!fila) throw new ErrorHttp(404, 'Usuario no encontrado');
         await tx.delete(sesiones).where(eq(sesiones.usuario_id, id));

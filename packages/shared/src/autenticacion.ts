@@ -29,6 +29,32 @@ export const esquemaVerificarCorreo = z.object({
 
 export const esquemaReenviarCodigo = z.object({ desafio: z.string().min(20).max(200) });
 
+const contrasenaNueva = z.string().min(LONGITUD_MINIMA_CONTRASENA, `La contraseña necesita al menos ${LONGITUD_MINIMA_CONTRASENA} caracteres`).max(200);
+
+/** Cédula dominicana: solo los 11 dígitos (acepta 001-1234567-8 o 00112345678). */
+export const normalizarCedula = (valor: string) => valor.replace(/\D/g, '');
+export const formatearCedula = (cedula: string) => `${cedula.slice(0, 3)}-${cedula.slice(3, 10)}-${cedula.slice(10)}`;
+export const esquemaCedula = z.string().transform(normalizarCedula).pipe(z.string().regex(/^\d{11}$/, 'La cédula tiene 11 dígitos'));
+
+// Recuperación de acceso: por código al correo, o por cédula para cuentas sin correo.
+export const esquemaRecuperarPorCorreo = z.object({
+  correo: z.string().trim().toLowerCase().pipe(z.email('Correo inválido')),
+});
+export const esquemaConfirmarRecuperacion = z.object({
+  desafio: z.string().min(20).max(200),
+  codigo: esquemaVerificarCorreo.shape.codigo,
+  contrasena: contrasenaNueva,
+});
+export const esquemaRecuperarPorCedula = z.object({
+  usuario: z.string().trim().toLowerCase().regex(patronUsuario, 'Usuario con formato inválido'),
+  cedula: esquemaCedula,
+});
+export const esquemaCambiarContrasena = z.object({ actual: contrasena, nueva: contrasenaNueva })
+  .refine(datos => datos.actual !== datos.nueva, { message: 'La contraseña nueva debe ser distinta de la actual', path: ['nueva'] });
+
+export interface RespuestaRecuperacion { desafio: string; correo: string; reintentarEn: number }
+export interface RespuestaRecuperacionCedula { contrasena_temporal: string }
+
 export const rolesUsuario = ['admin', 'tecnico'] as const;
 export type RolUsuario = (typeof rolesUsuario)[number];
 
@@ -42,6 +68,7 @@ export const esquemaCrearUsuario = z.object({
   contrasena: z.string().min(LONGITUD_MINIMA_CONTRASENA, `La contraseña necesita al menos ${LONGITUD_MINIMA_CONTRASENA} caracteres`).max(200),
   rol: z.enum(rolesUsuario).default('tecnico'),
   tecnico_id: z.preprocess(vacioComoAusente, z.coerce.number().int().positive().nullable().optional()),
+  cedula: z.preprocess(vacioComoAusente, esquemaCedula.nullable().optional()),
 }).refine(datos => datos.usuario || datos.correo, { message: 'Indica un usuario o un correo', path: ['usuario'] })
   .refine(datos => !datos.tecnico_id || datos.rol === 'tecnico', { message: 'Solo un técnico puede vincularse a la ficha de técnico', path: ['tecnico_id'] });
 
@@ -52,6 +79,8 @@ export interface UsuarioSesion {
   correo: string | null;
   rol: RolUsuario;
   tecnico_id: number | null;
+  // Contraseña temporal o puesta por un admin: el portal solo permite cambiarla.
+  debe_cambiar_contrasena?: boolean;
 }
 
 export type RespuestaLogin =
@@ -64,6 +93,7 @@ export const esquemaActualizarUsuario = z.object({
   rol: z.enum(rolesUsuario),
   tecnico_id: z.union([z.literal(''), z.null(), z.coerce.number().int().positive()]).optional()
     .transform(valor => (valor === '' || valor === undefined ? null : valor)),
+  cedula: z.preprocess(vacioComoAusente, esquemaCedula.nullable().optional()).transform(valor => valor ?? null),
   activo: z.boolean(),
 }).refine(datos => !datos.tecnico_id || datos.rol === 'tecnico', { message: 'Solo un técnico puede vincularse a la ficha de técnico', path: ['tecnico_id'] });
 
@@ -76,5 +106,6 @@ export interface UsuarioFila extends UsuarioSesion {
   correo_verificado: boolean;
   bloqueado_hasta: string | null;
   tecnico_nombre: string | null;
+  cedula: string | null;
   created_at: string;
 }

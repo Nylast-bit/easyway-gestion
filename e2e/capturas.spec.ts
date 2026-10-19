@@ -248,6 +248,26 @@ for (const tamano of TAMANOS) {
       await expect(page.getByRole('heading', { name: 'Verifica tu correo' })).toBeVisible();
       await capturar('02-verificar-correo');
 
+      // Recuperación de acceso: por código al correo y por cédula (contraseña temporal).
+      await page.route('**/api/auth/recuperar', route => route.fulfill({
+        status: 202, json: { desafio: 'd'.repeat(43), correo: 'an•••••••••••••••••••@magna.com.do', reintentarEn: 60 },
+      }));
+      await page.route('**/api/auth/recuperar/cedula', route => route.fulfill({ json: { contrasena_temporal: 'k7Pm-x3Qa-Z9tR' } }));
+      await page.goto('/login');
+      await page.getByRole('button', { name: '¿Olvidaste tu contraseña?' }).click();
+      await expect(page.getByRole('heading', { name: 'Recuperar acceso' })).toBeVisible();
+      await capturar('24-recuperar-correo');
+      await page.getByLabel('Correo de tu cuenta').fill('ana.gabriela.administradora@magna.com.do');
+      await page.getByRole('button', { name: 'Enviar código' }).click();
+      await expect(page.getByLabel('Código de 6 dígitos')).toBeVisible();
+      await capturar('25-recuperar-codigo');
+      await page.getByRole('button', { name: /Sin correo/ }).click();
+      await page.getByLabel('Usuario', { exact: true }).fill('francisco.hernandez');
+      await page.getByLabel('Cédula').fill('001-1234567-8');
+      await page.getByRole('button', { name: 'Validar cédula' }).click();
+      await expect(page.getByLabel('Contraseña temporal', { exact: true })).toBeVisible();
+      await capturar('26-recuperar-cedula');
+
       // Portal con sesión y datos simulados.
       await context.addCookies([{ name: 'easyway_sesion', value: 'token-capturas', url: 'http://127.0.0.1:3100', httpOnly: true, sameSite: 'Lax' }]);
       await simularApi(page);
@@ -321,6 +341,14 @@ for (const tamano of TAMANOS) {
       await page.getByRole('button', { name: /Nuevo trabajo/ }).click();
       await page.getByRole('button', { name: 'Es un cliente nuevo' }).click();
       await capturar('21b-nuevo-trabajo');
+
+      // Contraseña temporal: el portal pide cambiarla antes de mostrar nada.
+      await page.route('**/api/auth/sesion', route => route.fulfill({
+        json: { usuario: { ...usuarioPrueba, nombre: 'Francisco Javier Hernández de la Cruz', rol: 'tecnico', tecnico_id: 3, debe_cambiar_contrasena: true } },
+      }));
+      await page.goto('/field');
+      await expect(page.getByRole('heading', { name: 'Crea tu contraseña' })).toBeVisible();
+      await capturar('27-cambiar-contrasena');
 
       expect(errores).toEqual([]);
     });

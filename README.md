@@ -54,8 +54,16 @@ que se borra al terminar.
 - Resto de cuentas: pantalla **Usuarios** (solo administradores). Alta de administradores o
   técnicos vinculados a su ficha, activar/desactivar y restablecer contraseña; desactivar o
   restablecer cierra las sesiones abiertas de esa cuenta.
-- Endpoints: `POST /api/auth/login`, `/verificar-correo`, `/reenviar-codigo`, `/logout`,
-  `GET /api/auth/sesion`; cuentas (solo admin): `GET/POST /api/usuarios`, `PUT /api/usuarios/:id`
+- **¿Olvidaste tu contraseña?** en el login:
+  - *Con correo*: se envía un código de 6 dígitos (10 min, máx. 5 por hora) y con él se elige una
+    contraseña nueva; se cierran las demás sesiones y se quita el bloqueo. La pantalla no revela si
+    el correo existe.
+  - *Sin correo*: usuario + cédula registrada en la cuenta (Usuarios → Cédula). Si coinciden se
+    muestra una contraseña temporal una sola vez. Los fallos cuentan para el bloqueo de 15 min.
+- Contraseña temporal, inicial (alta por un admin) o restablecida por un admin: al entrar se pide
+  cambiarla y la API responde 403 a todo lo demás hasta hacerlo.
+- Endpoints: `POST /api/auth/login`, `/verificar-correo`, `/reenviar-codigo`, `/recuperar`,
+  `/recuperar/confirmar`, `/recuperar/cedula`, `/cambiar-contrasena`, `/logout`, `GET /api/auth/sesion`; cuentas (solo admin): `GET/POST /api/usuarios`, `PUT /api/usuarios/:id`
   y `PUT /api/usuarios/:id/contrasena`.
 
 ## Gestión y transacciones

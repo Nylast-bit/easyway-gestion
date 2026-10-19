@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, Eye, EyeOff, Loader2, Lock, MailCheck, User } from 'lucide-react';
 import { LONGITUD_CODIGO_OTP, esquemaLogin, type RespuestaLogin } from '@easyway/shared';
 import { ErrorApi, solicitarApi } from '../lib/api';
+import RecuperarAcceso from '../components/RecuperarAcceso';
 
 type Desafio = { desafio: string; correo: string; reintentarEn: number };
 
@@ -21,6 +22,7 @@ const Login: React.FC = () => {
   const [contrasena, setContrasena] = useState('');
   const [mostrarContrasena, setMostrarContrasena] = useState(false);
   const [desafio, setDesafio] = useState<Desafio | null>(null);
+  const [recuperando, setRecuperando] = useState(false);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
 
@@ -57,7 +59,13 @@ const Login: React.FC = () => {
           <span>Easyway GPS</span>
         </div>
 
-        {desafio ? (
+        {recuperando ? (
+          <RecuperarAcceso
+            onVolver={() => { setRecuperando(false); setError(''); }}
+            onSesion={entrar}
+            onTemporal={(usuario, temporal) => { setIdentificador(usuario); setContrasena(temporal); setRecuperando(false); setError(''); }}
+          />
+        ) : desafio ? (
           <VerificacionCorreo
             desafio={desafio}
             onVolver={() => { setDesafio(null); setError(''); }}
@@ -112,6 +120,9 @@ const Login: React.FC = () => {
               {enviando && <Loader2 size={18} className="girando" aria-hidden="true" />}
               {enviando ? 'Entrando…' : 'Entrar'}
             </button>
+            <div className="login-acciones login-acciones-centro">
+              <button type="button" className="login-enlace" onClick={() => { setRecuperando(true); setError(''); }}>¿Olvidaste tu contraseña?</button>
+            </div>
           </form>
         )}
       </section>

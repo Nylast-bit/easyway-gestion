@@ -1,5 +1,8 @@
 import { Hono } from 'hono';
-import { esquemaLogin, esquemaReenviarCodigo, esquemaVerificarCorreo, type RespuestaLogin } from '@easyway/shared';
+import {
+  esquemaCambiarContrasena, esquemaConfirmarRecuperacion, esquemaLogin, esquemaReenviarCodigo, esquemaRecuperarPorCedula,
+  esquemaRecuperarPorCorreo, esquemaVerificarCorreo, type RespuestaLogin, type RespuestaRecuperacion, type RespuestaRecuperacionCedula,
+} from '@easyway/shared';
 import { borrarCookieSesion, escribirCookieSesion, leerTokenSesion, requerirSesion, type Entorno } from './middleware';
 import type { ServicioAutenticacion } from './servicio';
 import { ErrorHttp, leerJson } from '../http/validacion';
@@ -7,6 +10,14 @@ import { ErrorHttp, leerJson } from '../http/validacion';
 const minutosRestantes = (hasta: Date) => Math.max(1, Math.ceil((hasta.getTime() - Date.now()) / 60_000));
 
 export function crearRutasAutenticacion(servicio: ServicioAutenticacion, cookieSegura: boolean) {
+  // Sesión y cambio de contraseña siguen disponibles aunque el cambio esté pendiente.
+  const sesion = requerirSesion(servicio, cookieSegura, { permitirCambioPendiente: true });
+  const codigoFallido = (tipo: 'expirado' | 'agotado' | 'incorrecto', restantes = 0): never => {
+    if (tipo === 'expirado') throw new ErrorHttp(410, 'El código caducó. Solicita uno nuevo.');
+    if (tipo === 'agotado') throw new ErrorHttp(429, 'Demasiados intentos. Solicita un código nuevo.');
+    throw new ErrorHttp(400, `Código incorrecto. Te quedan ${restantes} intentos.`);
+  };
+
   return new Hono<Entorno>()
     .post('/login', async c => {
       const { identificador, contrasena } = await leerJson(c, esquemaLogin);
@@ -53,11 +64,52 @@ export function crearRutasAutenticacion(servicio: ServicioAutenticacion, cookieS
         case 'enviado': return c.json({ reintentarEn: resultado.reintentarEn });
       }
     })
+    // Contraseña olvidada con correo: siempre 202 con un desafío (exista o no la cuenta).
+    .post('/recuperar', async c => {
+      const { correo } = await leerJson(c, esquemaRecuperarPorCorreo);
+      const resultado = await servicio.solicitarRecuperacion(correo);
+      switch (resultado.tipo) {
+        case 'espera': throw new ErrorHttp(429, `Espera ${resultado.segundos} s antes de pedir otro código.`, { reintentarEn: resultado.segundos });
+        case 'limite': throw new ErrorHttp(429, 'Se alcanzó el máximo de códigos por hora. Intenta más tarde.');
+        case 'envio_fallido': throw new ErrorHttp(502, 'No se pudo enviar el código. Intenta de nuevo en unos minutos.');
+        case 'verificacion': {
+          const cuerpo: RespuestaRecuperacion = { desafio: resultado.desafio, correo: resultado.correo, reintentarEn: resultado.reintentarEn };
+          return c.json(cuerpo, 202);
+        }
+      }
+    })
+    .post('/recuperar/confirmar', async c => {
+      const { desafio, codigo, contrasena } = await leerJson(c, esquemaConfirmarRecuperacion);
+      const resultado = await servicio.confirmarRecuperacion(desafio, codigo, contrasena);
+      if (resultado.tipo !== 'sesion') return codigoFallido(resultado.tipo, resultado.tipo === 'incorrecto' ? resultado.restantes : 0);
+      escribirCookieSesion(c, resultado.token, resultado.expira, cookieSegura);
+      const cuerpo: RespuestaLogin = { estado: 'sesion_iniciada', usuario: resultado.usuario };
+      return c.json(cuerpo);
+    })
+    // Cuentas sin correo: usuario + cédula → contraseña temporal que se muestra una sola vez.
+    .post('/recuperar/cedula', async c => {
+      const { usuario, cedula } = await leerJson(c, esquemaRecuperarPorCedula);
+      const resultado = await servicio.recuperarPorCedula(usuario, cedula);
+      switch (resultado.tipo) {
+        case 'invalido': throw new ErrorHttp(401, 'Usuario o cédula incorrectos. Si tu cuenta tiene correo, recupérala por correo.');
+        case 'bloqueado': throw new ErrorHttp(423, `Cuenta bloqueada temporalmente por intentos fallidos. Intenta de nuevo en ${minutosRestantes(resultado.hasta)} min.`);
+        case 'temporal': {
+          const cuerpo: RespuestaRecuperacionCedula = { contrasena_temporal: resultado.contrasena };
+          return c.json(cuerpo);
+        }
+      }
+    })
+    .post('/cambiar-contrasena', sesion, async c => {
+      const { actual, nueva } = await leerJson(c, esquemaCambiarContrasena);
+      const resultado = await servicio.cambiarContrasena(c.get('usuario').id, leerTokenSesion(c)!, actual, nueva);
+      if (resultado.tipo === 'incorrecta') throw new ErrorHttp(400, 'La contraseña actual no es correcta');
+      return c.json({ usuario: resultado.usuario });
+    })
     .post('/logout', async c => {
       const token = leerTokenSesion(c);
       if (token) await servicio.cerrarSesion(token);
       borrarCookieSesion(c, cookieSegura);
       return c.body(null, 204);
     })
-    .get('/sesion', requerirSesion(servicio, cookieSegura), c => c.json({ usuario: c.get('usuario') }));
+    .get('/sesion', sesion, c => c.json({ usuario: c.get('usuario') }));
 }

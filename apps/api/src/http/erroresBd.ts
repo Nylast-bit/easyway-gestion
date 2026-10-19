@@ -11,6 +11,7 @@ const MENSAJES: Record<string, string> = {
   usuarios_usuario_unico: 'Ya existe una cuenta con ese nombre de usuario',
   usuarios_correo_unico: 'Ya existe una cuenta con ese correo',
   usuarios_tecnico_unico: 'Esa ficha de técnico ya tiene una cuenta vinculada',
+  usuarios_cedula_unica: 'Ya existe una cuenta con esa cédula',
   servicios_activo_unico: 'El vehículo ya tiene un plan activo; cancela o suspende el actual primero',
   planes_nombre_unico: 'Ya existe un plan con ese nombre',
   tipos_servicio_nombre_unico: 'Ya existe un tipo de servicio con ese nombre',

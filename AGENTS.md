@@ -36,6 +36,8 @@
 - 5 contraseñas fallidas bloquean 15 min. Mutaciones solo aceptan JSON (defensa CSRF junto a SameSite). Roles `admin`/`tecnico`: `requerirSesion` + `requerirRol`.
 - Sin `RESEND_API_KEY`/`CORREO_REMITENTE` en desarrollo el OTP se imprime en la consola de la API; en producción son obligatorias. Plantilla HTML en `apps/api/src/correo/plantillaOtp.ts` (paleta #00b494).
 - Primer admin: `npm run db:crear-admin` (interactivo con contraseña oculta, o `ADMIN_*` en el entorno; idempotente). El resto de cuentas en `/users` (pantalla Usuarios, admin). Un admin no puede desactivarse ni quitarse el rol; desactivar, cambiar rol/ficha o restablecer contraseña borra las sesiones de esa cuenta.
+- Recuperación (`auth/servicio.ts`): `POST /auth/recuperar` responde 202 con desafío aunque el correo no exista (no enumera) y limita a 1 código/min y 5/h por cuenta; los códigos llevan `proposito` (`verificar`/`recuperar`) y no son intercambiables. `POST /auth/recuperar/cedula` solo para cuentas sin correo con `usuarios.cedula` (11 dígitos, única): da contraseña temporal; los fallos usan el mismo contador de bloqueo. Contraseña temporal, inicial o restablecida por admin → `debe_cambiar_contrasena`: `requerirSesion` responde 403 (`detalles.cambiar_contrasena`) salvo en `/auth/sesion` y `/auth/cambiar-contrasena`; la web muestra `CambiarContrasena` en lugar del portal. Todo queda en `auditoria`.
+- `DATABASE_URL` de Supabase: usar el Session pooler (`aws-0-us-east-2.pooler.supabase.com:5432`, usuario `postgres.<ref>`); la conexión directa `db.<ref>.supabase.co` es solo IPv6 y falla con ENOTFOUND en redes sin IPv6.
 - `npm run dev` de la API usa `node --watch --import tsx` (no `tsx watch`, que en Windows se quedaba sin escuchar).
 
 ## Cobros y vencimientos (fase 5)

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { KeyRound, Pencil, Plus, UserCog, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { LONGITUD_MINIMA_CONTRASENA, type Persona, type UsuarioFila } from '@easyway/shared';
+import { LONGITUD_MINIMA_CONTRASENA, formatearCedula, type Persona, type UsuarioFila } from '@easyway/shared';
 import Drawer from '../components/Drawer';
 import UsuarioForm, { type DatosFormularioUsuario } from '../components/UsuarioForm';
 import { formatearFecha, mensajeError, solicitarApi } from '../lib/api';
@@ -45,10 +45,10 @@ const Users: React.FC = () => {
   const guardar = async ({ contrasena, usuario, correo, ...resto }: DatosFormularioUsuario) => {
     try {
       if (seleccion) {
-        await solicitarApi(`/usuarios/${seleccion.id}`, { metodo: 'PUT', cuerpo: { nombre: resto.nombre, rol: resto.rol, tecnico_id: resto.tecnico_id, activo: resto.activo } });
+        await solicitarApi(`/usuarios/${seleccion.id}`, { metodo: 'PUT', cuerpo: { nombre: resto.nombre, rol: resto.rol, tecnico_id: resto.tecnico_id, activo: resto.activo, cedula: resto.cedula } });
         toast.success('Cuenta actualizada');
       } else {
-        await solicitarApi('/usuarios', { cuerpo: { nombre: resto.nombre, rol: resto.rol, tecnico_id: resto.tecnico_id, usuario, correo, contrasena } });
+        await solicitarApi('/usuarios', { cuerpo: { nombre: resto.nombre, rol: resto.rol, tecnico_id: resto.tecnico_id, usuario, correo, contrasena, cedula: resto.cedula } });
         toast.success('Cuenta creada');
       }
       setAbierto(false);
@@ -117,6 +117,8 @@ const Users: React.FC = () => {
                     <span className={`status-tag ${cuenta.activo ? 'status-green' : 'status-red'}`}>{cuenta.activo ? 'Activa' : 'Desactivada'}</span>
                     {cuenta.correo && <span className="vehicle-tag">{cuenta.correo_verificado ? 'Correo verificado' : 'Correo sin verificar'}</span>}
                     {cuenta.rol === 'tecnico' && <span className="vehicle-tag">Ficha: {cuenta.tecnico_nombre ?? 'sin vincular'}</span>}
+                    {cuenta.cedula && <span className="vehicle-tag">Cédula: {formatearCedula(cuenta.cedula)}</span>}
+                    {!cuenta.correo && !cuenta.cedula && <span className="status-tag status-yellow">Sin correo ni cédula para recuperar el acceso</span>}
                     {bloqueada && <span className="status-tag status-red">Bloqueada por intentos</span>}
                     <span className="vehicle-tag">Alta: {formatearFecha(cuenta.created_at)}</span>
                   </div>
@@ -136,7 +138,7 @@ const Users: React.FC = () => {
         {modo === 'contrasena' && seleccion ? (
           <form onSubmit={restablecer}>
             <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '1rem' }}>
-              Nueva contraseña para <strong>{seleccion.nombre}</strong>. Se cerrarán sus sesiones abiertas y se quitará cualquier bloqueo.
+              Nueva contraseña para <strong>{seleccion.nombre}</strong>. Se cerrarán sus sesiones abiertas, se quitará cualquier bloqueo y deberá cambiarla al entrar.
             </p>
             <div className="form-group">
               <label className="form-label" htmlFor="usr-nueva">Nueva contraseña</label>

@@ -56,7 +56,7 @@ test('crear técnico: envía identificadores y contraseña; la ficha ya vinculad
   fireEvent.change(ficha, { target: { value: '5' } });
   fireEvent.click(screen.getByRole('button', { name: 'Crear cuenta' }));
   await waitFor(() => expect(llamadas.find(l => l.metodo === 'POST')?.cuerpo).toEqual({
-    nombre: 'Luis Rosario', rol: 'tecnico', tecnico_id: '5', usuario: 'luis.r', correo: '', contrasena: 'clave-inicial-1',
+    nombre: 'Luis Rosario', rol: 'tecnico', tecnico_id: '5', usuario: 'luis.r', correo: '', contrasena: 'clave-inicial-1', cedula: '',
   }));
 });
 
@@ -75,7 +75,7 @@ test('editar: la cuenta propia no puede desactivarse; restablecer contraseña us
   fireEvent.click(screen.getByRole('button', { name: 'Editar Pedro Martínez' }));
   fireEvent.click(screen.getByRole('checkbox'));
   fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
-  await waitFor(() => expect(llamadas.find(l => l.url === '/api/usuarios/2')?.cuerpo).toEqual({ nombre: 'Pedro Martínez', rol: 'tecnico', tecnico_id: 4, activo: false }));
+  await waitFor(() => expect(llamadas.find(l => l.url === '/api/usuarios/2')?.cuerpo).toEqual({ nombre: 'Pedro Martínez', rol: 'tecnico', tecnico_id: 4, activo: false, cedula: '' }));
 
   fireEvent.click(screen.getByRole('button', { name: 'Restablecer contraseña de Pedro Martínez' }));
   fireEvent.change(screen.getByLabelText('Nueva contraseña'), { target: { value: 'nueva-clave-456' } });

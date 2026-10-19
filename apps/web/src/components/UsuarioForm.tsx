@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { LONGITUD_MINIMA_CONTRASENA, type Persona, type UsuarioFila } from '@easyway/shared';
+import { LONGITUD_MINIMA_CONTRASENA, formatearCedula, type Persona, type UsuarioFila } from '@easyway/shared';
 
 export type DatosFormularioUsuario = {
   nombre: string; usuario: string; correo: string; contrasena: string;
-  rol: 'admin' | 'tecnico'; tecnico_id: string | number; activo: boolean;
+  rol: 'admin' | 'tecnico'; tecnico_id: string | number; activo: boolean; cedula: string;
 };
 
 interface UsuarioFormProps {
@@ -28,6 +28,7 @@ const UsuarioForm: React.FC<UsuarioFormProps> = ({ onSubmit, initialValues, fich
     rol: initialValues?.rol ?? 'tecnico',
     tecnico_id: initialValues?.tecnico_id ?? fichaInicial?.id ?? '',
     activo: initialValues?.activo ?? true,
+    cedula: initialValues?.cedula ? formatearCedula(initialValues.cedula) : '',
   });
   const [verContrasena, setVerContrasena] = useState(false);
   const cambiar = <K extends keyof DatosFormularioUsuario>(campo: K, valor: DatosFormularioUsuario[K]) => setDatos(d => ({ ...d, [campo]: valor }));
@@ -71,7 +72,7 @@ const UsuarioForm: React.FC<UsuarioFormProps> = ({ onSubmit, initialValues, fich
                 {verContrasena ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            <small style={{ color: '#6b7280' }}>Mínimo {LONGITUD_MINIMA_CONTRASENA} caracteres. Compártela por un canal privado.</small>
+            <small style={{ color: '#6b7280' }}>Mínimo {LONGITUD_MINIMA_CONTRASENA} caracteres. Compártela por un canal privado: deberá cambiarla al entrar.</small>
           </div>
         </>
       )}
@@ -104,6 +105,13 @@ const UsuarioForm: React.FC<UsuarioFormProps> = ({ onSubmit, initialValues, fich
           Sin ficha vinculada el técnico no podrá ver instalaciones.
         </p>
       )}
+
+      <div className="form-group">
+        <label className="form-label" htmlFor="usr-cedula">Cédula</label>
+        <input id="usr-cedula" className="form-input" value={datos.cedula} inputMode="numeric" placeholder="000-0000000-0" maxLength={13}
+          onChange={e => cambiar('cedula', e.target.value)} />
+        <small style={{ color: '#6b7280' }}>Permite recuperar el acceso a cuentas sin correo: con usuario y cédula se entrega una contraseña temporal.</small>
+      </div>
 
       {editando && (
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '0.9rem' }}>

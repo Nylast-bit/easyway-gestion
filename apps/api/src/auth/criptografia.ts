@@ -36,6 +36,14 @@ export const generarToken = () => randomBytes(32).toString('base64url');
 export const sha256 = (valor: string) => createHash('sha256').update(valor).digest('hex');
 export const generarCodigoOtp = (digitos: number) => String(randomInt(0, 10 ** digitos)).padStart(digitos, '0');
 
+// Sin caracteres que se confunden al leerlos en pantalla (0/O, 1/l/I).
+const ALFABETO_TEMPORAL = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+/** Contraseña temporal legible en 3 bloques de 4 (≈70 bits), p. ej. "k7Pm-x3Qa-Z9tR". */
+export function generarContrasenaTemporal() {
+  const bloque = () => Array.from({ length: 4 }, () => ALFABETO_TEMPORAL[randomInt(ALFABETO_TEMPORAL.length)]).join('');
+  return [bloque(), bloque(), bloque()].join('-');
+}
+
 export function igualesSeguro(a: string, b: string) {
   const x = Buffer.from(a);
   const y = Buffer.from(b);

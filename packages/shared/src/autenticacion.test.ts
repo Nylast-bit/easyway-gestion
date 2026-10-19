@@ -1,5 +1,8 @@
 import { expect, test } from 'vitest';
-import { clasificarIdentificador, esquemaCrearUsuario, esquemaLogin, esquemaVerificarCorreo } from './autenticacion';
+import {
+  clasificarIdentificador, esquemaCambiarContrasena, esquemaCedula, esquemaCrearUsuario, esquemaLogin, esquemaRecuperarPorCedula,
+  esquemaVerificarCorreo, formatearCedula,
+} from './autenticacion';
 
 test('clasifica correo y usuario normalizando mayúsculas y espacios', () => {
   expect(clasificarIdentificador('  Ana.Perez@Magna.com.do ')).toEqual({ tipo: 'correo', valor: 'ana.perez@magna.com.do' });
@@ -22,4 +25,19 @@ test('crear usuario exige identificador, contraseña larga y técnico solo con r
   expect(esquemaCrearUsuario.safeParse(base).success).toBe(false);
   expect(esquemaCrearUsuario.safeParse({ ...base, usuario: 'ana', contrasena: 'corta' }).success).toBe(false);
   expect(esquemaCrearUsuario.safeParse({ ...base, usuario: 'ana', rol: 'admin', tecnico_id: 1 }).success).toBe(false);
+});
+
+test('cédula: acepta guiones y espacios, guarda 11 dígitos y se formatea', () => {
+  expect(esquemaCedula.parse('001-1234567-8')).toBe('00112345678');
+  expect(esquemaCedula.parse(' 402 1234567 1 ')).toBe('40212345671');
+  expect(esquemaCedula.safeParse('001-123456-8').success).toBe(false);
+  expect(formatearCedula('00112345678')).toBe('001-1234567-8');
+  expect(esquemaRecuperarPorCedula.parse({ usuario: ' Gabo ', cedula: '00112345678' })).toEqual({ usuario: 'gabo', cedula: '00112345678' });
+});
+
+test('cambiar contraseña: la nueva cumple el mínimo y es distinta de la actual', () => {
+  expect(esquemaCambiarContrasena.safeParse({ actual: 'k7Pm-x3Qa-Z9tR', nueva: 'clave-nueva-456' }).success).toBe(true);
+  expect(esquemaCambiarContrasena.safeParse({ actual: 'k7Pm-x3Qa-Z9tR', nueva: 'corta' }).success).toBe(false);
+  expect(esquemaCambiarContrasena.safeParse({ actual: 'clave-nueva-456', nueva: 'clave-nueva-456' }).error?.issues[0].message)
+    .toBe('La contraseña nueva debe ser distinta de la actual');
 });

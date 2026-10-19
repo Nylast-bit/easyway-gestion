@@ -127,8 +127,14 @@ export const usuarios = pgTable('usuarios', {
   activo: boolean('activo').notNull().default(true),
   intentos_fallidos: integer('intentos_fallidos').notNull().default(0),
   bloqueado_hasta: timestamp('bloqueado_hasta', { withTimezone: true }), created_at: creado(),
+  // Cédula (11 dígitos) para recuperar el acceso de cuentas sin correo.
+  cedula: text('cedula'),
+  // Contraseña asignada por otra persona (temporal o puesta por un admin): se cambia al entrar.
+  debe_cambiar_contrasena: boolean('debe_cambiar_contrasena').notNull().default(false),
 }, (tabla) => [
   uniqueIndex('usuarios_usuario_unico').on(tabla.usuario),
+  uniqueIndex('usuarios_cedula_unica').on(tabla.cedula),
+  check('usuarios_cedula_formato', sql`${tabla.cedula} ~ '^[0-9]{11}$'`),
   uniqueIndex('usuarios_correo_unico').on(tabla.correo),
   uniqueIndex('usuarios_tecnico_unico').on(tabla.tecnico_id),
   check('usuarios_identificador', sql`${tabla.usuario} IS NOT NULL OR ${tabla.correo} IS NOT NULL`),
@@ -152,8 +158,11 @@ export const verificacionesCorreo = pgTable('verificaciones_correo', {
   intentos: integer('intentos').notNull().default(0), envios: integer('envios').notNull().default(1),
   enviado_at: timestamp('enviado_at', { withTimezone: true }).notNull().defaultNow(),
   usado_at: timestamp('usado_at', { withTimezone: true }), created_at: creado(),
+  // verificar: primer acceso con correo; recuperar: restablecer la contraseña olvidada.
+  proposito: text('proposito').notNull().default('verificar'),
 }, (tabla) => [
   uniqueIndex('verificaciones_desafio_unico').on(tabla.desafio_hash),
+  check('verificaciones_proposito', sql`${tabla.proposito} IN ('verificar', 'recuperar')`),
   index('verificaciones_usuario_idx').on(tabla.usuario_id),
 ]).enableRLS();
 
