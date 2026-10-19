@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "concurrently -k -n api,web -c cyan,green \"npm run dev --workspace=@easyway/api\" \"npm run dev --workspace=@easyway/web\"",
