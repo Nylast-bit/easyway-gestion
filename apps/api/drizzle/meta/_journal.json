@@ -57,6 +57,13 @@
       "when": 1792414323196,
       "tag": "0007_recuperacion_acceso",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792416177733,
+      "tag": "0008_fotos_trabajos",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,7 @@ import {
   type CostoTecnicoFila, type PropuestaCampo,
 } from '@easyway/shared';
 import type { BaseDatos } from '../db/cliente';
-import { clientes, gps, instalaciones, planes, servicios, simcards, tecnicos, tiposServicio, vehiculos } from '../db/esquema';
+import { clientes, gps, instalaciones, planes, servicios, simcards, tecnicos, tiposServicio, vehiculoImagenes, vehiculos } from '../db/esquema';
 import type { Entorno } from '../auth/middleware';
 import { leerId } from '../http/erroresBd';
 import { ErrorHttp, leerJson } from '../http/validacion';
@@ -98,6 +98,8 @@ export function crearRutasAprobaciones(bd: BaseDatos, reloj: () => Date) {
           aprobacion: 'Aprobada', vehiculo_id: vehiculoId, gps_id: equipo.id, simcard_id: simId, costo_tecnico: datos.costo_tecnico,
           revisada_por: usuario.id, revisada_at: ahora, ...(datos.notas ? { notas: datos.notas } : {}),
         }).where(eq(instalaciones.id, id));
+        // Las fotos tomadas en campo pasan a la galería del vehículo definitivo.
+        await tx.update(vehiculoImagenes).set({ vehiculo_id: vehiculoId }).where(eq(vehiculoImagenes.instalacion_id, id));
         await registrarAuditoria(tx, usuario, 'aprobar', 'instalacion', id, { costo_tecnico: datos.costo_tecnico, efecto, creados });
       });
       const [trabajo] = await listarTrabajos(bd, [eq(instalaciones.id, id)]);

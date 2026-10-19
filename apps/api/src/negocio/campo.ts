@@ -5,7 +5,7 @@ import {
   type ClienteCampo, type PropuestaCampo, type ResumenCostoTecnico, type TrabajoCampo, type VehiculoCampo,
 } from '@easyway/shared';
 import type { BaseDatos } from '../db/cliente';
-import { clientes, gps, gpsAsignaciones, instalaciones, simcards, tecnicos, tiposServicio, usuarios, vehiculos } from '../db/esquema';
+import { clientes, gps, gpsAsignaciones, instalaciones, simcards, tecnicos, tiposServicio, usuarios, vehiculoImagenes, vehiculos } from '../db/esquema';
 import type { Entorno } from '../auth/middleware';
 import { ErrorHttp, leerJson } from '../http/validacion';
 import { fichaTecnico } from './acceso';
@@ -21,6 +21,7 @@ export async function listarTrabajos(bd: Pick<BaseDatos, 'select'>, filtros: SQL
     inst: instalaciones, tipo: tiposServicio.nombre, tecnico_nombre: tecnicos.nombre, registrada_por_nombre: usuarios.nombre,
     marca: vehiculos.marca, modelo: vehiculos.modelo, placa: vehiculos.placa, cliente_nombre: clientes.nombre,
     imei: gps.imei, sim: simcards.numero,
+    fotos: sql<number>`(SELECT count(*) FROM ${vehiculoImagenes} WHERE ${vehiculoImagenes.instalacion_id} = ${instalaciones.id})`.mapWith(Number),
   }).from(instalaciones)
     .innerJoin(tiposServicio, eq(tiposServicio.id, instalaciones.tipo_servicio_id))
     .leftJoin(tecnicos, eq(tecnicos.id, instalaciones.tecnico_id))
@@ -48,7 +49,7 @@ export async function listarTrabajos(bd: Pick<BaseDatos, 'select'>, filtros: SQL
       motivo_rechazo: f.inst.motivo_rechazo, notas: f.inst.notas, cliente_nombre: cliente, vehiculo_descripcion: vehiculo,
       imei: f.imei ?? p?.imei ?? '', sim: f.sim ?? p?.sim ?? null, vehiculo_id: f.inst.vehiculo_id,
       costo_tecnico: f.inst.costo_tecnico, costo_pagado_at: f.inst.costo_pagado_at?.toISOString() ?? null,
-      tecnico_nombre: f.tecnico_nombre, registrada_por_nombre: f.registrada_por_nombre, propuesta: p,
+      tecnico_nombre: f.tecnico_nombre, registrada_por_nombre: f.registrada_por_nombre, fotos: f.fotos, propuesta: p,
       coincidencias: { clientes: [], vehiculos: [], gps: null, simcard: null },
     };
     if (conCoincidencias && p && f.inst.aprobacion === 'Pendiente') fila.coincidencias = await buscarCoincidencias(bd, p);

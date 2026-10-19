@@ -141,10 +141,12 @@ export const esquemaAvanceInstalacion = z.object({
 export type DatosAvanceInstalacion = z.output<typeof esquemaAvanceInstalacion>;
 
 export const FOTOS_MAXIMAS_POR_VEHICULO = 5;
+// Fotos tomadas en campo con un trabajo; no cuentan en el límite de la galería del vehículo.
+export const FOTOS_MAXIMAS_POR_TRABAJO = 10;
 export const TAMANO_MAXIMO_FOTO = 8 * 1024 * 1024;
 
 // URL temporal de lectura (caduca); nunca se guarda en el cliente más allá de la vista actual.
-export interface FotoVehiculo { id: number; url: string; created_at: string; propia: boolean; autor: string | null }
+export interface FotoVehiculo { id: number; url: string; created_at: string; propia: boolean; autor: string | null; trabajo_id: number | null }
 
 // Filtros del listado de instalaciones (fechas de calendario en Santo Domingo, ambas incluidas).
 const fechaFiltro = z.union([z.literal(''), z.iso.date('Fecha inválida')]).optional().transform(v => v || null);

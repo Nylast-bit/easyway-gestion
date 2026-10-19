@@ -163,3 +163,56 @@ test('rollback: si el GPS ya está instalado en otro vehículo, la aprobación n
   expect([await contar('clientes'), await contar('vehiculos'), await contar('simcards')]).toEqual([1, 1, 0]);
   expect((await api('/aprobaciones')).datos[0].aprobacion).toBe('Pendiente');
 });
+
+// JPEG mínimo: basta la firma de bytes para pasar la validación de formato.
+const jpeg = () => new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
+async function subirFotoTrabajo(quien: string, trabajoId: number) {
+  const formulario = new FormData();
+  formulario.set('archivo', new File([jpeg() as Uint8Array<ArrayBuffer>], 'camara.jpg', { type: 'image/jpeg' }));
+  const r = await app.request(`/api/fotos/trabajo/${trabajoId}`, { method: 'POST', body: formulario, headers: { Cookie: sesiones[quien] } });
+  return { estado: r.status, datos: await r.json() };
+}
+
+test('fotos del trabajo: se toman con el vehículo aún sin crear, solo las ve su técnico y pasan al vehículo al aprobar', async () => {
+  const { datos: t } = await api('/campo/trabajos', { quien: 'tec.a', cuerpo: trabajo({
+    cliente_nuevo: { nombre: 'Cliente Fotos', tipo: 'Particular' }, vehiculo_nuevo: { placa: 'F000001', tipo: 'Carro' }, imei: '869000000000101',
+  }) });
+  for (let i = 0; i < 3; i++) expect((await subirFotoTrabajo('tec.a', t.id)).estado).toBe(201);
+  // Aislamiento: otro técnico no ve ni sube fotos a un trabajo ajeno.
+  expect((await subirFotoTrabajo('tec.b', t.id)).estado).toBe(404);
+  expect((await api(`/fotos/trabajo/${t.id}`, { quien: 'tec.b' })).estado).toBe(404);
+
+  const propias = await api(`/fotos/trabajo/${t.id}`, { quien: 'tec.a' });
+  expect(propias.datos).toHaveLength(3);
+  expect(propias.datos[0]).toMatchObject({ trabajo_id: t.id, propia: true, autor: 'tec.a' });
+  expect((await api('/campo/trabajos', { quien: 'tec.a' })).datos[0]).toMatchObject({ id: t.id, fotos: 3 });
+  // El técnico borra una suya mientras está pendiente; el admin ve las restantes en la cola.
+  expect((await api(`/fotos/${propias.datos[2].id}`, { metodo: 'DELETE', quien: 'tec.a' })).estado).toBe(204);
+  expect((await api(`/fotos/${propias.datos[1].id}`, { metodo: 'DELETE', quien: 'tec.b' })).estado).toBe(404);
+  expect((await api(`/fotos/trabajo/${t.id}`)).datos).toHaveLength(2);
+
+  const aprobado = await api(`/aprobaciones/${t.id}/aprobar`, { cuerpo: { costo_tecnico: 800 } });
+  expect(aprobado.estado).toBe(200);
+  const vehiculoId = aprobado.datos.vehiculo_id;
+  const galeria = await api(`/fotos?vehiculo_id=${vehiculoId}`, { quien: 'tec.a' });
+  expect(galeria.datos).toHaveLength(2);
+  expect(galeria.datos.every((f: { trabajo_id: number }) => f.trabajo_id === t.id)).toBe(true);
+  // Aprobado: las fotos nuevas van a la galería del vehículo, no al trabajo.
+  expect((await subirFotoTrabajo('tec.a', t.id)).estado).toBe(409);
+});
+
+test('fotos del trabajo: máximo 10 por trabajo y no cuentan en el límite de 5 de la galería', async () => {
+  const { datos: t } = await api('/campo/trabajos', { quien: 'tec.a', cuerpo: trabajo({
+    cliente_nuevo: { nombre: 'Cliente Límite', tipo: 'Particular' }, vehiculo_nuevo: { placa: 'F000002', tipo: 'Carro' }, imei: '869000000000102',
+  }) });
+  for (let i = 0; i < 10; i++) expect((await subirFotoTrabajo('tec.a', t.id)).estado).toBe(201);
+  const undecima = await subirFotoTrabajo('tec.a', t.id);
+  expect(undecima.estado).toBe(409);
+  expect(undecima.datos.error).toContain('10 fotos');
+  const { datos } = await api(`/aprobaciones/${t.id}/aprobar`, { cuerpo: { costo_tecnico: 500 } });
+  const formulario = new FormData();
+  formulario.set('vehiculo_id', String(datos.vehiculo_id));
+  formulario.set('archivo', new File([jpeg() as Uint8Array<ArrayBuffer>], 'otra.jpg', { type: 'image/jpeg' }));
+  expect((await app.request('/api/fotos', { method: 'POST', body: formulario, headers: { Cookie: sesiones.admin } })).status).toBe(201);
+  expect(await contar('vehiculo_imagenes')).toBe(11);
+});

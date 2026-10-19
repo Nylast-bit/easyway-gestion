@@ -26,7 +26,7 @@ export function crearRutasVehiculos(bd: BaseDatos, reloj: () => Date, almacen: A
     ]);
     // Miniatura: primera foto de cada vehículo, firmada en un solo lote.
     const primeras = new Map<number, string>();
-    for (const foto of fotos) if (!primeras.has(foto.vehiculo_id)) primeras.set(foto.vehiculo_id, foto.storage_path);
+    for (const foto of fotos) if (foto.vehiculo_id !== null && !primeras.has(foto.vehiculo_id)) primeras.set(foto.vehiculo_id, foto.storage_path);
     const urls = await almacen.urlsTemporales([...primeras.values()], SEGUNDOS_URL_TEMPORAL)
       .catch(error => { console.error('No se pudieron firmar miniaturas:', (error as Error).message); return new Map<string, string>(); });
     return filas.map(({ vehiculo, cliente_nombre }) => {

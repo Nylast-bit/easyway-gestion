@@ -111,6 +111,10 @@ Una cuenta con rol técnico debe estar vinculada a su ficha (`tecnico_id`).
   cliente y vehículo existentes (búsqueda por nombre) o proponiendo nuevos, con IMEI, SIM, tipo, fecha y notas.
   Queda **pendiente**: no cambia el inventario hasta que un administrador lo apruebe. Ve sus trabajos
   (pendiente/aprobado/rechazado con motivo) y lo que se le debe y ya cobró.
+- **Fotos del trabajo**: en *Nuevo trabajo* el técnico toma fotos con la cámara del teléfono (una por toque,
+  las veces que quiera) o adjunta varias de la galería, hasta 10. Se suben al enviar, ya reducidas; si alguna
+  falla se agrega desde *Mis trabajos* mientras esté pendiente. El admin las ve al aprobar y pasan a la
+  galería del vehículo.
 - **Mis instalaciones**: avance (estado y notas) y fotos de sus trabajos; solo borra las fotos que subió.
 - **Filtros de instalaciones**: periodo (esta semana, este mes, mes anterior, este año o rango), técnico, tipo y
   estado, con el total y el conteo por técnico (pulsar un técnico filtra por él). El técnico solo cuenta lo suyo.

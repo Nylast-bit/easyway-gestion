@@ -1,0 +1,2995 @@
+{
+  "id": "d0df82a7-9ab7-4020-bfc8-ed3e21b900e7",
+  "prevId": "b4d1e2f8-c022-46db-9830-90edb9fb6a1c",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.auditoria": {
+      "name": "auditoria",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "auditoria_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accion": {
+          "name": "accion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entidad": {
+          "name": "entidad",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entidad_id": {
+          "name": "entidad_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "detalle": {
+          "name": "detalle",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "auditoria_entidad_idx": {
+          "name": "auditoria_entidad_idx",
+          "columns": [
+            {
+              "expression": "entidad",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "entidad_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "auditoria_fecha_idx": {
+          "name": "auditoria_fecha_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "auditoria_usuario_id_usuarios_id_fk": {
+          "name": "auditoria_usuario_id_usuarios_id_fk",
+          "tableFrom": "auditoria",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.cargos": {
+      "name": "cargos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "cargos_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "cliente_id": {
+          "name": "cliente_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "servicio_id": {
+          "name": "servicio_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "concepto": {
+          "name": "concepto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "periodo_inicio": {
+          "name": "periodo_inicio",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "periodo_fin": {
+          "name": "periodo_fin",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "monto": {
+          "name": "monto",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha_vencimiento": {
+          "name": "fecha_vencimiento",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "referencia_factura": {
+          "name": "referencia_factura",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_por": {
+          "name": "creado_por",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "anulado_at": {
+          "name": "anulado_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "anulado_por": {
+          "name": "anulado_por",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "motivo_anulacion": {
+          "name": "motivo_anulacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "cargos_periodo_unico": {
+          "name": "cargos_periodo_unico",
+          "columns": [
+            {
+              "expression": "servicio_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "periodo_inicio",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"cargos\".\"servicio_id\" IS NOT NULL AND \"cargos\".\"anulado_at\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "cargos_cliente_idx": {
+          "name": "cargos_cliente_idx",
+          "columns": [
+            {
+              "expression": "cliente_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "cargos_cliente_id_clientes_id_fk": {
+          "name": "cargos_cliente_id_clientes_id_fk",
+          "tableFrom": "cargos",
+          "tableTo": "clientes",
+          "columnsFrom": [
+            "cliente_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cargos_servicio_id_servicios_id_fk": {
+          "name": "cargos_servicio_id_servicios_id_fk",
+          "tableFrom": "cargos",
+          "tableTo": "servicios",
+          "columnsFrom": [
+            "servicio_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cargos_creado_por_usuarios_id_fk": {
+          "name": "cargos_creado_por_usuarios_id_fk",
+          "tableFrom": "cargos",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "creado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "cargos_anulado_por_usuarios_id_fk": {
+          "name": "cargos_anulado_por_usuarios_id_fk",
+          "tableFrom": "cargos",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "anulado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "cargos_monto_positivo": {
+          "name": "cargos_monto_positivo",
+          "value": "\"cargos\".\"monto\" > 0"
+        },
+        "cargos_periodo": {
+          "name": "cargos_periodo",
+          "value": "\"cargos\".\"periodo_fin\" IS NULL OR \"cargos\".\"periodo_inicio\" IS NULL OR \"cargos\".\"periodo_fin\" >= \"cargos\".\"periodo_inicio\""
+        },
+        "cargos_anulacion_motivo": {
+          "name": "cargos_anulacion_motivo",
+          "value": "\"cargos\".\"anulado_at\" IS NULL OR \"cargos\".\"motivo_anulacion\" IS NOT NULL"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.clientes": {
+      "name": "clientes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "clientes_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "telefono": {
+          "name": "telefono",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correo": {
+          "name": "correo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "tipo_cliente",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Particular'"
+        },
+        "documento": {
+          "name": "documento",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.gps": {
+      "name": "gps",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "gps_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "imei": {
+          "name": "imei",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modelo": {
+          "name": "modelo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "estado_gps",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Disponible'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "fecha_vencimiento": {
+          "name": "fecha_vencimiento",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "gps_imei_unico": {
+          "name": "gps_imei_unico",
+          "columns": [
+            {
+              "expression": "imei",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "gps_imei_formato": {
+          "name": "gps_imei_formato",
+          "value": "\"gps\".\"imei\" ~ '^[0-9]{15}$'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.gps_asignaciones": {
+      "name": "gps_asignaciones",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "gps_asignaciones_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "gps_id": {
+          "name": "gps_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vehiculo_id": {
+          "name": "vehiculo_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha_inicio": {
+          "name": "fecha_inicio",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "fecha_fin": {
+          "name": "fecha_fin",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "gps_asignacion_activa_unica": {
+          "name": "gps_asignacion_activa_unica",
+          "columns": [
+            {
+              "expression": "gps_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"gps_asignaciones\".\"fecha_fin\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gps_asignaciones_gps_idx": {
+          "name": "gps_asignaciones_gps_idx",
+          "columns": [
+            {
+              "expression": "gps_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gps_asignaciones_vehiculo_idx": {
+          "name": "gps_asignaciones_vehiculo_idx",
+          "columns": [
+            {
+              "expression": "vehiculo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "gps_asignaciones_gps_id_gps_id_fk": {
+          "name": "gps_asignaciones_gps_id_gps_id_fk",
+          "tableFrom": "gps_asignaciones",
+          "tableTo": "gps",
+          "columnsFrom": [
+            "gps_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "gps_asignaciones_vehiculo_id_vehiculos_id_fk": {
+          "name": "gps_asignaciones_vehiculo_id_vehiculos_id_fk",
+          "tableFrom": "gps_asignaciones",
+          "tableTo": "vehiculos",
+          "columnsFrom": [
+            "vehiculo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "gps_asignaciones_fechas": {
+          "name": "gps_asignaciones_fechas",
+          "value": "\"gps_asignaciones\".\"fecha_fin\" IS NULL OR \"gps_asignaciones\".\"fecha_fin\" >= \"gps_asignaciones\".\"fecha_inicio\""
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.importacion_filas": {
+      "name": "importacion_filas",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "importacion_filas_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "importacion_id": {
+          "name": "importacion_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hoja": {
+          "name": "hoja",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fila": {
+          "name": "fila",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "datos": {
+          "name": "datos",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "advertencias": {
+          "name": "advertencias",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "errores": {
+          "name": "errores",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        }
+      },
+      "indexes": {
+        "importacion_filas_importacion_idx": {
+          "name": "importacion_filas_importacion_idx",
+          "columns": [
+            {
+              "expression": "importacion_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "hoja",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "fila",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "importacion_filas_importacion_id_importaciones_id_fk": {
+          "name": "importacion_filas_importacion_id_importaciones_id_fk",
+          "tableFrom": "importacion_filas",
+          "tableTo": "importaciones",
+          "columnsFrom": [
+            "importacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.importacion_registros": {
+      "name": "importacion_registros",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "importacion_registros_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "importacion_id": {
+          "name": "importacion_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tabla": {
+          "name": "tabla",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "registro_id": {
+          "name": "registro_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "importacion_registros_unico": {
+          "name": "importacion_registros_unico",
+          "columns": [
+            {
+              "expression": "tabla",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "registro_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "importacion_registros_importacion_idx": {
+          "name": "importacion_registros_importacion_idx",
+          "columns": [
+            {
+              "expression": "importacion_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "importacion_registros_importacion_id_importaciones_id_fk": {
+          "name": "importacion_registros_importacion_id_importaciones_id_fk",
+          "tableFrom": "importacion_registros",
+          "tableTo": "importaciones",
+          "columnsFrom": [
+            "importacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.importaciones": {
+      "name": "importaciones",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "importaciones_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "archivo_nombre": {
+          "name": "archivo_nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "archivo_hash": {
+          "name": "archivo_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "estado_importacion",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Analizada'"
+        },
+        "resumen": {
+          "name": "resumen",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opciones": {
+          "name": "opciones",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_por": {
+          "name": "creado_por",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "confirmada_por": {
+          "name": "confirmada_por",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confirmada_at": {
+          "name": "confirmada_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revertida_por": {
+          "name": "revertida_por",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revertida_at": {
+          "name": "revertida_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "importaciones_archivo_vigente": {
+          "name": "importaciones_archivo_vigente",
+          "columns": [
+            {
+              "expression": "archivo_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"importaciones\".\"estado\" IN ('Analizada', 'Confirmada')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "importaciones_creado_por_usuarios_id_fk": {
+          "name": "importaciones_creado_por_usuarios_id_fk",
+          "tableFrom": "importaciones",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "creado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "importaciones_confirmada_por_usuarios_id_fk": {
+          "name": "importaciones_confirmada_por_usuarios_id_fk",
+          "tableFrom": "importaciones",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "confirmada_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "importaciones_revertida_por_usuarios_id_fk": {
+          "name": "importaciones_revertida_por_usuarios_id_fk",
+          "tableFrom": "importaciones",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "revertida_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.instalaciones": {
+      "name": "instalaciones",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "instalaciones_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "vehiculo_id": {
+          "name": "vehiculo_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gps_id": {
+          "name": "gps_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "simcard_id": {
+          "name": "simcard_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tecnico_id": {
+          "name": "tecnico_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fecha_instalacion": {
+          "name": "fecha_instalacion",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tipo_servicio_id": {
+          "name": "tipo_servicio_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "asunto": {
+          "name": "asunto",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "estado_instalacion",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'En Proceso'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "aprobacion": {
+          "name": "aprobacion",
+          "type": "estado_aprobacion",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Aprobada'"
+        },
+        "propuesta": {
+          "name": "propuesta",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registrada_por": {
+          "name": "registrada_por",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revisada_por": {
+          "name": "revisada_por",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revisada_at": {
+          "name": "revisada_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "motivo_rechazo": {
+          "name": "motivo_rechazo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "costo_tecnico": {
+          "name": "costo_tecnico",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "costo_pagado_at": {
+          "name": "costo_pagado_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "costo_pago_referencia": {
+          "name": "costo_pago_referencia",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "instalaciones_vehiculo_idx": {
+          "name": "instalaciones_vehiculo_idx",
+          "columns": [
+            {
+              "expression": "vehiculo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "instalaciones_gps_idx": {
+          "name": "instalaciones_gps_idx",
+          "columns": [
+            {
+              "expression": "gps_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "instalaciones_simcard_idx": {
+          "name": "instalaciones_simcard_idx",
+          "columns": [
+            {
+              "expression": "simcard_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "instalaciones_tecnico_idx": {
+          "name": "instalaciones_tecnico_idx",
+          "columns": [
+            {
+              "expression": "tecnico_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "instalaciones_aprobacion_idx": {
+          "name": "instalaciones_aprobacion_idx",
+          "columns": [
+            {
+              "expression": "aprobacion",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "instalaciones_vehiculo_id_vehiculos_id_fk": {
+          "name": "instalaciones_vehiculo_id_vehiculos_id_fk",
+          "tableFrom": "instalaciones",
+          "tableTo": "vehiculos",
+          "columnsFrom": [
+            "vehiculo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "instalaciones_gps_id_gps_id_fk": {
+          "name": "instalaciones_gps_id_gps_id_fk",
+          "tableFrom": "instalaciones",
+          "tableTo": "gps",
+          "columnsFrom": [
+            "gps_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "instalaciones_simcard_id_simcards_id_fk": {
+          "name": "instalaciones_simcard_id_simcards_id_fk",
+          "tableFrom": "instalaciones",
+          "tableTo": "simcards",
+          "columnsFrom": [
+            "simcard_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "instalaciones_tecnico_id_tecnicos_id_fk": {
+          "name": "instalaciones_tecnico_id_tecnicos_id_fk",
+          "tableFrom": "instalaciones",
+          "tableTo": "tecnicos",
+          "columnsFrom": [
+            "tecnico_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "instalaciones_tipo_servicio_id_tipos_servicio_id_fk": {
+          "name": "instalaciones_tipo_servicio_id_tipos_servicio_id_fk",
+          "tableFrom": "instalaciones",
+          "tableTo": "tipos_servicio",
+          "columnsFrom": [
+            "tipo_servicio_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "instalaciones_registrada_por_usuarios_id_fk": {
+          "name": "instalaciones_registrada_por_usuarios_id_fk",
+          "tableFrom": "instalaciones",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "registrada_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "instalaciones_revisada_por_usuarios_id_fk": {
+          "name": "instalaciones_revisada_por_usuarios_id_fk",
+          "tableFrom": "instalaciones",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "revisada_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "instalaciones_aprobada_completa": {
+          "name": "instalaciones_aprobada_completa",
+          "value": "\"instalaciones\".\"aprobacion\" <> 'Aprobada' OR (\"instalaciones\".\"vehiculo_id\" IS NOT NULL AND \"instalaciones\".\"gps_id\" IS NOT NULL)"
+        },
+        "instalaciones_costo_positivo": {
+          "name": "instalaciones_costo_positivo",
+          "value": "\"instalaciones\".\"costo_tecnico\" IS NULL OR \"instalaciones\".\"costo_tecnico\" >= 0"
+        },
+        "instalaciones_pago_con_costo": {
+          "name": "instalaciones_pago_con_costo",
+          "value": "\"instalaciones\".\"costo_pagado_at\" IS NULL OR \"instalaciones\".\"costo_tecnico\" IS NOT NULL"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.pago_aplicaciones": {
+      "name": "pago_aplicaciones",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "pago_aplicaciones_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "pago_id": {
+          "name": "pago_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cargo_id": {
+          "name": "cargo_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "monto": {
+          "name": "monto",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "pago_aplicaciones_unica": {
+          "name": "pago_aplicaciones_unica",
+          "columns": [
+            {
+              "expression": "pago_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "cargo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "pago_aplicaciones_cargo_idx": {
+          "name": "pago_aplicaciones_cargo_idx",
+          "columns": [
+            {
+              "expression": "cargo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "pago_aplicaciones_pago_id_pagos_id_fk": {
+          "name": "pago_aplicaciones_pago_id_pagos_id_fk",
+          "tableFrom": "pago_aplicaciones",
+          "tableTo": "pagos",
+          "columnsFrom": [
+            "pago_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "pago_aplicaciones_cargo_id_cargos_id_fk": {
+          "name": "pago_aplicaciones_cargo_id_cargos_id_fk",
+          "tableFrom": "pago_aplicaciones",
+          "tableTo": "cargos",
+          "columnsFrom": [
+            "cargo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "pago_aplicaciones_monto_positivo": {
+          "name": "pago_aplicaciones_monto_positivo",
+          "value": "\"pago_aplicaciones\".\"monto\" > 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.pagos": {
+      "name": "pagos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "pagos_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "cliente_id": {
+          "name": "cliente_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha": {
+          "name": "fecha",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "monto": {
+          "name": "monto",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metodo": {
+          "name": "metodo",
+          "type": "metodo_pago",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "referencia": {
+          "name": "referencia",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registrado_por": {
+          "name": "registrado_por",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "anulado_at": {
+          "name": "anulado_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "anulado_por": {
+          "name": "anulado_por",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "motivo_anulacion": {
+          "name": "motivo_anulacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "pagos_cliente_idx": {
+          "name": "pagos_cliente_idx",
+          "columns": [
+            {
+              "expression": "cliente_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "pagos_cliente_id_clientes_id_fk": {
+          "name": "pagos_cliente_id_clientes_id_fk",
+          "tableFrom": "pagos",
+          "tableTo": "clientes",
+          "columnsFrom": [
+            "cliente_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "pagos_registrado_por_usuarios_id_fk": {
+          "name": "pagos_registrado_por_usuarios_id_fk",
+          "tableFrom": "pagos",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "registrado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "pagos_anulado_por_usuarios_id_fk": {
+          "name": "pagos_anulado_por_usuarios_id_fk",
+          "tableFrom": "pagos",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "anulado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "pagos_monto_positivo": {
+          "name": "pagos_monto_positivo",
+          "value": "\"pagos\".\"monto\" > 0"
+        },
+        "pagos_anulacion_motivo": {
+          "name": "pagos_anulacion_motivo",
+          "value": "\"pagos\".\"anulado_at\" IS NULL OR \"pagos\".\"motivo_anulacion\" IS NOT NULL"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.planes": {
+      "name": "planes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "planes_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "periodicidad": {
+          "name": "periodicidad",
+          "type": "periodicidad_plan",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "precio": {
+          "name": "precio",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "planes_nombre_unico": {
+          "name": "planes_nombre_unico",
+          "columns": [
+            {
+              "expression": "lower(\"nombre\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "planes_precio_positivo": {
+          "name": "planes_precio_positivo",
+          "value": "\"planes\".\"precio\" >= 0"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.servicios": {
+      "name": "servicios",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "servicios_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "vehiculo_id": {
+          "name": "vehiculo_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plan_id": {
+          "name": "plan_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "precio": {
+          "name": "precio",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha_inicio": {
+          "name": "fecha_inicio",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "proximo_cobro": {
+          "name": "proximo_cobro",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "estado": {
+          "name": "estado",
+          "type": "estado_servicio",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Activo'"
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "servicios_activo_unico": {
+          "name": "servicios_activo_unico",
+          "columns": [
+            {
+              "expression": "vehiculo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"servicios\".\"estado\" = 'Activo'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "servicios_vehiculo_idx": {
+          "name": "servicios_vehiculo_idx",
+          "columns": [
+            {
+              "expression": "vehiculo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "servicios_plan_idx": {
+          "name": "servicios_plan_idx",
+          "columns": [
+            {
+              "expression": "plan_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "servicios_vehiculo_id_vehiculos_id_fk": {
+          "name": "servicios_vehiculo_id_vehiculos_id_fk",
+          "tableFrom": "servicios",
+          "tableTo": "vehiculos",
+          "columnsFrom": [
+            "vehiculo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "servicios_plan_id_planes_id_fk": {
+          "name": "servicios_plan_id_planes_id_fk",
+          "tableFrom": "servicios",
+          "tableTo": "planes",
+          "columnsFrom": [
+            "plan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "servicios_precio_positivo": {
+          "name": "servicios_precio_positivo",
+          "value": "\"servicios\".\"precio\" >= 0"
+        },
+        "servicios_fechas": {
+          "name": "servicios_fechas",
+          "value": "\"servicios\".\"proximo_cobro\" >= \"servicios\".\"fecha_inicio\""
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.sesiones": {
+      "name": "sesiones",
+      "schema": "",
+      "columns": {
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expira_at": {
+          "name": "expira_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "sesiones_usuario_idx": {
+          "name": "sesiones_usuario_idx",
+          "columns": [
+            {
+              "expression": "usuario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "sesiones_usuario_id_usuarios_id_fk": {
+          "name": "sesiones_usuario_id_usuarios_id_fk",
+          "tableFrom": "sesiones",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.simcard_asignaciones": {
+      "name": "simcard_asignaciones",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "simcard_asignaciones_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "simcard_id": {
+          "name": "simcard_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "gps_id": {
+          "name": "gps_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha_inicio": {
+          "name": "fecha_inicio",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "fecha_fin": {
+          "name": "fecha_fin",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "simcard_asignacion_activa_unica": {
+          "name": "simcard_asignacion_activa_unica",
+          "columns": [
+            {
+              "expression": "simcard_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"simcard_asignaciones\".\"fecha_fin\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "simcard_asignaciones_simcard_idx": {
+          "name": "simcard_asignaciones_simcard_idx",
+          "columns": [
+            {
+              "expression": "simcard_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "simcard_asignaciones_gps_idx": {
+          "name": "simcard_asignaciones_gps_idx",
+          "columns": [
+            {
+              "expression": "gps_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "simcard_asignaciones_simcard_id_simcards_id_fk": {
+          "name": "simcard_asignaciones_simcard_id_simcards_id_fk",
+          "tableFrom": "simcard_asignaciones",
+          "tableTo": "simcards",
+          "columnsFrom": [
+            "simcard_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "simcard_asignaciones_gps_id_gps_id_fk": {
+          "name": "simcard_asignaciones_gps_id_gps_id_fk",
+          "tableFrom": "simcard_asignaciones",
+          "tableTo": "gps",
+          "columnsFrom": [
+            "gps_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "simcard_asignaciones_fechas": {
+          "name": "simcard_asignaciones_fechas",
+          "value": "\"simcard_asignaciones\".\"fecha_fin\" IS NULL OR \"simcard_asignaciones\".\"fecha_fin\" >= \"simcard_asignaciones\".\"fecha_inicio\""
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.simcards": {
+      "name": "simcards",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "simcards_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "numero": {
+          "name": "numero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha_compra": {
+          "name": "fecha_compra",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fecha_vencimiento": {
+          "name": "fecha_vencimiento",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "estado_simcard",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Disponible'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "simcards_numero_unico": {
+          "name": "simcards_numero_unico",
+          "columns": [
+            {
+              "expression": "numero",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.tecnicos": {
+      "name": "tecnicos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tecnicos_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "telefono": {
+          "name": "telefono",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correo": {
+          "name": "correo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.tipos_servicio": {
+      "name": "tipos_servicio",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tipos_servicio_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "tipos_servicio_nombre_unico": {
+          "name": "tipos_servicio_nombre_unico",
+          "columns": [
+            {
+              "expression": "lower(\"nombre\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.usuarios": {
+      "name": "usuarios",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "usuarios_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "usuario": {
+          "name": "usuario",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correo": {
+          "name": "correo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contrasena_hash": {
+          "name": "contrasena_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rol": {
+          "name": "rol",
+          "type": "rol_usuario",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'tecnico'"
+        },
+        "tecnico_id": {
+          "name": "tecnico_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correo_verificado_at": {
+          "name": "correo_verificado_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "intentos_fallidos": {
+          "name": "intentos_fallidos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "bloqueado_hasta": {
+          "name": "bloqueado_hasta",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "cedula": {
+          "name": "cedula",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "debe_cambiar_contrasena": {
+          "name": "debe_cambiar_contrasena",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {
+        "usuarios_usuario_unico": {
+          "name": "usuarios_usuario_unico",
+          "columns": [
+            {
+              "expression": "usuario",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "usuarios_cedula_unica": {
+          "name": "usuarios_cedula_unica",
+          "columns": [
+            {
+              "expression": "cedula",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "usuarios_correo_unico": {
+          "name": "usuarios_correo_unico",
+          "columns": [
+            {
+              "expression": "correo",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "usuarios_tecnico_unico": {
+          "name": "usuarios_tecnico_unico",
+          "columns": [
+            {
+              "expression": "tecnico_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "usuarios_tecnico_id_tecnicos_id_fk": {
+          "name": "usuarios_tecnico_id_tecnicos_id_fk",
+          "tableFrom": "usuarios",
+          "tableTo": "tecnicos",
+          "columnsFrom": [
+            "tecnico_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "usuarios_cedula_formato": {
+          "name": "usuarios_cedula_formato",
+          "value": "\"usuarios\".\"cedula\" ~ '^[0-9]{11}$'"
+        },
+        "usuarios_identificador": {
+          "name": "usuarios_identificador",
+          "value": "\"usuarios\".\"usuario\" IS NOT NULL OR \"usuarios\".\"correo\" IS NOT NULL"
+        },
+        "usuarios_usuario_formato": {
+          "name": "usuarios_usuario_formato",
+          "value": "\"usuarios\".\"usuario\" ~ '^[a-z0-9._-]{3,40}$'"
+        },
+        "usuarios_correo_minusculas": {
+          "name": "usuarios_correo_minusculas",
+          "value": "\"usuarios\".\"correo\" = lower(\"usuarios\".\"correo\")"
+        },
+        "usuarios_tecnico_rol": {
+          "name": "usuarios_tecnico_rol",
+          "value": "\"usuarios\".\"tecnico_id\" IS NULL OR \"usuarios\".\"rol\" = 'tecnico'"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.vehiculo_imagenes": {
+      "name": "vehiculo_imagenes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "vehiculo_imagenes_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "vehiculo_id": {
+          "name": "vehiculo_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "storage_path": {
+          "name": "storage_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "subida_por": {
+          "name": "subida_por",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instalacion_id": {
+          "name": "instalacion_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "vehiculo_imagenes_ruta_unica": {
+          "name": "vehiculo_imagenes_ruta_unica",
+          "columns": [
+            {
+              "expression": "storage_path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "vehiculo_imagenes_vehiculo_idx": {
+          "name": "vehiculo_imagenes_vehiculo_idx",
+          "columns": [
+            {
+              "expression": "vehiculo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "vehiculo_imagenes_instalacion_idx": {
+          "name": "vehiculo_imagenes_instalacion_idx",
+          "columns": [
+            {
+              "expression": "instalacion_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "vehiculo_imagenes_vehiculo_id_vehiculos_id_fk": {
+          "name": "vehiculo_imagenes_vehiculo_id_vehiculos_id_fk",
+          "tableFrom": "vehiculo_imagenes",
+          "tableTo": "vehiculos",
+          "columnsFrom": [
+            "vehiculo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "vehiculo_imagenes_subida_por_usuarios_id_fk": {
+          "name": "vehiculo_imagenes_subida_por_usuarios_id_fk",
+          "tableFrom": "vehiculo_imagenes",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "subida_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "vehiculo_imagenes_instalacion_id_instalaciones_id_fk": {
+          "name": "vehiculo_imagenes_instalacion_id_instalaciones_id_fk",
+          "tableFrom": "vehiculo_imagenes",
+          "tableTo": "instalaciones",
+          "columnsFrom": [
+            "instalacion_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "vehiculo_imagenes_destino": {
+          "name": "vehiculo_imagenes_destino",
+          "value": "\"vehiculo_imagenes\".\"vehiculo_id\" IS NOT NULL OR \"vehiculo_imagenes\".\"instalacion_id\" IS NOT NULL"
+        }
+      },
+      "isRLSEnabled": true
+    },
+    "public.vehiculos": {
+      "name": "vehiculos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "vehiculos_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "cliente_id": {
+          "name": "cliente_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "marca": {
+          "name": "marca",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "modelo": {
+          "name": "modelo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "año": {
+          "name": "año",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "placa": {
+          "name": "placa",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chasis": {
+          "name": "chasis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "tipo_vehiculo",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Carro'"
+        }
+      },
+      "indexes": {
+        "vehiculos_cliente_idx": {
+          "name": "vehiculos_cliente_idx",
+          "columns": [
+            {
+              "expression": "cliente_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "vehiculos_cliente_id_clientes_id_fk": {
+          "name": "vehiculos_cliente_id_clientes_id_fk",
+          "tableFrom": "vehiculos",
+          "tableTo": "clientes",
+          "columnsFrom": [
+            "cliente_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.verificaciones_correo": {
+      "name": "verificaciones_correo",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "verificaciones_correo_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "desafio_hash": {
+          "name": "desafio_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "codigo_hash": {
+          "name": "codigo_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expira_at": {
+          "name": "expira_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "intentos": {
+          "name": "intentos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "envios": {
+          "name": "envios",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "enviado_at": {
+          "name": "enviado_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "usado_at": {
+          "name": "usado_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "proposito": {
+          "name": "proposito",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'verificar'"
+        }
+      },
+      "indexes": {
+        "verificaciones_desafio_unico": {
+          "name": "verificaciones_desafio_unico",
+          "columns": [
+            {
+              "expression": "desafio_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "verificaciones_usuario_idx": {
+          "name": "verificaciones_usuario_idx",
+          "columns": [
+            {
+              "expression": "usuario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "verificaciones_correo_usuario_id_usuarios_id_fk": {
+          "name": "verificaciones_correo_usuario_id_usuarios_id_fk",
+          "tableFrom": "verificaciones_correo",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "verificaciones_proposito": {
+          "name": "verificaciones_proposito",
+          "value": "\"verificaciones_correo\".\"proposito\" IN ('verificar', 'recuperar')"
+        }
+      },
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {
+    "public.estado_aprobacion": {
+      "name": "estado_aprobacion",
+      "schema": "public",
+      "values": [
+        "Pendiente",
+        "Aprobada",
+        "Rechazada"
+      ]
+    },
+    "public.estado_gps": {
+      "name": "estado_gps",
+      "schema": "public",
+      "values": [
+        "Disponible",
+        "Instalado",
+        "Retirado",
+        "Dañado"
+      ]
+    },
+    "public.estado_importacion": {
+      "name": "estado_importacion",
+      "schema": "public",
+      "values": [
+        "Analizada",
+        "Confirmada",
+        "Revertida",
+        "Descartada"
+      ]
+    },
+    "public.estado_instalacion": {
+      "name": "estado_instalacion",
+      "schema": "public",
+      "values": [
+        "En Proceso",
+        "Completado",
+        "Cancelado"
+      ]
+    },
+    "public.estado_servicio": {
+      "name": "estado_servicio",
+      "schema": "public",
+      "values": [
+        "Activo",
+        "Suspendido",
+        "Cancelado"
+      ]
+    },
+    "public.estado_simcard": {
+      "name": "estado_simcard",
+      "schema": "public",
+      "values": [
+        "Disponible",
+        "Asignada",
+        "Suspendida",
+        "Vencida"
+      ]
+    },
+    "public.metodo_pago": {
+      "name": "metodo_pago",
+      "schema": "public",
+      "values": [
+        "Efectivo",
+        "Transferencia",
+        "Tarjeta",
+        "Cheque",
+        "Otro"
+      ]
+    },
+    "public.periodicidad_plan": {
+      "name": "periodicidad_plan",
+      "schema": "public",
+      "values": [
+        "Mensual",
+        "Anual"
+      ]
+    },
+    "public.rol_usuario": {
+      "name": "rol_usuario",
+      "schema": "public",
+      "values": [
+        "admin",
+        "tecnico"
+      ]
+    },
+    "public.tipo_cliente": {
+      "name": "tipo_cliente",
+      "schema": "public",
+      "values": [
+        "Particular",
+        "Empresa"
+      ]
+    },
+    "public.tipo_vehiculo": {
+      "name": "tipo_vehiculo",
+      "schema": "public",
+      "values": [
+        "Carro",
+        "Motor",
+        "Camión",
+        "Otro"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

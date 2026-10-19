@@ -130,7 +130,7 @@ const filasImportacion = [
 
 // Fase 7: trabajos de campo, aprobación y costos con textos largos.
 const trabajoCampo = {
-  id: 21, aprobacion: 'Pendiente', estado: 'Completado', tipo: 'Instalación', fecha_instalacion: '2026-10-17T14:00:00Z', created_at: '',
+  id: 21, fotos: 3, aprobacion: 'Pendiente', estado: 'Completado', tipo: 'Instalación', fecha_instalacion: '2026-10-17T14:00:00Z', created_at: '',
   motivo_rechazo: null, notas: 'El cliente pidió ubicar el equipo bajo el tablero y probar el corte de motor en presencia del chofer.',
   cliente_nombre: `${clientes[0].nombre} · nuevo`, vehiculo_descripcion: 'TOYOTA HILUX DOBLE CABINA (L123456) · nuevo',
   imei: gps[0].imei, sim: '89010260000000000005', vehiculo_id: null, costo_tecnico: null, costo_pagado_at: null,
@@ -139,6 +139,8 @@ const trabajoCampo = {
     vehiculo_nuevo: { marca: 'TOYOTA', modelo: 'HILUX DOBLE CABINA', placa: 'L123456', año: 2022, chasis: null, color: 'BLANCO', tipo: 'Carro' }, imei: gps[0].imei, sim: '89010260000000000005' },
   coincidencias: { clientes: [{ id: 1, nombre: clientes[0].nombre }], vehiculos: [], gps: { id: 11, estado: 'Instalado', vehiculo: 'TOYOTA HILUX DOBLE CABINA (L123456)' }, simcard: null },
 };
+// PNG 2×2 válido para miniaturas de fotos simuladas.
+const PNG_MUESTRA = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGNgYGD4z8DAwMDAwMDAAAANAAH/kFz4AAAAAElFTkSuQmCC';
 const trabajosTecnico = [
   { ...trabajoCampo, coincidencias: { clientes: [], vehiculos: [], gps: null, simcard: null } },
   { ...trabajoCampo, id: 22, aprobacion: 'Rechazada', motivo_rechazo: 'El IMEI de la foto no coincide con el registrado; vuelve a enviarlo con una foto legible de la etiqueta.' },
@@ -175,6 +177,7 @@ async function simularApi(page: Page) {
     '/api/vencimientos?dias=30': vencimientos,
     '/api/importaciones': [importacion],
     '/api/aprobaciones': [trabajoCampo],
+    '/api/fotos/trabajo/21': [1, 2, 3].map(id => ({ id, url: `data:image/png;base64,${PNG_MUESTRA}`, created_at: '', propia: true, autor: tecnicos[0].nombre, trabajo_id: 21 })),
     '/api/costos-tecnicos/resumen': [{ tecnico_id: 1, tecnico_nombre: tecnicos[0].nombre, trabajos: 128, total: 153600, pagado: 98400, pendiente: 55200 }],
     '/api/costos-tecnicos?estado=pendientes': costosTecnicos,
     '/api/importaciones/7/filas?filtro=problemas': filasImportacion,
@@ -194,6 +197,8 @@ for (const tamano of TAMANOS) {
     test.use({ viewport: { width: tamano.width, height: tamano.height }, isMobile: tamano.isMobile, hasTouch: tamano.isMobile });
 
     test(`pantallas en ${tamano.nombre} (${tamano.width}x${tamano.height})`, async ({ page, context }) => {
+      // Recorre todas las pantallas, paneles y modales: necesita más que los 30 s por defecto.
+      test.setTimeout(120_000);
       const carpeta = `capturas/${tamano.nombre}`;
       mkdirSync(carpeta, { recursive: true });
       const errores: string[] = [];
@@ -341,6 +346,11 @@ for (const tamano of TAMANOS) {
       await page.getByRole('button', { name: /Nuevo trabajo/ }).click();
       await page.getByRole('button', { name: 'Es un cliente nuevo' }).click();
       await capturar('21b-nuevo-trabajo');
+      const png = Buffer.from(PNG_MUESTRA, 'base64');
+      await page.getByTestId('adjuntar-trabajo').setInputFiles([1, 2, 3, 4].map(n => ({ name: `foto-del-tablero-y-del-equipo-${n}.png`, mimeType: 'image/png', buffer: png })));
+      await expect(page.getByText('Fotos — 4/10')).toBeVisible();
+      await page.getByText('Fotos — 4/10').scrollIntoViewIfNeeded();
+      await capturar('21c-nuevo-trabajo-fotos');
 
       // Contraseña temporal: el portal pide cambiarla antes de mostrar nada.
       await page.route('**/api/auth/sesion', route => route.fulfill({

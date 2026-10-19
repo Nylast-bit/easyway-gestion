@@ -2,50 +2,51 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Camera, Image as ImageIcon, Loader2, Upload, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { FOTOS_MAXIMAS_POR_VEHICULO, TAMANO_MAXIMO_FOTO, type FotoVehiculo } from '@easyway/shared';
+import { FOTOS_MAXIMAS_POR_TRABAJO, FOTOS_MAXIMAS_POR_VEHICULO, TAMANO_MAXIMO_FOTO, type FotoVehiculo } from '@easyway/shared';
 import { mensajeError, solicitarApi } from '../lib/api';
+import { ErrorFoto, prepararFoto } from '../lib/imagenes';
 
-const TIPOS_ADMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
-
-// Fotos de un vehículo en almacenamiento privado. Cada operación se guarda al momento;
+// Fotos de un vehículo o de un trabajo de campo, en almacenamiento privado. Cada operación se guarda al momento;
 // las URL son temporales (10 min) y se renuevan al volver a abrir la galería.
-const GaleriaFotos: React.FC<{ vehiculoId: number }> = ({ vehiculoId }) => {
+// En la galería del vehículo, las fotos tomadas con un trabajo se muestran pero no cuentan en su límite.
+const GaleriaFotos: React.FC<{ vehiculoId?: number; trabajoId?: number; titulo?: string }> = ({ vehiculoId, trabajoId, titulo }) => {
   const [fotos, setFotos] = useState<FotoVehiculo[]>([]);
   const [subiendo, setSubiendo] = useState(0);
   const [ampliada, setAmpliada] = useState<string | null>(null);
   const archivoRef = useRef<HTMLInputElement>(null);
   const camaraRef = useRef<HTMLInputElement>(null);
+  const deTrabajo = trabajoId !== undefined;
+  const ruta = deTrabajo ? `/fotos/trabajo/${trabajoId}` : `/fotos?vehiculo_id=${vehiculoId}`;
+  const maximo = deTrabajo ? FOTOS_MAXIMAS_POR_TRABAJO : FOTOS_MAXIMAS_POR_VEHICULO;
 
   const cargar = useCallback(async () => {
-    try { setFotos(await solicitarApi<FotoVehiculo[]>(`/fotos?vehiculo_id=${vehiculoId}`)); }
+    try { setFotos(await solicitarApi<FotoVehiculo[]>(ruta)); }
     catch (error) { toast.error(mensajeError(error, 'No se pudieron cargar las fotos')); }
-  }, [vehiculoId]);
+  }, [ruta]);
 
   useEffect(() => { void cargar(); }, [cargar]);
+
+  const ocupadas = deTrabajo ? fotos.length : fotos.filter(f => !f.trabajo_id).length;
 
   const subir = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const elegidos = Array.from(e.target.files ?? []);
     e.target.value = '';
-    const disponibles = FOTOS_MAXIMAS_POR_VEHICULO - fotos.length;
-    if (elegidos.length > disponibles) toast.error(`Solo puedes agregar ${disponibles} foto(s) más (máximo ${FOTOS_MAXIMAS_POR_VEHICULO}).`);
-    const validos = elegidos.slice(0, Math.max(disponibles, 0)).filter(archivo => {
-      if (!TIPOS_ADMITIDOS.includes(archivo.type)) { toast.error(`${archivo.name}: usa JPG, PNG o WebP`); return false; }
-      if (archivo.size > TAMANO_MAXIMO_FOTO) { toast.error(`${archivo.name}: supera ${TAMANO_MAXIMO_FOTO / 1024 / 1024} MB`); return false; }
-      return true;
-    });
+    const disponibles = maximo - ocupadas - subiendo;
+    if (elegidos.length > disponibles) toast.error(`Solo puedes agregar ${Math.max(disponibles, 0)} foto(s) más (máximo ${maximo}).`);
     let guardadas = 0;
-    // En serie: el servidor bloquea el vehículo durante cada subida para respetar el límite.
-    for (const archivo of validos) {
+    // En serie: el servidor bloquea el vehículo o el trabajo durante cada subida para respetar el límite.
+    for (const original of elegidos.slice(0, Math.max(disponibles, 0))) {
       setSubiendo(n => n + 1);
       try {
+        const archivo = await prepararFoto(original);
         const formulario = new FormData();
-        formulario.set('vehiculo_id', String(vehiculoId));
+        if (!deTrabajo) formulario.set('vehiculo_id', String(vehiculoId));
         formulario.set('archivo', archivo);
-        const nueva = await solicitarApi<FotoVehiculo>('/fotos', { cuerpo: formulario });
+        const nueva = await solicitarApi<FotoVehiculo>(deTrabajo ? ruta : '/fotos', { cuerpo: formulario });
         setFotos(actuales => [...actuales, nueva]);
         guardadas++;
       } catch (error) {
-        toast.error(mensajeError(error, `No se pudo subir ${archivo.name}`));
+        toast.error(error instanceof ErrorFoto ? error.message : mensajeError(error, `No se pudo subir ${original.name}`));
       } finally {
         setSubiendo(n => n - 1);
       }
@@ -62,16 +63,16 @@ const GaleriaFotos: React.FC<{ vehiculoId: number }> = ({ vehiculoId }) => {
     } catch (error) { toast.error(mensajeError(error, 'No se pudo eliminar la foto')); }
   };
 
-  const puedeAgregar = fotos.length + subiendo < FOTOS_MAXIMAS_POR_VEHICULO;
+  const puedeAgregar = ocupadas + subiendo < maximo;
 
   return (
     <div className="form-group">
-      <label className="form-label">Fotos del vehículo — {fotos.length}/{FOTOS_MAXIMAS_POR_VEHICULO}</label>
+      <label className="form-label">{titulo ?? (deTrabajo ? 'Fotos del trabajo' : 'Fotos del vehículo')} — {ocupadas}/{maximo}</label>
 
       <div className="vehicle-images-grid">
         {fotos.map(foto => (
           <div key={foto.id} className="vehicle-image-preview" onClick={() => setAmpliada(foto.url)}>
-            <img src={foto.url} alt={`Foto del vehículo${foto.autor ? ` subida por ${foto.autor}` : ''}`} />
+            <img src={foto.url} alt={`${deTrabajo ? 'Foto del trabajo' : 'Foto del vehículo'}${foto.autor ? ` subida por ${foto.autor}` : ''}`} />
             {foto.propia && (
               <button type="button" className="vehicle-image-remove" aria-label="Eliminar foto"
                 onClick={e => { e.stopPropagation(); void borrar(foto); }}>
@@ -89,15 +90,15 @@ const GaleriaFotos: React.FC<{ vehiculoId: number }> = ({ vehiculoId }) => {
 
       {puedeAgregar && (
         <div className="vehicle-image-actions">
-          <button type="button" className="vehicle-action-btn" onClick={() => archivoRef.current?.click()}>
-            <Upload size={16} /> Subir archivos
-          </button>
           <button type="button" className="vehicle-action-btn" onClick={() => camaraRef.current?.click()}>
             <Camera size={16} /> Tomar foto
           </button>
+          <button type="button" className="vehicle-action-btn" onClick={() => archivoRef.current?.click()}>
+            <Upload size={16} /> Adjuntar
+          </button>
         </div>
       )}
-      <input ref={archivoRef} type="file" accept={TIPOS_ADMITIDOS.join(',')} multiple hidden onChange={subir} data-testid="subir-fotos" />
+      <input ref={archivoRef} type="file" accept="image/*" multiple hidden onChange={subir} data-testid="subir-fotos" />
       <input ref={camaraRef} type="file" accept="image/*" capture="environment" hidden onChange={subir} />
 
       {fotos.length === 0 && !subiendo && (

@@ -77,6 +77,7 @@ export interface TrabajoCampo {
   cliente_nombre: string; vehiculo_descripcion: string; imei: string; sim: string | null;
   vehiculo_id: number | null; costo_tecnico: number | null; costo_pagado_at: string | null;
   tecnico_nombre: string | null; registrada_por_nombre: string | null;
+  fotos: number;
   // Detalle para el admin al aprobar.
   propuesta: PropuestaCampo | null;
   coincidencias: { clientes: ClienteCampo[]; vehiculos: VehiculoCampo[]; gps: { id: number; estado: string; vehiculo: string | null } | null; simcard: { id: number; estado: string } | null };

@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { tiposVehiculo, type ClienteCampo, type ResumenCostoTecnico, type TipoServicioFila, type TrabajoCampo as Trabajo, type VehiculoCampo } from '@easyway/shared';
 import Drawer from '../components/Drawer';
 import GaleriaFotos from '../components/GaleriaFotos';
+import FotosPendientes from '../components/FotosPendientes';
+import { prepararFoto } from '../lib/imagenes';
 import { aFechaHoraLocal, desdeFechaHoraLocal, formatearDinero, formatearFecha, mensajeError, solicitarApi } from '../lib/api';
 
 const claseAprobacion = { Pendiente: 'status-yellow', Aprobada: 'status-green', Rechazada: 'status-red' } as const;
@@ -19,7 +21,9 @@ const TrabajoCampo: React.FC = () => {
   const [costos, setCostos] = useState<ResumenCostoTecnico | null>(null);
   const [tipos, setTipos] = useState<TipoServicioFila[]>([]);
   const [abierto, setAbierto] = useState(false);
-  const [fotos, setFotos] = useState<number | null>(null);
+  const [fotos, setFotos] = useState<{ vehiculoId?: number; trabajoId?: number } | null>(null);
+  const [archivos, setArchivos] = useState<File[]>([]);
+  const [progreso, setProgreso] = useState('');
   const [f, setF] = useState(formularioVacio);
   const [busqueda, setBusqueda] = useState('');
   const [resultados, setResultados] = useState<ClienteCampo[]>([]);
@@ -62,6 +66,7 @@ const TrabajoCampo: React.FC = () => {
     setF({ ...formularioVacio(), tipo_servicio_id: String(tipos[0]?.id ?? '') });
     setBusqueda('');
     setVehiculos([]);
+    setArchivos([]);
     setAbierto(true);
   };
 
@@ -70,18 +75,30 @@ const TrabajoCampo: React.FC = () => {
     const vehiculoNuevo = f.vehiculoNuevo || !f.cliente;
     setEnviando(true);
     try {
-      await solicitarApi('/campo/trabajos', { cuerpo: {
+      const creado = await solicitarApi<Trabajo>('/campo/trabajos', { cuerpo: {
         cliente_id: f.clienteNuevo ? null : f.cliente?.id ?? null,
         cliente_nuevo: f.clienteNuevo ? f.nuevoCliente : null,
         vehiculo_id: vehiculoNuevo ? null : f.vehiculo_id || null,
         vehiculo_nuevo: vehiculoNuevo ? f.nuevoVehiculo : null,
         imei: f.imei, sim: f.sim, tipo_servicio_id: f.tipo_servicio_id, fecha_instalacion: desdeFechaHoraLocal(f.fecha), notas: f.notas,
       } });
+      // El trabajo ya está guardado: las fotos se suben después, una a una; si alguna falla se puede reintentar desde "Mis trabajos".
+      let fallidas = 0;
+      for (const [i, original] of archivos.entries()) {
+        setProgreso(`Subiendo fotos ${i + 1}/${archivos.length}…`);
+        try {
+          const formulario = new FormData();
+          formulario.set('archivo', await prepararFoto(original));
+          await solicitarApi(`/fotos/trabajo/${creado.id}`, { cuerpo: formulario });
+        } catch { fallidas++; }
+      }
+      if (fallidas) toast.error(`${fallidas} foto(s) no se pudieron subir; agrégalas desde “Mis trabajos”.`);
       toast.success('Trabajo enviado; queda pendiente de aprobación');
       setAbierto(false);
+      setArchivos([]);
       void cargar();
     } catch (error) { toast.error(mensajeError(error, 'No se pudo registrar el trabajo')); }
-    finally { setEnviando(false); }
+    finally { setEnviando(false); setProgreso(''); }
   };
 
   const pedirVehiculoNuevo = f.clienteNuevo || f.vehiculoNuevo || (f.cliente !== null && vehiculos.length === 0);
@@ -120,8 +137,10 @@ const TrabajoCampo: React.FC = () => {
             <div className="vehicle-tags" style={{ marginTop: '0.5rem' }}>
               <span className="vehicle-tag">{formatearFecha(t.fecha_instalacion)}</span>
               {t.costo_tecnico !== null && <span className="vehicle-tag">{formatearDinero(t.costo_tecnico)} · {t.costo_pagado_at ? 'pagado' : 'por cobrar'}</span>}
-              {t.vehiculo_id && (
-                <button type="button" className="login-enlace" onClick={() => setFotos(t.vehiculo_id)}><Camera size={14} /> Fotos</button>
+              {t.aprobacion === 'Pendiente' ? (
+                <button type="button" className="login-enlace" onClick={() => setFotos({ trabajoId: t.id })}><Camera size={14} /> {t.fotos ? `Fotos (${t.fotos})` : 'Agregar fotos'}</button>
+              ) : t.vehiculo_id && (
+                <button type="button" className="login-enlace" onClick={() => setFotos({ vehiculoId: t.vehiculo_id! })}><Camera size={14} /> Fotos</button>
               )}
             </div>
             {t.motivo_rechazo && <p className="importacion-error" style={{ fontSize: '0.85rem', marginTop: '0.4rem' }}>Rechazado: {t.motivo_rechazo}</p>}
@@ -219,13 +238,14 @@ const TrabajoCampo: React.FC = () => {
             <label className="form-label" htmlFor="campo-notas">Notas</label>
             <textarea id="campo-notas" className="form-textarea" maxLength={2000} value={f.notas} onChange={e => setF({ ...f, notas: e.target.value })} />
           </div>
-          <p className="cuenta-ayuda">Un administrador revisará y aprobará el trabajo. Las fotos se suben desde “Mis trabajos” cuando el vehículo ya existe.</p>
-          <button type="submit" className="btn-submit" disabled={enviando}>{enviando ? 'Enviando…' : 'Enviar trabajo'}</button>
+          <FotosPendientes archivos={archivos} onCambio={setArchivos} />
+          <p className="cuenta-ayuda">Un administrador revisará y aprobará el trabajo; al aprobarlo, las fotos pasan a la galería del vehículo.</p>
+          <button type="submit" className="btn-submit" disabled={enviando}>{enviando ? progreso || 'Enviando…' : 'Enviar trabajo'}</button>
         </form>
       </Drawer>
 
-      <Drawer isOpen={fotos !== null} onClose={() => setFotos(null)} title="Fotos del vehículo">
-        {fotos !== null && <GaleriaFotos key={fotos} vehiculoId={fotos} />}
+      <Drawer isOpen={fotos !== null} onClose={() => { setFotos(null); void cargar(); }} title={fotos?.trabajoId ? 'Fotos del trabajo' : 'Fotos del vehículo'}>
+        {fotos !== null && <GaleriaFotos key={`${fotos.trabajoId}-${fotos.vehiculoId}`} {...fotos} />}
       </Drawer>
     </div>
   );

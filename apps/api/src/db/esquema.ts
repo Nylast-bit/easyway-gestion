@@ -108,13 +108,19 @@ export const simcardAsignaciones = pgTable('simcard_asignaciones', {
 ]).enableRLS();
 
 export const vehiculoImagenes = pgTable('vehiculo_imagenes', {
-  id: id(), vehiculo_id: integer('vehiculo_id').notNull().references(() => vehiculos.id),
+  // Sin vehículo mientras la foto es de un trabajo de campo pendiente (el vehículo puede no existir aún):
+  // al aprobar el trabajo se enlaza al vehículo definitivo.
+  id: id(), vehiculo_id: integer('vehiculo_id').references(() => vehiculos.id),
   storage_path: text('storage_path').notNull(), created_at: creado(),
   // Autor de la foto (fase 3): un técnico solo puede borrar las suyas. La foto se conserva si se borra el usuario.
   subida_por: integer('subida_por').references((): AnyPgColumn => usuarios.id, { onDelete: 'set null' }),
+  // Trabajo de campo con el que se tomó la foto.
+  instalacion_id: integer('instalacion_id').references(() => instalaciones.id),
 }, (tabla) => [
   uniqueIndex('vehiculo_imagenes_ruta_unica').on(tabla.storage_path),
   index('vehiculo_imagenes_vehiculo_idx').on(tabla.vehiculo_id),
+  index('vehiculo_imagenes_instalacion_idx').on(tabla.instalacion_id),
+  check('vehiculo_imagenes_destino', sql`${tabla.vehiculo_id} IS NOT NULL OR ${tabla.instalacion_id} IS NOT NULL`),
 ]).enableRLS();
 
 // Autenticación propia (fase 3): la cuenta se identifica por nombre de usuario o por correo.

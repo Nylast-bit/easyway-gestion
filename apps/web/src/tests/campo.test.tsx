@@ -86,3 +86,36 @@ test('costos: elige trabajos y marca el pago con su total', async () => {
   fireEvent.click(screen.getByRole('button', { name: /Marcar pagado \(2\) · RD\$1,700.00/ }));
   await waitFor(() => expect(llamadas.find(l => l.url === '/api/costos-tecnicos/pagar')?.cuerpo).toEqual({ instalacion_ids: [1, 2], referencia: 'Transferencia 0042' }));
 });
+
+test('técnico: toma y adjunta varias fotos en el trabajo nuevo y se suben al enviarlo', async () => {
+  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn((archivo: File) => `blob:${archivo.name}`), revokeObjectURL: vi.fn() }));
+  const subidas: FormData[] = [];
+  vi.stubGlobal('fetch', vi.fn(async (url: string, opciones?: RequestInit) => {
+    const metodo = opciones?.method ?? 'GET';
+    if (metodo === 'GET' && url === '/api/tipos-servicio?activos=1') return Response.json([{ id: 1, nombre: 'Instalación', activo: true }]);
+    if (metodo === 'GET' && url === '/api/campo/costos') return Response.json({ tecnico_id: 2, tecnico_nombre: 'Pedro', trabajos: 0, total: 0, pagado: 0, pendiente: 0 });
+    if (metodo === 'POST' && url === '/api/campo/trabajos') return Response.json(trabajoBase, { status: 201 });
+    if (metodo === 'POST' && url === '/api/fotos/trabajo/21') { subidas.push(opciones!.body as FormData); return Response.json({ id: subidas.length }, { status: 201 }); }
+    return respuestaPorDefecto(url);
+  }));
+  render(<TrabajoCampo />);
+  fireEvent.click(await screen.findByRole('button', { name: /Nuevo trabajo/ }));
+  await waitFor(() => expect(screen.getByLabelText('Tipo de servicio *')).toHaveValue('1'));
+  fireEvent.click(screen.getByRole('button', { name: 'Es un cliente nuevo' }));
+  fireEvent.change(screen.getByLabelText('Cliente *'), { target: { value: 'Flota del Este SRL' } });
+  fireEvent.change(screen.getByLabelText('IMEI *'), { target: { value: '863829070000001' } });
+
+  const foto = (nombre: string) => new File([new Uint8Array([0xff, 0xd8, 0xff])], nombre, { type: 'image/jpeg' });
+  // Dos disparos de cámara y dos adjuntos de la galería; un SVG se rechaza con aviso.
+  fireEvent.change(screen.getByTestId('camara-trabajo'), { target: { files: [foto('camara-1.jpg')] } });
+  fireEvent.change(screen.getByTestId('camara-trabajo'), { target: { files: [foto('camara-2.jpg')] } });
+  fireEvent.change(screen.getByTestId('adjuntar-trabajo'), { target: { files: [foto('galeria-1.jpg'), foto('galeria-2.jpg'), new File(['<svg/>'], 'x.svg', { type: 'image/svg+xml' })] } });
+  expect(avisos.error).toHaveBeenCalledWith('x.svg: usa JPG, PNG o WebP');
+  expect(screen.getByText('Fotos — 4/10')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Quitar foto 2' }));
+  expect(screen.getAllByAltText(/por subir/)).toHaveLength(3);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Enviar trabajo' }));
+  await waitFor(() => expect(avisos.success).toHaveBeenCalledWith('Trabajo enviado; queda pendiente de aprobación'));
+  expect(subidas.map(f => (f.get('archivo') as File).name)).toEqual(['camara-1.jpg', 'galeria-1.jpg', 'galeria-2.jpg']);
+});

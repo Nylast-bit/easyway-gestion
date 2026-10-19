@@ -131,6 +131,7 @@ const Aprobaciones: React.FC = () => {
                 </select>
               </div>
             </div>
+            <GaleriaFotos key={`trabajo-${actual.id}`} trabajoId={actual.id} titulo="Fotos tomadas en el trabajo" />
             {actual.vehiculo_id && <GaleriaFotos key={actual.vehiculo_id} vehiculoId={actual.vehiculo_id} />}
             <div className="cuenta-botones">
               <button type="submit" className="btn-submit" disabled={enviando}>{enviando ? 'Aprobando…' : 'Aprobar'}</button>
