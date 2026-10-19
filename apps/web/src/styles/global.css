@@ -27,6 +27,7 @@ body {
 .app-layout {
     display: flex;
     height: 100vh;
+    height: 100dvh; /* en móvil 100vh incluye la barra del navegador y tapa el final */
     overflow: hidden; /* Evita scroll global */
 }
 
@@ -38,9 +39,14 @@ body {
     flex-direction: column;
     align-items: center;
     padding: 1.5rem 0;
-    gap: 1rem;
+    gap: 0.75rem;
     flex-shrink: 0;
+    /* Si los iconos no caben en alto se desplaza, sin barras visibles ni scroll horizontal. */
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
 }
+.sidebar::-webkit-scrollbar { display: none; }
 
 .sidebar-icon {
     width: 48px;
@@ -53,6 +59,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
+    flex-shrink: 0; /* nunca se aplastan: si no caben, el menú se desplaza */
 }
 
 .sidebar-icon:hover {
@@ -65,10 +72,12 @@ body {
     color: #ffffff;
 }
 
-/* Tooltip para el sidebar de iconos */
+/* Tooltip para el sidebar de iconos: fijo a la ventana (el scroll del menú lo recortaría); altura en --tooltip-y */
 .sidebar-icon .tooltip {
-    position: absolute;
-    left: 60px;
+    position: fixed;
+    left: 72px;
+    top: var(--tooltip-y, 0);
+    transform: translateY(-50%);
     background-color: var(--text-primary);
     color: #fff;
     padding: 0.25rem 0.75rem;
@@ -87,6 +96,8 @@ body {
 
 .main-content {
     flex: 1;
+    min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -154,6 +165,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* en móvil 100vh incluye la barra del navegador y tapa el final */
     background-color: rgba(0, 0, 0, 0.4);
     z-index: 1000;
     opacity: 0;
@@ -173,6 +185,7 @@ body {
     width: 450px;
     max-width: 90%;
     height: 100vh;
+    height: 100dvh; /* en móvil 100vh incluye la barra del navegador y tapa el final */
     background-color: var(--sidebar-bg);
     box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
     z-index: 1001;
@@ -476,6 +489,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* en móvil 100vh incluye la barra del navegador y tapa el final */
     background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
@@ -766,6 +780,17 @@ body {
     }
 }
 
+/* Pantallas bajas (laptops de 768 px, teléfonos): iconos más compactos para que quepan los 14 sin desplazar */
+@media (max-height: 899px) {
+    .sidebar { padding: 0.75rem 0; gap: 0.4rem; }
+    .sidebar-icon { width: 44px; height: 44px; }
+}
+/* Ventanas aún más bajas (o con zoom del navegador): más compacto; si tampoco cabe, el menú se desplaza sin barras. */
+@media (max-height: 720px) {
+    .sidebar { padding: 0.5rem 0; gap: 0.25rem; }
+    .sidebar-icon { width: 40px; height: 40px; }
+}
+
 /* Ajustes extra para pantallas muy pequeñas (Teléfonos pequeños) */
 @media (max-width: 380px) {
     /* Reducir un poco el tamaño de los iconos del menú lateral si es muy estrecho */
@@ -1026,7 +1051,6 @@ body {
 }
 
 /* --- Trabajo de campo, aprobaciones y costos --- */
-.sidebar { overflow-y: auto; }
 .campo-elegido { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; border: 1px solid var(--border-color); border-radius: 10px; padding: 0.6rem 0.75rem; overflow-wrap: anywhere; }
 .campo-resultados { list-style: none; border: 1px solid var(--border-color); border-radius: 10px; margin-top: 0.35rem; max-height: 220px; overflow-y: auto; }
 .campo-resultados button { width: 100%; text-align: left; background: none; border: none; padding: 0.6rem 0.75rem; font: inherit; cursor: pointer; overflow-wrap: anywhere; }
@@ -1088,3 +1112,30 @@ body {
 .borrador-etiqueta { display: inline-flex; align-items: center; gap: 0.3rem; align-self: flex-start; white-space: nowrap; }
 .borrador-aviso { font-size: 0.85rem; margin-top: 0.4rem; color: var(--text-secondary); overflow-wrap: anywhere; }
 .borrador-descartar { color: #b91c1c; }
+
+/* Botón de guardar de los paneles: fijo al pie del panel mientras se desplaza el formulario (en el teléfono
+   el formulario es más alto que la pantalla). La sombra blanca tapa lo que pasa por debajo. */
+.drawer-content form > .btn-submit:last-child {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    box-shadow: 0 0 0 0.75rem var(--sidebar-bg), 0 2rem 0 0.75rem var(--sidebar-bg), 0 -1.25rem 1rem -0.5rem var(--sidebar-bg);
+}
+.drawer-content { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+
+/* Técnico en el teléfono: menú inferior con texto (2 opciones) en lugar de la columna lateral */
+.sidebar-texto { display: none; }
+@media (max-width: 768px) {
+    .app-layout.es-tecnico { flex-direction: column; }
+    .app-layout.es-tecnico .sidebar {
+        order: 2; width: 100%; flex-direction: row; justify-content: stretch; gap: 0.5rem;
+        padding: 0.4rem 0.75rem calc(0.4rem + env(safe-area-inset-bottom));
+        border-right: 0; border-top: 1px solid var(--border-color); overflow: visible;
+    }
+    .app-layout.es-tecnico .sidebar-icon {
+        flex: 1; width: auto; height: auto; flex-direction: column; gap: 0.15rem; padding: 0.4rem 0.25rem;
+        font-size: 0.75rem; font-weight: 600; text-decoration: none;
+    }
+    .app-layout.es-tecnico .sidebar-texto { display: block; }
+    .app-layout.es-tecnico .tooltip { display: none; }
+}

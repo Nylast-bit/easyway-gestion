@@ -29,6 +29,13 @@ const navItems = [
   { to: '/users', icon: UserCog, label: 'Usuarios' },
 ];
 
+// El menú puede desplazarse en pantallas bajas: el tooltip es `fixed` (no lo recorta el scroll del menú)
+// y toma la altura real del icono al pasar el ratón o enfocarlo con el teclado.
+const fijarTooltip = (e: React.SyntheticEvent<HTMLElement>) => {
+  const caja = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty('--tooltip-y', `${caja.top + caja.height / 2}px`);
+};
+
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -98,7 +105,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   );
 
   return (
-    <div className="app-layout">
+    <div className={esTecnico ? 'app-layout es-tecnico' : 'app-layout'}>
       <aside className="sidebar">
         {usuario && elementos.map((item, index) => (
           <Link
@@ -107,9 +114,13 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             aria-label={item.label}
             aria-current={pathname === item.to ? 'page' : undefined}
             className={`sidebar-icon ${pathname === item.to ? 'active' : ''}`}
+            onMouseEnter={fijarTooltip}
+            onFocus={fijarTooltip}
           >
             <item.icon size={24} />
-            <span className="tooltip">{item.label}</span>
+            {/* Texto visible solo en el menú inferior del técnico en el teléfono; si no, tooltip. */}
+            <span className="sidebar-texto">{item.label}</span>
+            <span className="tooltip" aria-hidden="true">{item.label}</span>
           </Link>
         ))}
       </aside>

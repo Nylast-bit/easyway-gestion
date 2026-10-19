@@ -219,6 +219,8 @@ for (const tamano of TAMANOS) {
             if (!texto || getComputedStyle(elemento).textOverflow === 'ellipsis') continue;
             const caja = elemento.getBoundingClientRect();
             if (!caja.width || !caja.height) continue;
+            // Un elemento fijo (p. ej. el tooltip del menú) escapa del overflow de sus ancestros.
+            if (getComputedStyle(elemento).position === 'fixed') continue;
             for (let padre = elemento.parentElement; padre && padre !== document.body; padre = padre.parentElement) {
               const estilo = getComputedStyle(padre);
               if (!/hidden|clip/.test(estilo.overflowX)) {
@@ -289,6 +291,15 @@ for (const tamano of TAMANOS) {
         await capturar(nombre);
       }
 
+      // Menú lateral del admin (14 iconos): cabe sin desplazarse y el tooltip sale junto al icono.
+      const menu = page.locator('.sidebar');
+      expect(await menu.evaluate(el => el.scrollHeight - el.clientHeight), `menú lateral con scroll en ${tamano.nombre}`).toBeLessThanOrEqual(0);
+      const ultimo = page.getByRole('link', { name: 'Usuarios' });
+      await ultimo.hover();
+      const [icono, globo] = await Promise.all([ultimo.boundingBox(), ultimo.locator('.tooltip').boundingBox()]);
+      expect(Math.abs(icono!.y + icono!.height / 2 - (globo!.y + globo!.height / 2))).toBeLessThanOrEqual(2);
+      await capturar('03b-menu-tooltip');
+
       // Paneles y modales.
       await page.goto('/vehicles');
       await page.getByRole('button', { name: /Agregar/ }).click();
@@ -353,11 +364,20 @@ for (const tamano of TAMANOS) {
       await page.getByRole('button', { name: /Nuevo trabajo/ }).click();
       await page.getByRole('button', { name: 'Es un cliente nuevo' }).click();
       await capturar('21b-nuevo-trabajo');
+      // El botón de enviar queda fijo al pie del panel: visible sin desplazar el formulario.
+      await expect(page.getByRole('button', { name: 'Enviar trabajo' })).toBeInViewport({ ratio: 1 });
       const png = Buffer.from(PNG_MUESTRA, 'base64');
       await page.getByTestId('adjuntar-trabajo').setInputFiles([1, 2, 3, 4].map(n => ({ name: `foto-del-tablero-y-del-equipo-${n}.png`, mimeType: 'image/png', buffer: png })));
       await expect(page.getByText('Fotos — 4/10')).toBeVisible();
       await page.getByText('Fotos — 4/10').scrollIntoViewIfNeeded();
       await capturar('21c-nuevo-trabajo-fotos');
+      await expect(page.getByRole('button', { name: 'Enviar trabajo' })).toBeInViewport({ ratio: 1 });
+      // Fotos de un trabajo pendiente desde "Mis trabajos".
+      await page.goto('/field');
+      await page.getByRole('button', { name: 'Fotos (3)' }).first().click();
+      await expect(page.getByRole('heading', { name: 'Fotos del trabajo' })).toBeVisible();
+      await expect.poll(() => page.locator('.drawer-content img').count()).toBe(3);
+      await capturar('21g-fotos-trabajo');
       // Cola sin conexión: borradores guardados en IndexedDB; el envío falla por falta de red y siguen en cola.
       await page.route('**/api/campo/trabajos', route => (route.request().method() === 'POST' ? route.abort('internetdisconnected') : route.fulfill({ json: trabajosTecnico })));
       await page.route('**/api/fotos/trabajo/**', route => route.abort('internetdisconnected'));
@@ -387,6 +407,9 @@ for (const tamano of TAMANOS) {
       await page.goto('/installations');
       await expect(page.getByRole('heading', { name: 'Mis instalaciones' })).toBeVisible();
       await capturar('21e-mis-instalaciones');
+      await page.getByRole('button', { name: 'Actualizar avance' }).first().click();
+      await expect(page.getByRole('button', { name: 'Guardar avance' })).toBeInViewport({ ratio: 1 });
+      await capturar('21h-actualizar-avance');
 
       // Contraseña temporal: el portal pide cambiarla antes de mostrar nada.
       await page.route('**/api/auth/sesion', route => route.fulfill({
